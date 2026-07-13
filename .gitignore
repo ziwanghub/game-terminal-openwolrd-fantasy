@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Saves & local
+saves/
+*.log
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
