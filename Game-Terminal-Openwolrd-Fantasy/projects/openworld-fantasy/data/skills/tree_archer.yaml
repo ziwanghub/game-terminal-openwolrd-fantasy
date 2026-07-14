@@ -1,0 +1,96 @@
+# Archer skill tree
+
+- id: archer_aimed
+  name: เล็งแม่น
+  slot: combat
+  cost_mana: 6
+  power: 20
+  elements: [physical]
+  combo_ok: true
+  tree: archer
+  tier: 2
+  requires: [arrow_shot]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 50
+
+- id: archer_trap_shot
+  name: ศรกับดัก
+  slot: combat
+  cost_mana: 12
+  power: 15
+  elements: [physical, nature]
+  combo_ok: true
+  tree: archer
+  tier: 2
+  requires: [arrow_shot]
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 70
+
+- id: archer_gale
+  name: ลูกธนูลมกรด
+  slot: combat
+  cost_mana: 14
+  power: 28
+  elements: [wind]
+  combo_ok: true
+  tree: archer
+  tier: 3
+  requires: [wind_pierce, wind_slash]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 125
+
+- id: archer_multishot
+  name: ยิงกระจาย
+  slot: combat
+  cost_mana: 18
+  power: 32
+  elements: [physical, wind]
+  combo_ok: true
+  tree: archer
+  tier: 3
+  requires: [archer_aimed]
+  learn:
+    method: [self]
+    require_level: 15
+    cost_world: 130
+    cost_items:
+      upgrade_mat: 1
+
+- id: archer_skyfall
+  name: ฟ้าหล่น
+  slot: combat
+  cost_mana: 26
+  power: 46
+  elements: [physical, wind, lightning]
+  combo_ok: true
+  tree: archer
+  tier: 4
+  requires: [rain_of_arrows, archer_gale]
+  learn:
+    method: [self]
+    require_level: 26
+    cost_world: 210
+    cost_heaven: 2
+
+- id: archer_evade_veil
+  name: ม่านหลบ
+  slot: defense
+  cost_mana: 5
+  strong_vs: [physical, wind]
+  weak_vs: [fire, arcane]
+  damage_mult_strong: 0.15
+  damage_mult_neutral: 0.5
+  damage_mult_weak: 0.9
+  tree: archer
+  tier: 2
+  requires: [guard_basic, arrow_shot]
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 55

@@ -1,0 +1,14 @@
+{
+  "gate_id": "mock",
+  "workdir": ".",
+  "env": {
+    "MOCK_MODE": "true"
+  },
+  "command": "echo \"running mock tests... PASS\"",
+  "timeout_ms": 30000,
+  "expected_assertions": [
+    "PASS"
+  ],
+  "next_action": "zcl state update --phase M8C-5",
+  "stop_conditions": []
+}

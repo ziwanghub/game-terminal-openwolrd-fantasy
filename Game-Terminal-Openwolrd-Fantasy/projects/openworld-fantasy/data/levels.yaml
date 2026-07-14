@@ -1,0 +1,13 @@
+# Balance wave 1 — slightly steeper, less mid-game snowball
+id: default_curve
+base: 120
+exponent: 1.52
+linear: 35
+min_level: 1
+xp_kill_base: 15
+xp_kill_per_monster_level: 5
+xp_gap_bonus: 3.2
+xp_overlevel_factor: 0.42
+# Soft death penalties (applied in code; documented here)
+death_money_loss_pct: 0.08
+death_xp_loss_pct: 0.05

@@ -1,0 +1,10 @@
+{
+  "name": "embed-agent-runtime",
+  "version": "1.0.0",
+  "description": "Example showing how an AI Agent loop can embed Z-MOS",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "zmos-core": "file:../.."
+  }
+}

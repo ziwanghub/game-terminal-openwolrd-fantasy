@@ -1,0 +1,45 @@
+{
+  "name": "premium-massage-v1",
+  "version": "1.1.1",
+  "type": "landing",
+  "status": "tested",
+  "validation_stage": "extracted-from-real-source",
+  "created_from_project": "massageV1-zmos-coreV0.2.2",
+  "source_project": "TheGigBeauty-Original",
+  "source_project_version": "0.2.1",
+  "last_extracted_at": "2026-03-23",
+  "last_promoted_at": "2026-03-23",
+  "promotion_history": [
+    {
+      "status": "draft",
+      "date": "2026-03-23",
+      "agent": "Antigravity",
+      "note": "Initial scaffold"
+    },
+    {
+      "status": "tested",
+      "date": "2026-03-23",
+      "agent": "Antigravity",
+      "note": "Extracted real source code and assets from massageV1-zmos-coreV0.2.2"
+    }
+  ],
+  "customer_live_status": "sold-not-yet-live",
+  "description": "Premium landing page template for massage/spa businesses. Extracted from a real commercial project with multi-language support and mobile-first design.",
+  "compatible_with": [
+    "booking-standard-v1",
+    "admin-spa-v1"
+  ],
+  "required_modules": [
+    "auth-line-v1"
+  ],
+  "config_schema": "../../schemas/config.schema.json",
+  "package_support": [
+    "pro",
+    "premium"
+  ],
+  "last_validated_at": "2026-03-23",
+  "author": "Antigravity",
+  "entry_point": "index.html",
+  "build_command": "npm run build",
+  "install_command": "npm install"
+}

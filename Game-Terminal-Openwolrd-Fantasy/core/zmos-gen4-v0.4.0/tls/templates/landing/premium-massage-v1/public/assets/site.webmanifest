@@ -1,0 +1,23 @@
+{
+  "name": "Serenity Massage V1",
+  "short_name": "Serenity",
+  "description": "Premium wellness and massage service landing page.",
+  "theme_color": "#faf9f7",
+  "background_color": "#faf9f7",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/?source=pwa",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

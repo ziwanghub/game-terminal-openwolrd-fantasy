@@ -2,13 +2,33 @@
 
 เกมแฟนตาซี open skill / open world แบบ **ข้อความใน Terminal** (ยังไม่มีกราฟิก)
 
-## รันเกม (prototype ปัจจุบัน)
+## โครงสร้าง
 
-```bash
-python3 pixel_fantasy_openskill.py
+```text
+Game-Terminal-Openwolrd-Fantasy/
+├── core/          # Z-MOS governance (lite) — ไม่ใช่โค้ดเกม
+├── design/        # RD / สเปค
+└── projects/
+    └── openworld-fantasy/   # ★ เกมจริง (Python)
 ```
 
-ต้องการ Python 3 เท่านั้น (stdlib)
+## รันเกม (ปัจจุบัน)
+
+```bash
+cd Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy
+python3 -m game
+python3 -m pytest -q
+```
+
+ต้องการ Python 3.9+ · `pip install -e ".[dev]"` (PyYAML, pytest)
+
+**เวอร์ชันเกม:** ดู `projects/openworld-fantasy/game/config.py`  
+(ปัจจุบัน: `1.13.10-alpha` · `aoe-pack-balance`)
+
+## CI
+
+GitHub Actions: `.github/workflows/ci.yml`  
+รัน `pytest` บน `projects/openworld-fantasy` ทุก push/PR ไป `main`
 
 ## Remote
 
@@ -16,21 +36,12 @@ python3 pixel_fantasy_openskill.py
 git@github.com:ziwanghub/game-terminal-openwolrd-fantasy.git
 ```
 
-## แผนพัฒนา (ย่อ)
+## บทบาทโฟลเดอร์
 
-| เฟส | เนื้อหา |
-|-----|---------|
-| P0 | โครงโปรเจกต์ + UI ข้อความอ่านง่าย |
-| P1 | Data YAML + ASCII art |
-| P2 | เซฟ / เลือกตัวละคร |
-| P3 | HP/MP/สถานะ/ร้านยา + Spotlight ของหายาก |
-| P4 | เลเวล XP% / เกียร์ / การ์ดเสียบอุปกรณ์ |
-| P5 | สกิลเลข + คอมโบ + มานา |
-| P6 | ธาตุ / fusion / journal |
-| P7 | ป้องกันแพ้ทาง |
-| P8 | พื้นที่ตามเลเวล, ???, หีบเสี่ยง |
-| P9 | ออโต้ฟาร์ม + ไทม์เมอร์ |
-| P10 | หลายโลก + แอดมิน |
-| P11 | Polish / บาลานซ์ |
+| ที่ | บทบาท |
+|----|--------|
+| `projects/openworld-fantasy` | โค้ดเกม · data · tests |
+| `core/` | Z-MOS lite (วินัย dev) — อย่าใส่ logic เกม |
+| `design/` | เอกสารความต้องการ |
 
-รายละเอียดดีไซน์พัฒนาร่วมในเซสชันออกแบบ (data-driven, ไม่บอกสูตรแพ้ทางให้ผู้เล่นล่วงหน้า)
+รายละเอียด: `Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy/docs/ARCHITECTURE.md`

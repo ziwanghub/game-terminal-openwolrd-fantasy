@@ -1,0 +1,199 @@
+# Craft recipes — inputs_rarity: min grade per material (optional)
+# output_rarity: forced output grade; else inherits from requirements
+
+- id: craft_steel_blade
+  name: หลอมดาบเหล็กกล้า
+  station: forge
+  inputs:
+    iron_sword: 1
+    upgrade_mat: 3
+    rare_mat: 1
+  inputs_rarity:
+    iron_sword: uncommon   # ต้องการดาบอย่างน้อยระดับ「สูง」
+    upgrade_mat: common
+    rare_mat: common
+  money: 120
+  output: steel_blade
+  output_rarity: uncommon
+  unlock_level: 4
+
+- id: craft_iron_plate
+  name: ตีเกราะเหล็ก
+  station: forge
+  inputs:
+    leather_armor: 1
+    upgrade_mat: 4
+  inputs_rarity:
+    leather_armor: common
+  money: 100
+  output: iron_plate
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_shadow_dagger
+  name: หลอมกริชเงา
+  station: forge
+  inputs:
+    iron_sword: 1
+    upgrade_mat: 2
+    rare_mat: 1
+  inputs_rarity:
+    iron_sword: uncommon
+    rare_mat: uncommon
+  money: 150
+  output: shadow_dagger
+  output_rarity: rare
+  unlock_level: 5
+
+- id: craft_mage_robe
+  name: เย็บชุดคลุมเวทย์
+  station: forge
+  inputs:
+    leather_armor: 1
+    upgrade_mat: 2
+    rare_mat: 1
+  inputs_rarity:
+    leather_armor: uncommon
+  money: 140
+  output: mage_robe
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_potion_bundle
+  name: ชุดยาฉุกเฉิน
+  station: camp
+  inputs:
+    potion_hp_small: 2
+  money: 20
+  output: potion_hp
+  unlock_level: 1
+
+- id: craft_antidote
+  name: ต้มยาแก้พิษ
+  station: camp
+  inputs:
+    potion_hp_small: 1
+    upgrade_mat: 1
+  money: 15
+  output: antidote
+  unlock_level: 1
+
+- id: craft_card_fire
+  name: จารึกการ์ดไฟ
+  station: mystic
+  inputs:
+    upgrade_mat: 2
+    rare_mat: 1
+  inputs_rarity:
+    rare_mat: uncommon
+  money: 80
+  output: card_fire
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_card_guard
+  name: จารึกการ์ดม่านน้ำ
+  station: mystic
+  inputs:
+    upgrade_mat: 2
+    rare_mat: 1
+  inputs_rarity:
+    rare_mat: uncommon
+  money: 100
+  output: card_guard_water
+  output_rarity: rare
+  unlock_level: 4
+
+- id: craft_thorn_blade
+  name: หลอมดาบหนามราชันย์
+  station: forge
+  inputs:
+    steel_blade: 1
+    rare_mat: 2
+    upgrade_mat: 3
+  inputs_rarity:
+    steel_blade: rare
+    rare_mat: rare
+  money: 250
+  output: thorn_blade
+  output_rarity: sacred
+  unlock_level: 8
+
+- id: craft_thorn_mail
+  name: ตีเกราะหนาม
+  station: forge
+  inputs:
+    iron_plate: 1
+    rare_mat: 2
+    upgrade_mat: 3
+  inputs_rarity:
+    iron_plate: rare
+    rare_mat: rare
+  money: 240
+  output: thorn_mail
+  output_rarity: sacred
+  unlock_level: 8
+
+- id: craft_shadow_cloak
+  name: เย็บผ้าคลุมเงา
+  station: mystic
+  inputs:
+    leather_armor: 1
+    rare_mat: 1
+    upgrade_mat: 2
+  inputs_rarity:
+    leather_armor: uncommon
+    rare_mat: uncommon
+  money: 160
+  output: shadow_cloak
+  output_rarity: rare
+  unlock_level: 6
+
+- id: craft_divine_ring
+  name: หลอมวงแหวนศักดิ์สิทธิ์
+  station: mystic
+  inputs:
+    copper_ring: 1
+    rare_mat: 2
+    upgrade_mat: 2
+  inputs_rarity:
+    copper_ring: rare
+    rare_mat: sacred
+  money: 300
+  output: silver_amulet
+  output_rarity: sacred
+  unlock_level: 12
+
+# bulk 1.13.9
+- id: craft_bandit_knife
+  name: ลับมีดปล้น
+  station: forge
+  inputs:
+    upgrade_mat: 1
+    herb_bundle: 1
+  money: 25
+  output: bandit_knife
+  output_rarity: common
+  unlock_level: 1
+
+- id: craft_dust_veil
+  name: เย็บผ้าคลุมฝุ่น
+  station: forge
+  inputs:
+    sand_cloak_mat: 1
+    herb_bundle: 2
+  money: 45
+  output: dust_veil
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_city_ration
+  name: ห่อเสบียงเมือง
+  station: camp
+  inputs:
+    city_bread: 2
+    herb_bundle: 1
+  money: 15
+  output: traveler_ration
+  output_rarity: common
+  unlock_level: 1

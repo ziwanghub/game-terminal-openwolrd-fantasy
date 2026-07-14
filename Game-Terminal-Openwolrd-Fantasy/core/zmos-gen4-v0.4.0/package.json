@@ -1,0 +1,46 @@
+{
+  "name": "zmos-core",
+  "version": "0.4.0",
+  "description": "ZMOS Gen4 v0.4.0 Controlled Trial Foundation — Pure Truth-First Governance Engine",
+  "versionSource": "sdk/version.ts",
+  "main": "dist/cli/gateway.js",
+  "type": "module",
+  "bin": {
+    "zcl": "./bin/zcl.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "ops:build": "npm run build",
+    "ops:verify-dist": "node ./scripts/ops/verify-dist.mjs",
+    "ops:preflight": "ZMOS_PREFLIGHT_EXEC_MODE=ops-dist node ./bin/zcl.js preflight",
+    "doc:check": "node ./bin/zcl.js doc:check",
+    "doc:index": "node ./bin/zcl.js doc:index",
+    "doc:doctor": "node ./bin/zcl.js doc:doctor",
+    "dev": "node ./bin/zcl.js --dev-ts",
+    "dev:ts": "node --import tsx ./cli/gateway.ts",
+    "ops:init": "npm run ops:verify-dist && ZMOS_PREFLIGHT_ALLOW_CANONICAL_MISSING=1 npm run ops:preflight && node ./bin/zcl.js init",
+    "ops:start": "npm run ops:verify-dist && node ./bin/zcl.js start",
+    "ops:status": "npm run ops:verify-dist && npm run ops:preflight && node ./bin/zcl.js status",
+    "ops:doctor": "npm run ops:verify-dist && npm run ops:preflight && node ./bin/zcl.js doctor",
+    "verify:smoke": "node ./scripts/verify/verify.mjs smoke",
+    "verify:core": "node ./scripts/verify/verify.mjs core",
+    "verify:trace": "node ./scripts/verify/verify.mjs trace",
+    "verify:docs": "node ./scripts/verify/verify.mjs docs",
+    "verify:all": "node ./scripts/verify/verify.mjs all",
+    "verify:production-readiness": "node ./scripts/verify/production-readiness.mjs",
+    "verify:production-readiness:strict": "node ./scripts/verify/production-readiness.mjs --profile=strict",
+    "check:version-branding": "node ./scripts/verify/version-branding-guard.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/integration/run-with-intent.test.ts",
+    "update-version": "tsx scripts/update-version.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

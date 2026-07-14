@@ -1,17 +1,37 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+.eggs/
+dist/
+build/
 .venv/
 venv/
 .env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Saves & local
+# Node / Z-MOS local deps
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Game local state
 saves/
+exports/
 *.log
 .DS_Store
 
-# IDE
+# IDE / OS
 .idea/
 .vscode/
 *.swp
+*~
+
+# Session / temp
+/tmp/
+*.tmp

@@ -1,0 +1,102 @@
+# Warrior skill tree extensions (T2–T4)
+
+- id: warrior_cleave
+  name: กวาดฟัน
+  slot: combat
+  cost_mana: 10
+  power: 16
+  elements: [physical]
+  combo_ok: true
+  aoe: true
+  tree: warrior
+  tier: 2
+  requires: [basic_strike]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 55
+
+- id: warrior_taunt
+  name: ท้าทาย
+  slot: support
+  cost_mana: 6
+  heal: 8
+  elements: [physical]
+  combo_ok: false
+  tree: warrior
+  tier: 2
+  requires: [basic_strike]
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 40
+
+- id: warrior_whirl
+  name: หมุนดาบ
+  slot: combat
+  cost_mana: 18
+  power: 26
+  elements: [physical, wind]
+  combo_ok: true
+  aoe: true
+  tree: warrior
+  tier: 3
+  requires: [warrior_cleave]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 120
+    cost_items:
+      upgrade_mat: 1
+
+- id: warrior_shield_bash
+  name: โล่กระแทก
+  slot: combat
+  cost_mana: 10
+  power: 20
+  elements: [physical]
+  combo_ok: true
+  tree: warrior
+  tier: 3
+  requires: [counter_guard]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 110
+
+- id: warrior_iron_tempest
+  name: พายุเหล็ก
+  slot: combat
+  cost_mana: 24
+  power: 42
+  elements: [physical]
+  combo_ok: true
+  tree: warrior
+  tier: 4
+  requires: [warrior_whirl, iron_will]
+  learn:
+    method: [self, master]
+    require_level: 26
+    cost_world: 220
+    cost_heaven: 2
+    cost_items:
+      upgrade_mat: 2
+    master_id: master_steel
+
+- id: warrior_bastion
+  name: ป้อมเกราะ
+  slot: defense
+  cost_mana: 12
+  strong_vs: [physical, fire, wind]
+  weak_vs: [arcane, shadow]
+  damage_mult_strong: 0.08
+  damage_mult_neutral: 0.4
+  damage_mult_weak: 0.8
+  tree: warrior
+  tier: 4
+  requires: [warrior_shield_bash, guard_earth]
+  learn:
+    method: [self]
+    require_level: 24
+    cost_world: 180
+    cost_hell: 1

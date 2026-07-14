@@ -1,0 +1,13 @@
+{
+  "gate_id": "standard",
+  "workdir": ".",
+  "env": {
+    "NODE_ENV": "development",
+    "ZMOS_EXEC_TARGET_KIND": "project"
+  },
+  "command": "npm run ops:preflight",
+  "timeout_ms": 30000,
+  "expected_assertions": [],
+  "next_action": "zcl status",
+  "stop_conditions": []
+}

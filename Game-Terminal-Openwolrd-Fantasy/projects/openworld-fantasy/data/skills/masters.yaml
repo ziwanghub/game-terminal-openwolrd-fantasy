@@ -1,0 +1,82 @@
+# Skill masters — NPC teachers with lease / renew fees
+
+- id: master_steel
+  name: อาจารย์เกราะแดง
+  area_hint: ancient_city
+  flavor: ชายชุดเกราะแดงพูดน้อย ยื่นมือขอค่าเรียน
+  teaches:
+    - skill_id: master_steel_lesson
+      fee_world: 100
+      fee_heaven: 0
+      fee_hell: 0
+      lease_uses: 10
+      renew_fee_world: 60
+      require_skills: [basic_strike, counter_guard]
+    - skill_id: warrior_iron_tempest
+      fee_world: 180
+      fee_heaven: 2
+      lease_uses: null
+      require_skills: [warrior_whirl, iron_will]
+
+- id: master_tide
+  name: อาจารย์ม่านน้ำ
+  area_hint: mist_marsh
+  flavor: กลิ่นน้ำค้างและสมุดเปียก
+  teaches:
+    - skill_id: water_bolt
+      fee_world: 40
+      fee_heaven: 1
+      lease_uses: null
+      require_skills: []
+    - skill_id: guard_water_veil
+      fee_world: 50
+      fee_heaven: 0
+      lease_uses: null
+      require_skills: [guard_basic]
+    - skill_id: master_tide_wave
+      fee_world: 90
+      fee_heaven: 2
+      lease_uses: 10
+      renew_fee_world: 55
+      require_skills: [water_bolt]
+    - skill_id: master_light_hymn
+      fee_world: 80
+      fee_heaven: 3
+      lease_uses: 12
+      renew_fee_world: 50
+      require_skills: [heal]
+
+- id: master_arcane
+  name: อาจารย์ม่านอาร์เคน
+  area_hint: crystal_peak
+  flavor: ดวงตาเรืองแสงจางๆ
+  teaches:
+    - skill_id: master_arcane_sigil
+      fee_world: 120
+      fee_heaven: 3
+      lease_uses: 8
+      renew_fee_world: 70
+      renew_fee_heaven: 1
+      require_skills: [arcane_surge]
+    - skill_id: mage_void_lance
+      fee_world: 200
+      fee_heaven: 4
+      lease_uses: null
+      require_skills: [mage_prism, mana_font]
+
+- id: master_shade
+  name: อาจารย์เงาไร้ชื่อ
+  area_hint: cave_shadow
+  flavor: เสียงกระซิบจากมุมมืด
+  teaches:
+    - skill_id: master_shade_cut
+      fee_world: 100
+      fee_hell: 2
+      lease_uses: 10
+      renew_fee_world: 60
+      require_skills: [smoke_step]
+    - skill_id: rogue_nightfall
+      fee_world: 180
+      fee_hell: 3
+      lease_uses: null
+      require_skills: [assassinate, rogue_poison_edge]

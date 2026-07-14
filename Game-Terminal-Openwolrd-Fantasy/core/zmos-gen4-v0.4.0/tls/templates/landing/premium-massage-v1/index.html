@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Serenity | Sanctuary of Tranquility</title>
+    <link rel="manifest" href="/assets/site.webmanifest">
+    <meta name="theme-color" content="#faf9f7">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
+    <div id="root"></div>
+    <script type="module" src="/app/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // navigator.serviceWorker.register('/sw.js')
+        });
+      }
+    </script>
+</body>
+</html>

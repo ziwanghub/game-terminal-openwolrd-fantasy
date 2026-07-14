@@ -1,0 +1,10 @@
+{
+  "name": "embed-node-project",
+  "version": "1.0.0",
+  "description": "Example showing how to embed Z-MOS inside a standard Node project",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "zmos-core": "file:../.."
+  }
+}

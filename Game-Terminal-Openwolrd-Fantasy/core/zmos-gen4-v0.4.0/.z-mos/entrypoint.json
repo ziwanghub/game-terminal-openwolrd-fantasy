@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.3.2",
+  "generated_at": "2026-04-17T14:30:00Z",
+  "standard_path": "docs/standards/ZMOS-COMMUNICATION-STANDARD.md",
+  "runtime_state_paths": {
+    "manifest": ".z-mos/zmos-manifest.json",
+    "session": ".z-mos/state/session.json",
+    "project_state": ".z-mos/state/project-state.json"
+  },
+  "policy_paths": {
+    "workflow_policy": ".z-mos/workflow-policy.json",
+    "readiness_policy": ".z-mos/readiness-policy.json"
+  },
+  "latest_artifacts": {
+    "latest_handoff": ".z-mos/handoff/latest.json",
+    "latest_report": ".z-mos/reports/latest.json",
+    "latest_advisory_bundle": ".z-mos/advisory/latest.json"
+  },
+  "trace_path": ".z-mos/trace/runtime-trace.jsonl",
+  "rehydration_order": [
+    "runtime_state_paths.manifest",
+    "runtime_state_paths.project_state",
+    "latest_artifacts.latest_handoff"
+  ]
+}

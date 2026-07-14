@@ -1,0 +1,92 @@
+# Skills primarily taught by masters — often leased (limited uses)
+
+- id: master_steel_lesson
+  name: บทเรียนเหล็ก (อาจารย์)
+  slot: combat
+  cost_mana: 12
+  power: 26
+  elements: [physical]
+  combo_ok: true
+  tree: warrior
+  tier: 3
+  requires: [basic_strike, counter_guard]
+  learn:
+    method: [master]
+    require_level: 12
+    master_id: master_steel
+    cost_world: 0
+  charge:
+    mode: master_lease
+    max_uses: 10
+
+- id: master_tide_wave
+  name: คลื่นอาจารย์น้ำ
+  slot: combat
+  cost_mana: 14
+  power: 24
+  elements: [water]
+  combo_ok: true
+  tier: 3
+  requires: [water_bolt]
+  learn:
+    method: [master]
+    require_level: 10
+    master_id: master_tide
+    require_occ: [mage, priest, warrior, archer, rogue]
+  charge:
+    mode: master_lease
+    max_uses: 10
+
+- id: master_arcane_sigil
+  name: ซิกิลอาร์เคน
+  slot: combat
+  cost_mana: 18
+  power: 34
+  elements: [arcane]
+  combo_ok: true
+  tree: mage
+  tier: 3
+  requires: [arcane_surge]
+  learn:
+    method: [master]
+    require_level: 14
+    master_id: master_arcane
+  charge:
+    mode: master_lease
+    max_uses: 8
+
+- id: master_shade_cut
+  name: คมเงาอาจารย์
+  slot: combat
+  cost_mana: 15
+  power: 30
+  elements: [shadow]
+  combo_ok: true
+  tree: rogue
+  tier: 3
+  requires: [smoke_step]
+  learn:
+    method: [master]
+    require_level: 14
+    master_id: master_shade
+  charge:
+    mode: master_lease
+    max_uses: 10
+
+- id: master_light_hymn
+  name: บทสวดแสง
+  slot: support
+  cost_mana: 14
+  heal: 28
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 3
+  requires: [heal]
+  learn:
+    method: [master]
+    require_level: 12
+    master_id: master_tide
+  charge:
+    mode: master_lease
+    max_uses: 12

@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.5.0-p2",
+  "mode": "advisory",
+  "allowed_files": [],
+  "protected_files": [],
+  "allowed_patterns": [],
+  "protected_patterns": [],
+  "do_not_touch": [],
+  "stop_conditions": [],
+  "bypass_policy": "Requires explicit override flag in command. Default blocked."
+}

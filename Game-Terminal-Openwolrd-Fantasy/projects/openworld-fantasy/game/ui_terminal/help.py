@@ -1,0 +1,148 @@
+"""Tutorial and in-game help — Mode Shell + systems (Phase D)."""
+from __future__ import annotations
+
+from typing import Any, List, MutableMapping, Optional
+
+from game.ports.io import IO
+from game.ui_terminal.layout import render_box
+
+
+TUTORIAL_PAGES = [
+    [
+        " บทเรียน 1/7 — โหมดเล่น (สำคัญ)",
+        "---",
+        " เกมแบ่งโหมด — เมนูเปลี่ยนตามสถานการณ์",
+        " 〔สำรวจ〕เดินโลก · พัก สำรวจ เข้าหา เดินทาง",
+        " 〔ตัวละคร〕กด 5 หรือ I — กระเป๋า แต้ม เควส เซฟ",
+        " 〔ร้าน〕กด 6 — ร้าน/ตลาด/คราฟ (ไม่ปนในกระเป๋า)",
+        " 〔ไฟต์〕เข้าอัตโนมัติเมื่อปะทะ — เมนูสู้เท่านั้น",
+        " H = ช่วยด่วน · T = บทเรียนซ้ำ · 0 = ออก(เซฟ)",
+    ],
+    [
+        " บทเรียน 2/7 — สำรวจ · สายตา · คำสั่ง",
+        "---",
+        " 1 พัก · 2 สำรวจ · 3 เข้าหา · 4 เดินทาง · 7 ออโต้",
+        " สายตามีรหัส: mn01 มอน · ch01 หีบ · np01 NPC",
+        " f_mn01 เข้าหา · o_ch01 เปิด · talk_np01 พูด · ?",
+        " สำรวจอาจเจอไฟต์เดี่ยวหรือกลุ่ม (สู้ทีละตัว)",
+        " B = บอสเมื่อปลด · เมืองเริ่มมอนเบาลงแล้ว",
+    ],
+    [
+        " บทเรียน 3/7 — ตัวละคร (5 / I)",
+        "---",
+        " 1 สถานะ · 2 กระเป๋า(ของ) · 3 สวมใส่ · 4 ภารกิจ",
+        " 5 เงินย่อ · 6 แต้ม P/N/C · 7 สกิล·ปาร์ตี้·ห้องสมุด",
+        " 8 ตั้งค่า/เซฟ · 0 กลับสำรวจ",
+        " Hotkey เดิมยังใช้จากสนาม: P N S K Y C L U",
+        " J ในตัวละคร/กระเป๋า = กระดานภารกิจ",
+    ],
+    [
+        " บทเรียน 4/7 — กระเป๋า · รหัสของ",
+        "---",
+        " ในตัวละคร → 2 กระเป๋า: อุปกรณ์ รักษา วัตถุดิบ การ์ด",
+        " sw001 = ชนิด · sw001_xxxx#yyyy = ชิ้นของคุณ",
+        " ยืนยัน y/n ก่อนอัป · ใส่การ์ด · ขาย · ทิ้ง",
+        " ร้านหลัก: กลับสำรวจ → 6 (ไม่ใช่เมนูกระเป๋าหลัก)",
+    ],
+    [
+        " บทเรียน 5/7 — ร้าน · ตลาด · กระดาน",
+        "---",
+        " สำรวจ 6: ร้านท้องถิ่น · สวรรค์/นรก · ตลาดผู้เล่น M",
+        " ภาษีตลาด → กองทุนค่าจ้างกระดาน (J)",
+        " กระดานแรงก์ F–SSS · งาน★ เงื่อนไขซ่อน",
+        " เงินโลก / สวรรค์ / นรก ใช้คนละที่",
+    ],
+    [
+        " บทเรียน 6/7 — ไฟต์ · ATB · สติ",
+        "---",
+        " รอแท่งจังหวะเต็มก่อนโจมตี/คำสั่ง",
+        " 1 โจมตี · 2 คอมโบ · 3 ยา · 4 หนี · 5 ปาร์ตี้ · 6 สติ",
+        " สติ: ลงทุนฉลาดขยายความจุ · ใช้เร่งแท่ง / ทางเลือก ★",
+        " ฟื้นสติ: พัก · เวลา · ชาสมาธิ ฯลฯ",
+        " กลุ่ม: แท่งพร้อมกัน · เป้า 1/2/3 หรือ * ทั้งกลุ่ม (กระแสลด)",
+        " สกิล [AoE] กระแสโดนทั้งกลุ่มอัตโนมัติ",
+    ],
+    [
+        " บทเรียน 7/7 — เติบโต · เป้าสั้น · รอบเรื่อง",
+        "---",
+        " เริ่มนักเดินทาง — C เปลี่ยนอาชีพเมื่อถึงเวลา",
+        " เควสในตัวละคร 4: เลือดแรก · รากเมือง · รอบโลก…",
+        " รอบ 1 ปิดแล้ว อาจเปิดสายรอบ 2 (soft)",
+        " อย่ารีบ — เปิดทีละโหมด: สำรวจ → ตัวละคร → ร้าน → ไฟต์",
+    ],
+]
+
+
+HELP_LINES = [
+    " โหมด: 〔สำรวจ〕· 〔ตัวละคร〕5/I · 〔ร้าน〕6 · 〔ไฟต์〕อัตโนมัติ",
+    " H หน้านี้ · T บทเรียน (7 หน้า) · ? คำสั่งรหัส",
+    " สำรวจ: 1–4 พัก/สำรวจ/เข้าหา/เดินทาง · 5 ตัวละคร · 6 ร้าน · 7 ออโต้ · 0 ออก",
+    " ตัวละคร: สถานะ·กระเป๋า·เกียร์·ภารกิจ·แต้ม·สกิล · J กระดาน",
+    " ร้าน: ท้องถิ่น · สวรรค์/นรก · ตลาด M · คราฟ",
+    " ไฟต์: 1–6 โจมตี/คอมโบ/ยา/หนี/ปาร์ตี้/สติ · กลุ่ม=ทีละตัว",
+    " Hotkey: P N S K Y C L U  |  คำสั่ง f_mn01 · equip_sw001",
+]
+
+
+# Soft tips after tutorial — Mode Shell + early goals
+CITY_ONBOARD_TIPS = [
+    "ใบ้: กด 5 หรือ I = ตัวละคร (แต้ม·กระเป๋า·เควส) · 6 = ร้าน",
+    "ใบ้: ในเมืองลอง สำรวจ (2) — เควส「รากแห่งเมือง」ในตัวละคร→4",
+    "ใบ้: ร้าน 6 → 1 ซื้อดาบ/ยา · แล้วกลับตัวละครสวมใส่",
+    "ใบ้: สายตา mn01 แล้ว 3 เข้าหา หรือ f_mn01 · ? = คำสั่ง",
+    "ใบ้: ไฟต์รอแท่งเต็ม · 6 ใช้สติเร่งเมื่อต้องการชิง",
+    "ใบ้: กระดาน J ในตัวละคร/กระเป๋า · งานเมืองเปิดทีละบท",
+    "ใบ้: U ตั้งค่าอยู่ในตัวละคร→8 · H ช่วย · T บทเรียนโหมด",
+]
+
+
+def show_tutorial(io: IO, force: bool = False) -> None:
+    for page in TUTORIAL_PAGES:
+        io.write_line()
+        io.write_line(render_box(page, double=True))
+        io.read_line("Enter หน้าถัดไป...")
+
+
+def show_help(io: IO) -> None:
+    lines = [" ช่วยเหลือด่วน", "---", *HELP_LINES]
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    io.read_line("Enter...")
+
+
+def maybe_onboarding_tip(
+    player: MutableMapping[str, Any],
+    io: IO,
+    *,
+    area_id: str = "",
+) -> Optional[str]:
+    """
+    Early soft tips after tutorial — city/low level, at most every few turns.
+    Returns tip text if shown, else None.
+    """
+    if not player.get("tutorial_done"):
+        return None
+    tips_seen = int(player.get("onboard_tip_index") or 0)
+    if tips_seen >= len(CITY_ONBOARD_TIPS):
+        return None
+    tu = int(player.get("time_units") or 0)
+    if tu < 2 or tu % 3 != 2:
+        return None
+    lv = int(player.get("level") or 1)
+    starterish = area_id in (
+        "ancient_city",
+        "dark_forest",
+        "mountain_rock",
+        "",
+    ) or lv <= 5
+    if not starterish and tips_seen >= 3:
+        return None
+    tip = CITY_ONBOARD_TIPS[tips_seen]
+    player["onboard_tip_index"] = tips_seen + 1
+    io.write_line(f"  …{tip}")
+    return tip
+
+
+def help_covers_keywords() -> List[str]:
+    blob = "\n".join("\n".join(p) for p in TUTORIAL_PAGES) + "\n" + "\n".join(HELP_LINES)
+    return blob.split()

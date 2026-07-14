@@ -1,0 +1,64 @@
+{
+  "modules": [
+    {
+      "name": "hero-section-v1",
+      "type": "component",
+      "version": "1.0.0",
+      "status": "tested",
+      "description": "Hero section with background image, headline, and CTA button. Extracted from premium-massage-v1.",
+      "source_template": "landing/premium-massage-v1",
+      "entry_point": "app/components/HeroSection.tsx",
+      "package_support": ["basic", "pro", "premium"],
+      "last_validated_at": "2026-04-16",
+      "author": "z-mos-core"
+    },
+    {
+      "name": "language-modal-v1",
+      "type": "component",
+      "version": "1.0.0",
+      "status": "tested",
+      "description": "Language selection modal supporting EN, ZH, TH. Extracted from premium-massage-v1.",
+      "source_template": "landing/premium-massage-v1",
+      "entry_point": "app/components/LanguageModal.tsx",
+      "package_support": ["pro", "premium"],
+      "last_validated_at": "2026-04-16",
+      "author": "z-mos-core"
+    },
+    {
+      "name": "footer-v1",
+      "type": "component",
+      "version": "1.0.0",
+      "status": "tested",
+      "description": "Standard footer with contact info, social links, and copyright. Extracted from premium-massage-v1.",
+      "source_template": "landing/premium-massage-v1",
+      "entry_point": "app/components/Footer.tsx",
+      "package_support": ["basic", "pro", "premium"],
+      "last_validated_at": "2026-04-16",
+      "author": "z-mos-core"
+    },
+    {
+      "name": "services-section-v1",
+      "type": "component",
+      "version": "1.0.0",
+      "status": "draft",
+      "description": "Services grid section with icons, titles, and descriptions. Extracted from premium-massage-v1.",
+      "source_template": "landing/premium-massage-v1",
+      "entry_point": "app/components/ServicesSection.tsx",
+      "package_support": ["basic", "pro", "premium"],
+      "last_validated_at": null,
+      "author": "z-mos-core"
+    },
+    {
+      "name": "booking-config-v1",
+      "type": "config",
+      "version": "1.0.0",
+      "status": "draft",
+      "description": "Booking configuration schema for time slots, availability, and contact methods.",
+      "source_template": "landing/premium-massage-v1",
+      "entry_point": "app/config/booking.ts",
+      "package_support": ["pro", "premium"],
+      "last_validated_at": null,
+      "author": "z-mos-core"
+    }
+  ]
+}

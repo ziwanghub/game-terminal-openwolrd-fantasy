@@ -1,0 +1,13 @@
+id: hardcore
+name: โลกท้าทาย — เงานิรันดร์
+difficulty: 2
+difficulty_label: ท้าทาย
+starting_area: cave_shadow
+description: ยากขึ้น · เซฟ/อันดับ/ประวัติผู้เล่นแยกจากโลกอื่น
+independent: true
+modifiers:
+  enemy_hp_mult: 1.35
+  enemy_atk_mult: 1.28
+  xp_mult: 1.2
+  money_mult: 0.9
+  start_money_mult: 0.65

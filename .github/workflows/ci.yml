@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  openworld-fantasy-pytest:
+    name: openworld-fantasy · pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: python -m pytest -q --tb=short
+
+      - name: Show app version
+        run: python -c "from game.config import APP_NAME, APP_VERSION, PHASE; print(f'{APP_NAME} {APP_VERSION} ({PHASE})')"

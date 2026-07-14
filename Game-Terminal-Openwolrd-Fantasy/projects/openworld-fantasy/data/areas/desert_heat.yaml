@@ -1,0 +1,19 @@
+id: desert_heat
+name: ทะเลทรายร้อน
+world_tier: 3
+unlock_level: 8
+connections: [mountain_rock, ancient_city, void_rift]
+mastery_start: 10
+ambient:
+  hp_regen: 1
+  mana_regen: 2
+monster_pools:
+  - id: sand_scorpion
+    weight: 40
+  - id: desert_raider
+    weight: 35
+  - id: fire_salamander
+    weight: 25
+
+boss_id: boss_sun_scourge
+boss_unlock_level: 14

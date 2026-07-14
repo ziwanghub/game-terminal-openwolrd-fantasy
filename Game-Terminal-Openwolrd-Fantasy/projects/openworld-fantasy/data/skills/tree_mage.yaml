@@ -1,0 +1,100 @@
+# Mage skill tree extensions
+
+- id: mage_frost_shard
+  name: เศษน้ำแข็ง
+  slot: combat
+  cost_mana: 11
+  power: 17
+  elements: [water, wind]
+  combo_ok: true
+  tree: mage
+  tier: 2
+  requires: [magic_missile]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 60
+    cost_heaven: 1
+
+- id: mage_ember
+  name: เถ้าไฟ
+  slot: combat
+  cost_mana: 10
+  power: 16
+  elements: [fire]
+  combo_ok: true
+  tree: mage
+  tier: 2
+  requires: [magic_missile]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 55
+
+- id: mage_chain_spark
+  name: สายฟ้าโซ่
+  slot: combat
+  cost_mana: 16
+  power: 26
+  elements: [lightning]
+  combo_ok: true
+  tree: mage
+  tier: 3
+  requires: [lightning_spark]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 130
+    cost_heaven: 2
+
+- id: mage_prism
+  name: ปริซึมธาตุ
+  slot: combat
+  cost_mana: 20
+  power: 28
+  elements: [arcane, fire, water]
+  combo_ok: true
+  tree: mage
+  tier: 3
+  requires: [arcane_surge, mage_frost_shard]
+  learn:
+    method: [self]
+    require_level: 16
+    cost_world: 140
+    cost_items:
+      upgrade_mat: 1
+
+- id: mage_void_lance
+  name: หอกสุญญะ
+  slot: combat
+  cost_mana: 26
+  power: 44
+  elements: [arcane, shadow]
+  combo_ok: true
+  tree: mage
+  tier: 4
+  requires: [mage_prism, mana_font]
+  learn:
+    method: [self, master]
+    require_level: 26
+    cost_world: 200
+    cost_heaven: 4
+    master_id: master_arcane
+
+- id: mage_mana_shield
+  name: โล่มานา
+  slot: defense
+  cost_mana: 10
+  strong_vs: [arcane, fire, lightning]
+  weak_vs: [physical]
+  damage_mult_strong: 0.12
+  damage_mult_neutral: 0.48
+  damage_mult_weak: 0.9
+  tree: mage
+  tier: 3
+  requires: [magic_missile, guard_basic]
+  learn:
+    method: [self]
+    require_level: 12
+    cost_world: 100
+    cost_heaven: 1

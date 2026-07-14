@@ -1,0 +1,107 @@
+# How to gain personality_points — ALL HIDDEN from UI.
+# Engine checks progress counters; player must discover via play or library fragments.
+
+id: personality_point_economy
+# points player can invest into trait axes (N menu)
+points_on_start: 1
+# soft max unspent pool (prevent hoarding forever)
+max_unspent: 12
+# each invested point moves axis by this amount toward chosen direction
+invest_delta: 4.0
+# investing costs 1 personality_point
+
+# Progress counters (on player.personality_progress) unlock grants once
+grants:
+  - id: first_kind_act
+    # 3 polite or gift or aid approaches
+    counter: approach_kind
+    need: 3
+    points: 1
+    once: true
+
+  - id: battle_courage
+    counter: combat_wins
+    need: 8
+    points: 1
+    once: true
+
+  - id: never_ran
+    # 5 wins with 0 flees since counter start — tracked as combat_wins_no_flee streak
+    counter: win_streak_no_flee
+    need: 5
+    points: 1
+    once: true
+
+  - id: curious_explorer
+    counter: explore_count
+    need: 12
+    points: 1
+    once: true
+
+  - id: bookworm
+    counter: library_visits
+    need: 2
+    points: 1
+    once: true
+
+  - id: honor_quest
+    counter: quests_done
+    need: 3
+    points: 1
+    once: true
+
+  - id: gift_giver
+    counter: gifts_given
+    need: 2
+    points: 1
+    once: true
+
+  - id: survivor
+    counter: deaths
+    need: 2
+    points: 1
+    once: true
+
+  - id: social_butterfly
+    counter: player_meets
+    need: 3
+    points: 1
+    once: true
+
+  - id: combo_mind
+    counter: combos_used
+    need: 10
+    points: 1
+    once: true
+
+  - id: mid_journey
+    counter: level_reached
+    need: 10
+    points: 2
+    once: true
+
+  - id: deep_journey
+    counter: level_reached
+    need: 20
+    points: 2
+    once: true
+
+  - id: boss_witness
+    counter: boss_kills
+    need: 1
+    points: 1
+    once: true
+
+  - id: boss_slayer
+    counter: boss_kills
+    need: 3
+    points: 2
+    once: true
+
+  # Repeatable slow drip (not once)
+  - id: every_five_wins
+    counter: combat_wins
+    need: 5
+    points: 1
+    once: false
+    every: 5

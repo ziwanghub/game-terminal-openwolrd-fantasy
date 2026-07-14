@@ -1,0 +1,9 @@
+{
+  "start_sequence": 1,
+  "end_sequence": 375,
+  "start_hash": "ab48aab51c727bec3b86112bf1e3b5db9075f303fc6c32e57ed7e4e5e61d7053",
+  "end_hash": "221712ad4df551d9c055b86b8595fc48d066e447e81f3f4b419655ccb39b91f5",
+  "segment_hash": "faf947a1fdd73b4a09a1ce1a832bdfe99034e9ec302badd47f75e9400987af35",
+  "previous_segment_hash": "cd95c2f297913c66320a38def073313d221bd157ea01e6a2adbb25acb962fc23",
+  "archived_at": "2026-05-07T04:24:35.631Z"
+}

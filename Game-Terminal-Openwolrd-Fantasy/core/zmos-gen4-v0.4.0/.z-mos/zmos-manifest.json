@@ -1,0 +1,49 @@
+{
+  "repository": {
+    "name": "zmos-core",
+    "framework": "Z-MOS",
+    "version": "3.0.0"
+  },
+  "workspace": {
+    "root": ".",
+    "stateDir": ".z-mos/state",
+    "traceDir": ".z-mos/trace"
+  },
+  "runtime": {
+    "platform": "node",
+    "moduleSystem": "esm",
+    "entryCommand": "zcl"
+  },
+  "status": {
+    "stage": "v3.0.0 Purity",
+    "aiCli": "provider-agnostic-governance"
+  },
+  "lifecycle": {
+    "status": "active",
+    "updatedAt": "2026-05-06T14:13:10.840Z",
+    "reason": "Sprint-4 canonicalization: pure truth-first with legacy runtime removal"
+  },
+  "scope": {
+    "mutation": {
+      "mode": "strict",
+      "allowedPaths": [
+        ".",
+        "tls/templates",
+        "tls/registry",
+        ".z-mos"
+      ],
+      "protectedPaths": [
+        ".z-mos",
+        "bin",
+        "cli",
+        "contracts",
+        "core",
+        "governance",
+        "trace",
+        "docs",
+        "tls/modules",
+        "tls/schemas"
+      ]
+    }
+  }
+}

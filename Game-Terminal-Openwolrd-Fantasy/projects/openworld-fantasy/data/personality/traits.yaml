@@ -1,0 +1,71 @@
+# Personality axes — raw scores -100..100 (hidden).
+# Soft labels shown only as vague words when |score| high enough.
+
+axes:
+  - id: kindness
+    name_hidden: ความเมตตา
+    low_label: เย็นชา
+    high_label: เมตตา
+  - id: courage
+    name_hidden: ความกล้า
+    low_label: ระมัดระวัง
+    high_label: กล้าหาญ
+  - id: honor
+    name_hidden: เกียรติ
+    low_label: ฉวยโอกาส
+    high_label: มีเกียรติ
+  - id: greed
+    name_hidden: ความโลภ
+    low_label: พอเพียง
+    high_label: โลภ
+  - id: curiosity
+    name_hidden: ความอยากรู้
+    low_label: ปิดกั้น
+    high_label: อยากรู้
+  - id: aggression
+    name_hidden: ความก้าวร้าว
+    low_label: สงบ
+    high_label: ก้าวร้าว
+  - id: loyalty
+    name_hidden: ความจงรัก
+    low_label: อิสระ
+    high_label: ซื่อสัตย์
+  - id: caution
+    name_hidden: ความระวัง
+    low_label: บ้าบิ่น
+    high_label: รอบคอบ
+
+# How gameplay events nudge axes (hidden deltas)
+# applied with decay so personality drifts slowly, not snaps
+event_deltas:
+  approach_polite: { kindness: 2, honor: 1, aggression: -1 }
+  approach_gift: { kindness: 3, greed: -1, loyalty: 1 }
+  approach_challenge: { courage: 3, aggression: 2, caution: -2 }
+  approach_threaten: { aggression: 4, kindness: -3, honor: -2 }
+  approach_cautious: { caution: 3, courage: -1 }
+  approach_aid: { kindness: 3, loyalty: 2, greed: -1 }
+
+  combat_attack: { aggression: 0.4, courage: 0.3 }
+  combat_defend: { caution: 0.5, courage: 0.1 }
+  combat_flee: { caution: 1.2, courage: -1.5, aggression: -0.5 }
+  combat_combo: { curiosity: 0.3, courage: 0.2 }
+  combat_win: { courage: 0.5, aggression: 0.2 }
+  combat_death: { caution: 1.5, courage: -0.5 }
+
+  npc_shop: { greed: 0.2, curiosity: 0.1 }
+  npc_friend: { kindness: 1, loyalty: 1 }
+  npc_master: { curiosity: 1.5, honor: 0.5 }
+  npc_hostile: { aggression: 1, caution: 0.5 }
+
+  chest_open: { curiosity: 0.4, greed: 0.3 }
+  rest: { caution: 0.2, aggression: -0.1 }
+  explore: { curiosity: 0.5 }
+  library_visit: { curiosity: 2, honor: 0.5 }
+  quest_complete: { honor: 1, loyalty: 0.5 }
+  gift_money: { kindness: 1, greed: -1 }
+
+# Soft labels: only show if abs(score) >= threshold
+label_threshold: 35
+
+# Decay toward 0 each major beat (keeps room to change)
+decay_per_day: 0.02

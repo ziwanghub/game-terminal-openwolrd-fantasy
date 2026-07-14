@@ -1,0 +1,377 @@
+# ประกาศภารกิจ — งบจากภาษีตลาด
+# rank: F < E < D < C < B < A < S < SS < SSS
+# special: true = เงื่อนไขรับซ่อน ผู้เล่นต้องประเมินเอง
+# wage_cost ≈ 30–45% ของ reward_money (สูงสุด SSS ไม่ดูดกองทุนแห้งเร็วเกิน)
+
+ranks:
+  - F
+  - E
+  - D
+  - C
+  - B
+  - A
+  - S
+  - SS
+  - SSS
+
+# XP ต่อภารกิจสำเร็จ (สะสมเพื่อเลื่อน rank กระดาน)
+rank_xp_to_next:
+  F: 3
+  E: 5
+  D: 8
+  C: 12
+  B: 16
+  A: 22
+  S: 30
+  SS: 40
+  SSS: 999
+
+missions:
+  - id: board_patrol_f
+    name: ลาดตระเวนรอบเมือง
+    rank: F
+    difficulty: 1
+    type: kill
+    target: 2
+    reward_money: 25
+    reward_xp: 30
+    wage_cost: 9
+    desc: กำจัดภัยคุกคามใกล้เมือง 2 ครั้ง
+
+  - id: board_herb_f
+    name: เก็บยาสมุนไพร
+    rank: F
+    difficulty: 1
+    type: explore
+    target: 2
+    reward_money: 20
+    reward_xp: 25
+    reward_items: [focus_tea]
+    wage_cost: 7
+    desc: สำรวจหาสมุนไพร 2 ครั้ง
+
+  - id: board_rest_e
+    name: พักผ่อนตามแพทย์
+    rank: E
+    difficulty: 2
+    type: rest
+    target: 2
+    reward_money: 30
+    reward_xp: 35
+    wage_cost: 11
+    desc: พักฟื้นให้ครบตามกำหนด
+
+  - id: board_cull_e
+    name: ลดจำนวนมอน
+    rank: E
+    difficulty: 2
+    type: kill
+    target: 4
+    reward_money: 45
+    reward_xp: 50
+    wage_cost: 16
+    desc: ชนะการต่อสู้ 4 ครั้ง
+
+  - id: board_road_d
+    name: เคลียร์เส้นทาง
+    rank: D
+    difficulty: 3
+    type: kill
+    target: 6
+    reward_money: 70
+    reward_xp: 80
+    reward_items: [potion_hp]
+    wage_cost: 24
+    desc: กำจัดศัตรูตามเส้นทาง 6 ครั้ง
+
+  - id: board_scout_d
+    name: ลาดตระเวนไกล
+    rank: D
+    difficulty: 3
+    type: explore
+    target: 5
+    reward_money: 60
+    reward_xp: 70
+    wage_cost: 22
+    desc: สำรวจ 5 ครั้ง
+
+  - id: board_hunt_c
+    name: ล่าใหญ่
+    rank: C
+    difficulty: 4
+    type: kill
+    target: 10
+    reward_money: 120
+    reward_xp: 140
+    reward_items: [upgrade_mat]
+    wage_cost: 42
+    desc: ชนะไฟต์ 10 ครั้ง
+
+  - id: board_travel_c
+    name: ส่งข่าวต่างเมือง
+    rank: C
+    difficulty: 4
+    type: travel
+    target: 3
+    reward_money: 100
+    reward_xp: 110
+    wage_cost: 36
+    desc: เดินทางเปลี่ยนพื้นที่ 3 ครั้ง
+
+  - id: board_elite_b
+    name: ปราบภัยระดับสูง
+    rank: B
+    difficulty: 5
+    type: kill
+    target: 15
+    reward_money: 200
+    reward_xp: 220
+    reward_items: [mind_elixir, upgrade_mat]
+    wage_cost: 70
+    desc: ชนะ 15 ไฟต์
+
+  - id: board_dungeon_b
+    name: ลมโพรงต้องสงสัย
+    rank: B
+    difficulty: 5
+    type: dungeon_clear
+    target: 1
+    reward_money: 250
+    reward_xp: 260
+    wage_cost: 85
+    desc: เคลียร์ดันเจียน 1 ครั้ง
+
+  - id: board_war_a
+    name: สงครามเงียบ
+    rank: A
+    difficulty: 6
+    type: kill
+    target: 25
+    reward_money: 400
+    reward_xp: 400
+    reward_items: [rare_mat, panacea]
+    wage_cost: 140
+    desc: ชนะ 25 ไฟต์
+
+  - id: board_boss_a
+    name: เงาแห่งพื้นที่
+    rank: A
+    difficulty: 6
+    type: kill_boss
+    target: 1
+    reward_money: 450
+    reward_xp: 450
+    wage_cost: 155
+    desc: เอาชนะบอส 1 ตัว
+
+  - id: board_legend_s
+    name: ภารกิจระดับตำนาน
+    rank: S
+    difficulty: 7
+    type: kill
+    target: 40
+    reward_money: 700
+    reward_xp: 700
+    reward_items: [lucid_incense, rare_mat]
+    wage_cost: 250
+    desc: ชนะ 40 ไฟต์
+
+  - id: board_ss_raid
+    name: โจมตีเชิงลึก
+    rank: SS
+    difficulty: 8
+    type: kill
+    target: 60
+    reward_money: 1200
+    reward_xp: 1000
+    reward_items: [rare_mat, rare_mat]
+    wage_cost: 400
+    desc: ชนะ 60 ไฟต์
+
+  - id: board_sss_end
+    name: ประกาศระดับสุดขีด
+    rank: SSS
+    difficulty: 9
+    type: kill_boss
+    target: 3
+    reward_money: 2500
+    reward_xp: 2000
+    reward_items: [lucid_incense, mind_elixir, rare_mat]
+    wage_cost: 750
+    desc: เอาชนะบอส 3 ครั้ง
+
+  # พิเศษ — ไม่บอกเงื่อนไขรับ (special: true)
+  # ── สายเรื่องเมือง (chain · requires_done ซ่อนจาก UI) ──
+  - id: board_story_city_1
+    name: เสียงจากกำแพงเมือง
+    rank: F
+    difficulty: 1
+    type: explore
+    target: 3
+    reward_money: 28
+    reward_xp: 35
+    wage_cost: 10
+    reward_items: [focus_tea]
+    desc: มีคนกระซิบถึงรอยแยกนอกกำแพง — ลองสำรวจดู
+    story: true
+    chapter: city_whisper
+
+  - id: board_story_city_2
+    name: เงาตามรอย
+    rank: E
+    difficulty: 2
+    type: kill
+    target: 3
+    reward_money: 50
+    reward_xp: 55
+    wage_cost: 18
+    desc: หลังสำรวจ เงาเริ่มตาม — จัดการ 3 ครั้ง
+    story: true
+    chapter: city_whisper
+    requires_done: board_story_city_1
+
+  - id: board_story_city_3
+    name: คำสัญญาใต้โคม
+    rank: D
+    difficulty: 3
+    type: rest
+    target: 2
+    reward_money: 75
+    reward_xp: 80
+    wage_cost: 26
+    reward_items: [potion_hp]
+    desc: พักให้ครบ — บางอย่างจะเปิดเมื่อร่างกายพร้อม
+    story: true
+    chapter: city_whisper
+    requires_done: board_story_city_2
+
+  - id: board_story_road_1
+    name: เส้นทางที่หายไป
+    rank: C
+    difficulty: 4
+    type: travel
+    target: 2
+    reward_money: 130
+    reward_xp: 150
+    wage_cost: 45
+    desc: เดินทางข้ามพื้นที่ — ตามแผนที่เก่าที่ขาดตอน
+    story: true
+    chapter: lost_road
+    requires_done: board_story_city_3
+
+  - id: board_story_road_2
+    name: รอยเท้าคู่ขนาน
+    rank: C
+    difficulty: 4
+    type: kill
+    target: 8
+    reward_money: 150
+    reward_xp: 160
+    wage_cost: 52
+    reward_items: [herb_bundle]
+    desc: มีใครเดินตามแผนที่เดียวกับคุณ — จัดการสิ่งกีดขวาง 8 ครั้ง
+    story: true
+    chapter: lost_road
+    requires_done: board_story_road_1
+
+  - id: board_story_crystal_1
+    name: เสียงจากยอดผลึก
+    rank: B
+    difficulty: 5
+    type: explore
+    target: 4
+    reward_money: 220
+    reward_xp: 240
+    wage_cost: 80
+    reward_items: [crystal_dust]
+    desc: หลังเส้นทางเปิด — เสียงดังจากยอดเขา
+    story: true
+    chapter: crystal_echo
+    requires_done: board_story_road_2
+
+  - id: board_story_crystal_2
+    name: แสงที่ไม่ใช่ดวงอาทิตย์
+    rank: B
+    difficulty: 5
+    type: dungeon_clear
+    target: 1
+    reward_money: 280
+    reward_xp: 300
+    wage_cost: 95
+    reward_items: [round_token]
+    desc: เคลียร์โพรงใกล้ผลึก — ปิดบทหนึ่งของรอบ
+    story: true
+    chapter: crystal_echo
+    requires_done: board_story_crystal_1
+
+  # ── รอบ 2 กระดาน (หลัง crystal) ──
+  - id: board_story_void_1
+    name: รอยแยกที่กระซิบ
+    rank: A
+    difficulty: 6
+    type: explore
+    target: 5
+    reward_money: 380
+    reward_xp: 400
+    wage_cost: 140
+    reward_items: [void_key_shard]
+    desc: หลังผลึก — มีเสียงจากที่ที่แผนที่ไม่ครอบ
+    story: true
+    chapter: void_second
+    requires_done: board_story_crystal_2
+
+  - id: board_story_void_2
+    name: นับดาวที่หายไป
+    rank: A
+    difficulty: 6
+    type: kill
+    target: 20
+    reward_money: 420
+    reward_xp: 450
+    wage_cost: 150
+    reward_items: [rare_mat, lucid_incense]
+    desc: เงาจากรอยแยกตามมา — ชนะ 20 ครั้ง
+    story: true
+    chapter: void_second
+    requires_done: board_story_void_1
+
+  - id: board_story_void_3
+    name: ปิดรอบสองด้วยมือ
+    rank: S
+    difficulty: 7
+    type: dungeon_clear
+    target: 1
+    reward_money: 600
+    reward_xp: 650
+    wage_cost: 220
+    reward_items: [round_token, rare_mat]
+    desc: เคลียร์ดันลึก — เส้นทางรอบสองจางลง
+    story: true
+    chapter: void_second
+    requires_done: board_story_void_2
+
+  - id: board_special_whisper
+    name: ★ งานลับจากเงา
+    rank: C
+    difficulty: 5
+    special: true
+    type: kill
+    target: 8
+    reward_money: 300
+    reward_xp: 300
+    reward_items: [mind_elixir]
+    wage_cost: 100
+    desc: รายละเอียดคลุมเครือ — รับได้หรือไม่ ขึ้นกับตัวคุณ
+    # hidden gates in code: level, kills, intel, luck — not listed here as player text
+
+  - id: board_special_star
+    name: ★ ดาวที่มองไม่เห็น
+    rank: A
+    difficulty: 7
+    special: true
+    type: kill_boss
+    target: 1
+    reward_money: 800
+    reward_xp: 800
+    wage_cost: 280
+    desc: มีเพียงบางคนที่ถูกเรียก — คุณไม่รู้ว่าทำไม

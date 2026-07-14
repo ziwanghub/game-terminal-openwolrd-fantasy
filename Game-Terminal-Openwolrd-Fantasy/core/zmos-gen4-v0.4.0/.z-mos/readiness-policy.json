@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "defaultProfile": "standard",
+  "profiles": {
+    "standard": {
+      "description": "Controlled rollout mode: pass with explicitly budgeted warnings.",
+      "allowlistedPreflightWarnings": [
+        "runtime-lock-health",
+        "document-schema"
+      ],
+      "allowDoctorWarning": true,
+      "allowStartWarning": true
+    },
+    "strict": {
+      "description": "Hard production mode: zero-warning only.",
+      "allowlistedPreflightWarnings": [
+        "worktree-discipline",
+        "phase3-5state-code",
+        "phase3-5state-runtime",
+        "phase3-5state-environment",
+        "phase3-5state-data-config",
+        "phase3-5state-assets-schema",
+        "document-structure"
+      ],
+      "allowDoctorWarning": true,
+      "allowStartWarning": true
+    }
+  }
+}

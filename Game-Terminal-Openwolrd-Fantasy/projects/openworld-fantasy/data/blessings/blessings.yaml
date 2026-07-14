@@ -1,0 +1,67 @@
+# Level-up blessings — rare, opaque, flavor-first
+# weight is relative; base_chance on level-up is very low (code)
+
+default_level_chance: 0.04   # ~4% per level (then weighted pick)
+emergency_unlock_chance: 0.12  # if already has emergency blessing stored
+
+blessings:
+  - id: soft_second_wind
+    name: ลมหายใจที่สอง
+    kind: passive
+    rarity: uncommon
+    weight: 40
+    desc: ร่างกายฟื้นตัวเล็กน้อยเมื่อรอดจากขอบความตาย (ซ่อนผล)
+    # soft: heal bias when hp low once per combat — code flags
+    flags: [soft_second_wind]
+
+  - id: keen_edge
+    name: คมที่มองไม่เห็น
+    kind: passive
+    rarity: rare
+    weight: 18
+    desc: บางครั้งคมดาบ “ตรงจังหวะ” มากกว่าที่ควร
+    flags: [keen_edge]
+
+  - id: quiet_mind
+    name: จิตสงบ
+    kind: passive
+    rarity: uncommon
+    weight: 28
+    desc: เลือกทางในบทสนทนาได้ละเอียดขึ้นเล็กน้อย
+    flags: [quiet_mind]
+    learn_points: 1
+
+  - id: fox_luck
+    name: โชคจิ้งจอก
+    kind: passive
+    rarity: rare
+    weight: 12
+    desc: วันนี้โลกดูเอียงเข้าข้างคุณ — หรือไม่ก็หลอกตา
+    luck_bias: 0.08
+    flags: [fox_luck]
+
+  - id: last_stand_seed
+    name: เมล็ดเอาชีวิตรอด
+    kind: emergency
+    rarity: sacred
+    weight: 6
+    desc: รู้สึกว่า “ยังมีทาง” เก็บไว้ในใจ — อาจใช้ตอนวิกฤต
+    flags: [emergency_seed]
+    store_emergency: true
+
+  - id: empty_grace
+    name: พรที่ว่างเปล่า
+    kind: choice
+    rarity: rare
+    weight: 10
+    desc: ทางแยกในใจ — ไม่รู้ว่าอันไหนดี
+    choices:
+      - id: grace_body
+        label: ร่างกายแข็งขึ้นเล็กน้อย
+        flags: [grace_body]
+      - id: grace_mind
+        label: จิตปลอดโปร่งขึ้นเล็กน้อย
+        flags: [grace_mind]
+      - id: grace_refuse
+        label: ไม่รับอะไรทั้งนั้น
+        flags: []

@@ -1,0 +1,23 @@
+# Hidden from player UI until journal unlock (P6) — used lightly in P1 combat flavor
+matchups:
+  - attacker: water
+    defender: fire
+    mult: 1.4
+  - attacker: fire
+    defender: nature
+    mult: 1.25
+  - attacker: fire
+    defender: water
+    mult: 0.75
+  - attacker: shadow
+    defender: holy
+    mult: 0.8
+  - attacker: holy
+    defender: shadow
+    mult: 1.35
+  - attacker: lightning
+    defender: water
+    mult: 1.3
+  - attacker: earth
+    defender: lightning
+    mult: 0.85

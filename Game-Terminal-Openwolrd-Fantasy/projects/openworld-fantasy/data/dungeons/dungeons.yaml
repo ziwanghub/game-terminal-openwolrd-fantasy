@@ -1,0 +1,328 @@
+# Dungeons per area — difficulty numbers HIDDEN from player.
+# soft_label only appears after enough knowledge (visits/clears/library).
+
+appear_chance: 0.18
+# base chance each field tick to show a dungeon mouth in sights
+
+# Time limit: each dungeon action (explore/advance/boss try/escape fail) spends 1 turn
+# Numbers hidden — player only feels pressure messages
+time_limit:
+  base_turns: 14
+  per_floor: 4
+  per_difficulty: 2
+  # when remaining turns low, soft pressure; at 0 force collapse eject
+  warn_at: 5
+  critical_at: 2
+
+# Random floor layout tags (soft map) + event weights when exploring
+floor_layouts:
+  - id: winding
+    label: ทางคดเคี้ยว
+  - id: chamber
+    label: ห้องโถงกว้าง
+  - id: choke
+    label: ทางแคบอับ
+  - id: collapse
+    label: ซากถล่ม
+  - id: shrine
+    label: แท่นบูชาเลือน
+  - id: pool
+    label: แอ่งน้ำดำ
+  - id: crystal
+    label: โถงผลึก
+  - id: void
+    label: ช่องว่างไร้ทิศ
+
+floor_events:
+  - id: ambush
+    weight: 35
+    kind: combat
+    flavor: เงาพุ่งจากมุมมืด!
+  - id: patrol
+    weight: 20
+    kind: combat
+    flavor: กลุ่มศัตรูลาดตระเวนตัดทาง
+  - id: empty
+    weight: 15
+    kind: empty
+    flavor: เงียบ — ได้แต่จดจำเส้นทาง
+  - id: cache
+    weight: 12
+    kind: loot
+    flavor: พบซากกระเป๋า/หีบเก่า
+  - id: rest_nook
+    weight: 8
+    kind: rest
+    flavor: มุมปลอดภัยครู่หนึ่ง — หายใจได้
+  - id: trap
+    weight: 10
+    kind: trap
+    flavor: กับดัก! พื้น/ลูกดอก/พิษ
+  - id: omen
+    weight: 8
+    kind: omen
+    flavor: สัญญาณอันตรายกระตุก — ความรู้สะสม
+
+# Default clear rewards if dungeon has no custom rewards block
+default_rewards:
+  money_world: [40, 90]
+  xp: [25, 60]
+  items:
+    - id: upgrade_mat
+      chance: 0.55
+      rarity: uncommon
+    - id: rare_mat
+      chance: 0.22
+      rarity: rare
+    - id: dungeon_thread
+      chance: 0.08
+      rarity: rare
+
+escape:
+  # items that MAY allow exit if already in inventory when entering (not taught in UI)
+  items:
+    - id: dungeon_thread
+      success_chance: 0.55
+    - id: void_key_shard
+      success_chance: 0.75
+    - id: blessed_charm
+      success_chance: 0.35   # sacred charm can sometimes pull you out
+  # failed escape / forced leave drains
+  drain_money_pct: 0.12
+  drain_item_chance: 0.4
+  drain_max_items: 2
+
+knowledge:
+  # visits needed before soft difficulty word appears
+  soft_label_visits: 2
+  # clears needed for more accurate tone
+  accurate_after_clears: 1
+
+dungeons:
+  - id: dung_forest_root
+    name: รากป่ารูปเขี้ยว
+    area_id: dark_forest
+    # hidden difficulty 1-5
+    difficulty: 2
+    floors: 2
+    enemy_hp_mult: 1.15
+    enemy_atk_mult: 1.1
+    boss_id: boss_forest_king
+    min_level_soft: 3
+    appear_weight: 20
+    layout_bias: [winding, chamber, pool]
+    rewards:
+      money_world: [50, 100]
+      xp: [30, 70]
+      items:
+        - id: upgrade_mat
+          chance: 0.6
+          rarity: uncommon
+        - id: potion_hp
+          chance: 0.35
+          rarity: common
+        - id: dungeon_thread
+          chance: 0.12
+          rarity: rare
+    soft_labels:
+      vague: "ลมจากโพรงเย็นผิดปกติ"
+      known: "อันตรายปานกลาง — เคยได้ยิน"
+      accurate: "ระดับ: น่ากลัวพอตัว (เคยเคลียร์)"
+
+  - id: dung_cave_abyss
+    name: โพรงเหวเงา
+    area_id: cave_shadow
+    difficulty: 3
+    floors: 3
+    enemy_hp_mult: 1.25
+    enemy_atk_mult: 1.2
+    boss_id: boss_shadow_queen
+    min_level_soft: 6
+    appear_weight: 16
+    layout_bias: [choke, collapse, winding]
+    rewards:
+      money_world: [70, 140]
+      money_hell: [1, 3]
+      xp: [45, 100]
+      items:
+        - id: rare_mat
+          chance: 0.35
+          rarity: rare
+        - id: shadow_dagger
+          chance: 0.12
+          rarity: rare
+        - id: dungeon_thread
+          chance: 0.1
+          rarity: rare
+    soft_labels:
+      vague: "กลิ่นสนิมและความมืดเหนียว"
+      known: "อันตรายสูง — หลายคนไม่กลับ"
+      accurate: "ระดับ: หนัก (เคยเคลียร์)"
+
+  - id: dung_mountain_vein
+    name: เส้นเลือดหิน
+    area_id: mountain_rock
+    difficulty: 3
+    floors: 2
+    enemy_hp_mult: 1.3
+    enemy_atk_mult: 1.15
+    boss_id: boss_stone_titan
+    min_level_soft: 5
+    appear_weight: 14
+    layout_bias: [collapse, chamber, choke]
+    rewards:
+      money_world: [60, 120]
+      xp: [40, 90]
+      items:
+        - id: upgrade_mat
+          chance: 0.5
+          rarity: uncommon
+        - id: iron_plate
+          chance: 0.1
+          rarity: uncommon
+    soft_labels:
+      vague: "เสียงหินถล่มจากด้านใน"
+      known: "อันตราย — เกราะหินหนา"
+      accurate: "ระดับ: หนักปานกลาง"
+
+  - id: dung_desert_tomb
+    name: สุสานทรายร้อน
+    area_id: desert_heat
+    difficulty: 3
+    floors: 3
+    enemy_hp_mult: 1.28
+    enemy_atk_mult: 1.22
+    boss_id: boss_sun_scourge
+    min_level_soft: 8
+    appear_weight: 12
+    layout_bias: [chamber, shrine, collapse]
+    rewards:
+      money_world: [80, 150]
+      money_heaven: [1, 2]
+      xp: [50, 110]
+      items:
+        - id: rare_mat
+          chance: 0.3
+          rarity: rare
+        - id: copper_ring
+          chance: 0.15
+          rarity: uncommon
+    soft_labels:
+      vague: "ความร้อนพวยจากปากอุโมงค์"
+      known: "อันตรายสูง — แห้งและโหด"
+      accurate: "ระดับ: หนัก"
+
+  - id: dung_city_crypt
+    name: สุสานเมืองโบราณ
+    area_id: ancient_city
+    difficulty: 4
+    floors: 3
+    enemy_hp_mult: 1.4
+    enemy_atk_mult: 1.3
+    boss_id: boss_ruin_oracle
+    min_level_soft: 10
+    appear_weight: 12
+    layout_bias: [shrine, winding, chamber]
+    rewards:
+      money_world: [100, 180]
+      xp: [70, 140]
+      items:
+        - id: rare_mat
+          chance: 0.4
+          rarity: rare
+        - id: void_key_shard
+          chance: 0.06
+          rarity: sacred
+        - id: silver_amulet
+          chance: 0.12
+          rarity: rare
+    soft_labels:
+      vague: "เสียงกระซิบภาษาที่ตายแล้ว"
+      known: "อันตรายมาก — ความรู้ช่วยรอด"
+      accurate: "ระดับ: โหด"
+
+  - id: dung_marsh_mire
+    name: หลุมหมอกดูด
+    area_id: mist_marsh
+    difficulty: 3
+    floors: 2
+    enemy_hp_mult: 1.22
+    enemy_atk_mult: 1.18
+    boss_id: boss_mist_hydra
+    min_level_soft: 7
+    appear_weight: 14
+    layout_bias: [pool, winding, choke]
+    rewards:
+      money_world: [65, 130]
+      xp: [45, 95]
+      items:
+        - id: antidote
+          chance: 0.4
+          rarity: common
+        - id: rare_mat
+          chance: 0.25
+          rarity: uncommon
+    soft_labels:
+      vague: "หมอกลงต่ำกลืนทางเข้า"
+      known: "อันตราย — พิษและหลายหัว"
+      accurate: "ระดับ: หนัก"
+
+  - id: dung_crystal_core
+    name: แกนผลึก
+    area_id: crystal_peak
+    difficulty: 4
+    floors: 3
+    enemy_hp_mult: 1.45
+    enemy_atk_mult: 1.35
+    boss_id: boss_prism_sovereign
+    min_level_soft: 12
+    appear_weight: 10
+    layout_bias: [crystal, chamber, shrine]
+    rewards:
+      money_world: [120, 200]
+      money_heaven: [2, 5]
+      xp: [80, 160]
+      items:
+        - id: arcane_circlet
+          chance: 0.1
+          rarity: sacred
+        - id: rare_mat
+          chance: 0.45
+          rarity: rare
+        - id: dungeon_thread
+          chance: 0.1
+          rarity: rare
+    soft_labels:
+      vague: "แสงหักเหจนมึน"
+      known: "อันตรายมาก — ผลึกตัด"
+      accurate: "ระดับ: โหดจัด"
+
+  - id: dung_void_maw
+    name: ปากสุญญะ
+    area_id: void_rift
+    difficulty: 5
+    floors: 4
+    enemy_hp_mult: 1.6
+    enemy_atk_mult: 1.5
+    boss_id: boss_void_herald
+    min_level_soft: 15
+    appear_weight: 8
+    layout_bias: [void, choke, collapse]
+    rewards:
+      money_world: [150, 280]
+      money_hell: [2, 6]
+      xp: [100, 220]
+      items:
+        - id: void_key_shard
+          chance: 0.18
+          rarity: sacred
+        - id: rare_mat
+          chance: 0.5
+          rarity: sacred
+        - id: shadow_cloak
+          chance: 0.08
+          rarity: legendary
+    soft_labels:
+      vague: "ทิศทางหาย — ทางเข้ากินเงา"
+      known: "อันตรายสูงสุดที่เคยได้ยิน"
+      accurate: "ระดับ: สุดขีด (เคยรอดมาได้)"

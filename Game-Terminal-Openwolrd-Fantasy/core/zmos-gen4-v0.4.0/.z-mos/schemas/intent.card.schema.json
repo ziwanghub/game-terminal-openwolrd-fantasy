@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://zmos.dev/schemas/intent.card.schema.json",
+  "title": "Z-MOS Intent Card",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "human", "system"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "2.0.0" },
+        "human": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["intent", "decision", "risk_accepted"],
+          "properties": {
+            "intent": { "type": "string", "minLength": 1 },
+            "decision": { "type": "string", "minLength": 1 },
+            "risk_accepted": { "type": "string", "minLength": 1 }
+          }
+        },
+        "system": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scope_files",
+            "required_tests",
+            "stop_conditions",
+            "rollback_plan",
+            "truth_snapshot_ref"
+          ],
+          "properties": {
+            "scope_files": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "required_tests": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "stop_conditions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "rollback_plan": { "type": "string", "minLength": 1 },
+            "truth_snapshot_ref": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "intent", "system", "agent"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "3.0.0-agent" },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["objective", "strategy", "risk_acknowledgement"],
+          "properties": {
+            "objective": { "type": "string", "minLength": 1 },
+            "strategy": { "type": "string", "minLength": 1 },
+            "risk_acknowledgement": { "type": "string", "minLength": 1 }
+          }
+        },
+        "system": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scope_files",
+            "required_tests",
+            "stop_conditions",
+            "rollback_plan",
+            "truth_snapshot_ref"
+          ],
+          "properties": {
+            "scope_files": { "type": "array", "items": { "type": "string" } },
+            "required_tests": { "type": "array", "items": { "type": "string" } },
+            "stop_conditions": { "type": "array", "items": { "type": "string" } },
+            "rollback_plan": { "type": "string", "minLength": 1 },
+            "truth_snapshot_ref": { "type": "string", "minLength": 1 },
+            "allowed_hosts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "allowed_databases": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "agent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "allowed_tools",
+            "allowed_actions",
+            "max_steps",
+            "termination_conditions",
+            "enforcement"
+          ],
+          "properties": {
+            "allowed_tools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "allowed_actions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "max_steps": { "type": "integer", "minimum": 1 },
+            "termination_conditions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "enforcement": { "type": "string", "const": "hard-block" }
+          }
+        }
+      }
+    }
+  ]
+}

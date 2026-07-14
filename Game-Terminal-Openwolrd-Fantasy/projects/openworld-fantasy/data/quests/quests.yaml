@@ -1,0 +1,362 @@
+- id: first_blood
+  name: เลือดแรก
+  description: ชนะมอนสเตอร์ 3 ตัว
+  type: kill
+  target: 3
+  reward_xp: 80
+  reward_money: 60
+  reward_items: [potion_hp]
+  unlock_level: 1
+
+- id: forest_walker
+  name: คนเดินป่า
+  description: สำรวจในป่ามืด 5 ครั้ง (เมนู 2 — พักไม่นับ)
+  type: explore_area
+  area: dark_forest
+  target: 5
+  reward_xp: 100
+  reward_money: 40
+  reward_items: [card_vitality]
+  unlock_level: 1
+
+- id: path_to_five
+  name: เส้นทางสู่เลเวลที่บอสเปิด
+  description: ชนะมอนรวม 8 ตัว — เตรียมพร้อมท้าบอสป่า (Lv.5)
+  type: kill
+  target: 8
+  reward_xp: 180
+  reward_money: 80
+  reward_items: [potion_hp, antidote, balm_regen]
+  unlock_level: 1
+  depends_on: [first_blood]
+
+- id: dungeon_first_clear
+  name: ลมจากโพรง
+  description: เคลียร์ดันเจียนใดก็ได้ 1 ครั้ง
+  type: dungeon_clear
+  target: 1
+  reward_xp: 200
+  reward_money: 100
+  reward_items: [panacea, upgrade_mat]
+  unlock_level: 3
+  depends_on: [first_blood]
+
+- id: gear_up
+  name: ติดอาวุธ
+  description: สวมอาวุธอย่างน้อย 1 ชิ้น
+  type: equip_weapon
+  target: 1
+  reward_xp: 50
+  reward_money: 30
+  reward_items: [card_fire]
+  unlock_level: 1
+
+- id: card_socket
+  name: นักสะสมการ์ด
+  description: ใส่การ์ดลงช่องอุปกรณ์ 1 ครั้ง
+  type: socket_card
+  target: 1
+  reward_xp: 70
+  reward_money: 50
+  reward_items: [upgrade_mat]
+  unlock_level: 1
+  depends_on: [gear_up]
+
+- id: world_traveler
+  name: นักเดินทาง
+  description: เดินทางเปลี่ยนพื้นที่ 4 ครั้ง
+  type: travel
+  target: 4
+  reward_xp: 120
+  reward_money: 70
+  reward_items: [potion_mana, potion_hp]
+  unlock_level: 2
+  depends_on: [first_blood]
+
+- id: forest_champion
+  name: แชมป์ป่ามืด
+  description: เอาชนะบอสราชันย์เถื่อน 1 ครั้ง
+  type: kill_boss
+  boss_id: boss_forest_king
+  target: 1
+  reward_xp: 350
+  reward_money: 200
+  reward_items: [upgrade_mat, upgrade_mat, rare_mat]
+  unlock_level: 5
+  depends_on: [forest_walker, first_blood]
+
+- id: cave_delver
+  name: นักสำรวจถ้ำ
+  description: ชนะมอนในถ้ำเงา 4 ตัว
+  type: kill_area
+  area: cave_shadow
+  target: 4
+  reward_xp: 160
+  reward_money: 90
+  reward_items: [upgrade_mat, card_shadow]
+  unlock_level: 3
+  depends_on: [world_traveler]
+
+- id: shadow_slayer
+  name: เพชฌฆาตเงา
+  description: เอาชนะราชินีเงา
+  type: kill_boss
+  boss_id: boss_shadow_queen
+  target: 1
+  reward_xp: 500
+  reward_money: 280
+  reward_items: [shadow_dagger, rare_mat]
+  unlock_level: 8
+  depends_on: [cave_delver]
+
+- id: high_hunter
+  name: นักล่าขั้นสูง
+  description: ชนะมอนรวม 15 ตัว
+  type: kill
+  target: 15
+  reward_xp: 400
+  reward_money: 200
+  reward_items: [steel_blade, rare_mat]
+  unlock_level: 5
+  depends_on: [first_blood]
+
+- id: forge_initiate
+  name: ศิษย์ช่างตี
+  description: คราฟไอเทมสำเร็จ 1 ครั้ง
+  type: craft
+  target: 1
+  reward_xp: 90
+  reward_money: 40
+  reward_items: [upgrade_mat]
+  unlock_level: 2
+  depends_on: [gear_up]
+
+- id: titan_fall
+  name: ล้มไททัน
+  description: เอาชนะไททันหิน
+  type: kill_boss
+  boss_id: boss_stone_titan
+  target: 1
+  reward_xp: 600
+  reward_money: 320
+  reward_items: [iron_plate, rare_mat, rare_mat]
+  unlock_level: 10
+  depends_on: [high_hunter]
+
+- id: sun_end
+  name: สิ้นแสง
+  description: เอาชนะภัยพิบัติอาทิตย์
+  type: kill_boss
+  boss_id: boss_sun_scourge
+  target: 1
+  reward_xp: 900
+  reward_money: 500
+  reward_items: [card_lightning, rare_mat, steel_blade]
+  unlock_level: 14
+  depends_on: [titan_fall, shadow_slayer]
+
+- id: mist_walker
+  name: คนเดินหมอก
+  description: สำรวจหนองหมอก 4 ครั้ง
+  type: explore_area
+  area: mist_marsh
+  target: 4
+  reward_xp: 180
+  reward_money: 80
+  reward_items: [upgrade_mat]
+  unlock_level: 6
+  depends_on: [world_traveler]
+
+- id: hydra_slayer
+  name: ล่าไฮดรา
+  description: เอาชนะไฮดราหมอก
+  type: kill_boss
+  boss_id: boss_mist_hydra
+  target: 1
+  reward_xp: 450
+  reward_money: 220
+  reward_items: [rare_mat, card_water]
+  unlock_level: 9
+  depends_on: [mist_walker]
+
+- id: void_initiate
+  name: ผู้ก้าวสู่รอยแยก
+  description: ชนะมอนในรอยแยกสุญญะ 5 ตัว
+  type: kill_area
+  area: void_rift
+  target: 5
+  reward_xp: 500
+  reward_money: 200
+  reward_items: [rare_mat]
+  unlock_level: 14
+  depends_on: [high_hunter]
+
+# ── สายรอบโลก (campaign soft) ──
+- id: city_roots
+  name: รากแห่งเมือง
+  description: สำรวจเมืองโบราณ 3 ครั้ง (จุดเริ่มเรื่อง)
+  type: explore_area
+  area: ancient_city
+  target: 3
+  reward_xp: 70
+  reward_money: 40
+  reward_items: [traveler_ration, city_map_scrap]
+  unlock_level: 1
+  campaign: true
+  chapter: roots
+
+- id: crystal_path
+  name: เส้นทางผลึก
+  description: เดินทางไปยอดผลึกแล้วสำรวจ 2 ครั้ง
+  type: explore_area
+  area: crystal_peak
+  target: 2
+  reward_xp: 200
+  reward_money: 100
+  reward_items: [crystal_dust, potion_mana]
+  unlock_level: 6
+  depends_on: [world_traveler, city_roots]
+  campaign: true
+  chapter: crystal
+
+- id: desert_trial
+  name: บททดสอบทะเลทราย
+  description: ชนะมอนในทะเลทรายร้อน 5 ตัว
+  type: kill_area
+  area: desert_heat
+  target: 5
+  reward_xp: 280
+  reward_money: 140
+  reward_items: [sand_cloak_mat, potion_hp]
+  unlock_level: 7
+  depends_on: [world_traveler]
+  campaign: true
+  chapter: desert
+
+- id: world_round_clear
+  name: รอบแรกของโลก
+  description: เคลียร์ดันเจียน 1 + เอาชนะบอสพื้นที่ใดก็ได้ 1
+  type: dungeon_clear
+  target: 1
+  reward_xp: 400
+  reward_money: 250
+  reward_items: [round_token, rare_mat, traveler_ration]
+  unlock_level: 5
+  depends_on: [dungeon_first_clear, forest_champion]
+  campaign: true
+  chapter: first_round
+  marks_round: 1
+
+- id: board_regular
+  name: ลูกจ้างกระดาน
+  description: เคลียร์ภารกิจกระดาน 3 งาน (แรงก์ใดก็ได้)
+  type: board_complete
+  target: 3
+  reward_xp: 150
+  reward_money: 80
+  reward_items: [focus_tea, upgrade_mat]
+  unlock_level: 2
+  depends_on: [first_blood]
+  campaign: true
+  chapter: roots
+
+# ── รอบ 2 (หลังปิดรอบแรก soft) ──
+- id: second_horizon
+  name: ขอบฟ้าที่สอง
+  description: เดินทางเปลี่ยนพื้นที่ 3 ครั้งหลังรอบแรก
+  type: travel
+  target: 3
+  reward_xp: 220
+  reward_money: 120
+  reward_items: [traveler_ration, crystal_dust]
+  unlock_level: 6
+  depends_on: [world_round_clear]
+  campaign: true
+  chapter: second_horizon
+
+- id: void_echo
+  name: เสียงจากรอยแยก
+  description: ชนะมอนในรอยแยกสุญญะ 3 ตัว
+  type: kill_area
+  area: void_rift
+  target: 3
+  reward_xp: 350
+  reward_money: 180
+  reward_items: [void_key_shard]
+  unlock_level: 12
+  depends_on: [world_round_clear, high_hunter]
+  campaign: true
+  chapter: void_second
+
+- id: world_round_two
+  name: รอบสองของโลก
+  description: เคลียร์ดันเจียนอีก 1 ครั้งหลังรอบแรก
+  type: dungeon_clear
+  target: 1
+  reward_xp: 500
+  reward_money: 300
+  reward_items: [round_token, rare_mat, mind_elixir]
+  unlock_level: 8
+  depends_on: [world_round_clear, second_horizon]
+  campaign: true
+  chapter: second_round
+  marks_round: 2
+
+- id: board_veteran
+  name: ลูกจ้างอาวุโส
+  description: เคลียร์กระดานรวม 8 งาน
+  type: board_complete
+  target: 8
+  reward_xp: 280
+  reward_money: 150
+  reward_items: [upgrade_mat, focus_tea]
+  unlock_level: 5
+  depends_on: [board_regular]
+  campaign: true
+  chapter: second_horizon
+
+# bulk side quests 1.13.9
+- id: rat_hunter
+  name: นักล่าหนูเมือง
+  description: ชนะมอน 5 ตัวในเมืองโบราณ
+  type: kill_area
+  area: ancient_city
+  target: 5
+  reward_xp: 90
+  reward_money: 50
+  reward_items: [city_bread, bandit_knife]
+  unlock_level: 1
+  depends_on: [city_roots]
+
+- id: pack_survivor
+  name: รอดจากฝูง
+  description: ชนะไฟต์ 6 ครั้ง (กลุ่มนับด้วย)
+  type: kill
+  target: 6
+  reward_xp: 120
+  reward_money: 70
+  reward_items: [upgrade_mat, focus_tea]
+  unlock_level: 2
+  depends_on: [first_blood]
+
+- id: forge_bread
+  name: เสบียงช่างตี
+  description: คราฟไอเทมสำเร็จ 2 ครั้ง
+  type: craft
+  target: 2
+  reward_xp: 100
+  reward_money: 40
+  reward_items: [upgrade_mat]
+  unlock_level: 3
+  depends_on: [forge_initiate]
+
+- id: market_first_sale
+  name: แม่ค้ามือใหม่
+  description: สำรวจเมืองโบราณ 2 ครั้ง (หาทางตลาด)
+  type: explore_area
+  area: ancient_city
+  target: 2
+  reward_xp: 60
+  reward_money: 30
+  reward_items: [city_bread, herb_bundle]
+  unlock_level: 1

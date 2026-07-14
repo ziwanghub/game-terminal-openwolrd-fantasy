@@ -1,0 +1,15 @@
+{
+  "gate_id": "M8C4",
+  "workdir": ".",
+  "env": {
+    "NODE_ENV": "development",
+    "ZMOS_EXEC_TARGET_KIND": "project"
+  },
+  "command": "npm run build && echo '[PASS] Build completed'",
+  "timeout_ms": 30000,
+  "expected_assertions": [
+    "[PASS] Build completed"
+  ],
+  "next_action": "zcl state update --phase M8C-5",
+  "stop_conditions": []
+}

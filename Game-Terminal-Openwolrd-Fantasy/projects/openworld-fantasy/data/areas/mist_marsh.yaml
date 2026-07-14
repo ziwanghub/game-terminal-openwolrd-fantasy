@@ -1,0 +1,20 @@
+id: mist_marsh
+name: หนองหมอก
+world_tier: 2
+unlock_level: 6
+connections: [dark_forest, cave_shadow, crystal_peak]
+mastery_start: 10
+ambient:
+  hp_regen: 2
+  mana_regen: 4
+monster_pools:
+  - id: marsh_leech
+    weight: 35
+  - id: fog_wisp
+    weight: 30
+  - id: bog_troll
+    weight: 25
+  - id: mist_horror
+    weight: 10
+boss_id: boss_mist_hydra
+boss_unlock_level: 9

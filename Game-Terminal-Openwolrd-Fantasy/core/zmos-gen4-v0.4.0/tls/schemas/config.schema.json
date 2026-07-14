@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Shop Config Schema",
+  "description": "Schema for shop-config.json — per-client configuration",
+  "type": "object",
+  "required": ["shop", "branding", "services", "hours", "features", "package"],
+  "properties": {
+    "shop": {
+      "type": "object",
+      "required": ["name", "slug"],
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "tagline": { "type": "string" },
+        "logo": { "type": "string" },
+        "phone": { "type": "string" },
+        "line_id": { "type": "string" },
+        "address": { "type": "string" },
+        "map_url": { "type": "string", "format": "uri" },
+        "social": {
+          "type": "object",
+          "properties": {
+            "facebook": { "type": "string" },
+            "instagram": { "type": "string" },
+            "tiktok": { "type": "string" }
+          }
+        }
+      }
+    },
+    "branding": {
+      "type": "object",
+      "required": ["primary_color"],
+      "properties": {
+        "primary_color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "secondary_color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "font": { "type": "string" }
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "price"],
+        "properties": {
+          "name": { "type": "string" },
+          "duration": { "type": "string" },
+          "price": { "type": "number", "minimum": 0 },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "staff": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "photo": { "type": "string" }
+        }
+      }
+    },
+    "hours": {
+      "type": "object",
+      "description": "Business hours per day group"
+    },
+    "features": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "required": ["visible", "enabled"],
+          "properties": {
+            "visible": { "type": "boolean" },
+            "enabled": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "package": {
+      "type": "string",
+      "enum": ["basic", "pro", "premium"]
+    }
+  }
+}

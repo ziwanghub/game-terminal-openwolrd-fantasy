@@ -1,0 +1,125 @@
+# Abnormal status catalog (debuffs / short ailments)
+# Numbers are soft for players — UI prefers names + feel over full formulas.
+# Schema: id, name, kind, duration, tick_hp, skip_action, skip_action_chance,
+#         cleansed_by (item ids or tags), cleanse_tags, element, soft_feel
+
+defaults:
+  max_stacks: 1
+  refresh_on_reapply: true
+  on_hit_chance_cap: 0.35
+  # soft element→status when monster profile has no explicit status
+  element_status_fallback: true
+  element_status_chance: 0.12
+  resist_cap: 0.85
+
+statuses:
+  - id: poison
+    name: พิษ
+    kind: debuff
+    category: ailment
+    targets: [player, monster]
+    duration: 3
+    tick_hp: 4
+    tick_phase: always
+    soft_feel: คลื่นคลื่น เลือดอุ่นผิดปกติ
+    cleansed_by: [antidote, blessed_charm, panacea]
+    cleanse_tags: [poison, ailment]
+    narrative_tick: status_tick_poison
+
+  - id: burn
+    name: ไหม้
+    kind: debuff
+    category: ailment
+    targets: [player, monster]
+    duration: 2
+    tick_hp: 5
+    tick_phase: always
+    element: fire
+    soft_feel: แสบร้อนเป็นระลอก
+    cleansed_by: [antidote, blessed_charm, panacea]
+    cleanse_tags: [burn, ailment, fire]
+    narrative_tick: status_tick_burn
+
+  - id: freeze
+    name: แช่แข็ง
+    kind: debuff
+    category: control
+    targets: [player, monster]
+    duration: 2
+    tick_hp: 0
+    skip_action: true
+    element: ice
+    soft_feel: แข็งทื่อ เคลื่อนไหวช้า
+    cleansed_by: [blessed_charm, panacea]
+    cleanse_tags: [freeze, control, ice]
+    narrative_tick: status_tick_freeze
+    # damage amplifies handled in combat when attacker uses fire/lightning
+
+  - id: stun
+    name: มึนงง
+    kind: debuff
+    category: control
+    targets: [player, monster]
+    duration: 1
+    tick_hp: 0
+    skip_action: true
+    soft_feel: หูอื้อ จังหวะหลุด
+    cleansed_by: [blessed_charm, antidote, panacea]
+    cleanse_tags: [stun, control]
+    narrative_tick: status_tick_stun
+
+  - id: shock
+    name: ช็อก
+    kind: debuff
+    category: ailment
+    targets: [player, monster]
+    duration: 2
+    tick_hp: 3
+    skip_action: false
+    skip_action_chance: 0.30
+    element: lightning
+    soft_feel: กล้ามเนื้อกระตุก ฝีเท้าหลุด
+    cleansed_by: [antidote, blessed_charm, panacea]
+    cleanse_tags: [shock, ailment, lightning]
+    narrative_tick: status_tick_shock
+
+  # --- Buffs (positive; not removed by panacea/cleanse debuffs) ---
+  - id: regen
+    name: ฟื้นฟู
+    kind: buff
+    category: recovery
+    targets: [player]
+    duration: 3
+    tick_heal: 6
+    soft_feel: เลือดอุ่นไหลกลับ เจ็บน้อยลง
+    narrative_tick: status_tick_regen
+
+  - id: might
+    name: พลังขึ้น
+    kind: buff
+    category: combat
+    targets: [player]
+    duration: 3
+    atk_flat: 5
+    soft_feel: กล้ามเนื้อแน่น แรงมือหนักขึ้น
+    narrative_tick: status_tick_might
+
+  - id: ward
+    name: เกราะอ่อน
+    kind: buff
+    category: combat
+    targets: [player]
+    duration: 2
+    dmg_taken_mult: 0.85
+    soft_feel: ผิวหนังแข็งขึ้นชั่วครู่
+    narrative_tick: status_tick_ward
+
+  - id: focus
+    name: สมาธิ
+    kind: buff
+    category: recovery
+    targets: [player]
+    duration: 3
+    tick_mana: 4
+    soft_feel: จิตสงบ มานาไหลช้าๆ
+    narrative_tick: status_tick_focus

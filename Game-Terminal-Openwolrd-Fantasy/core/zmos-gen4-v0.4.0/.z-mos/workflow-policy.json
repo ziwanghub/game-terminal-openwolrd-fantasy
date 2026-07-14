@@ -1,0 +1,68 @@
+{
+  "workflows": [
+    {
+      "workflowName": "runtime-check",
+      "advisoryAiAllowed": false,
+      "mutationAllowed": false,
+      "delegationAllowed": false,
+      "trustTier": "TIER_0",
+      "allowedSteps": [
+        "inspect runtime state",
+        "read status evidence",
+        "read doctor diagnostics",
+        "advisory AI invocation"
+      ]
+    },
+    {
+      "workflowName": "advisory-check",
+      "advisoryAiAllowed": true,
+      "mutationAllowed": false,
+      "delegationAllowed": false,
+      "trustTier": "TIER_1",
+      "allowedSteps": [
+        "inspect runtime state",
+        "read status evidence",
+        "read doctor diagnostics",
+        "invoke advisory AI"
+      ]
+    },
+    {
+      "workflowName": "ai-test",
+      "advisoryAiAllowed": true,
+      "mutationAllowed": false,
+      "delegationAllowed": false,
+      "trustTier": "TIER_2",
+      "allowedTasks": ["system-check"],
+      "forbiddenPatterns": ["delete", "remove", "rm -rf", "overwrite package.json"],
+      "allowedSteps": [
+        "validate payload",
+        "check canonical state",
+        "invoke governed AI task"
+      ]
+    },
+    {
+      "workflowName": "ai-run",
+      "advisoryAiAllowed": true,
+      "mutationAllowed": false,
+      "delegationAllowed": false,
+      "trustTier": "TIER_3",
+      "allowedTasks": ["system-check", "code-task"],
+      "forbiddenPatterns": ["delete", "remove", "rm -rf", "overwrite package.json"],
+      "allowedSteps": [
+        "validate payload",
+        "check canonical state",
+        "enforce contract",
+        "invoke governed AI task",
+        "write output artifact"
+      ]
+    }
+  ],
+  "criticalCommands": [
+    { "command": "runtime-check", "workflowName": "runtime-check" },
+    { "command": "advisory-check", "workflowName": "advisory-check" },
+    { "command": "ai-run", "workflowName": "ai-run" },
+    { "command": "ai-test", "workflowName": "ai-test" },
+    { "command": "start", "workflowName": "runtime-check" },
+    { "command": "preflight", "workflowName": "runtime-check" }
+  ]
+}

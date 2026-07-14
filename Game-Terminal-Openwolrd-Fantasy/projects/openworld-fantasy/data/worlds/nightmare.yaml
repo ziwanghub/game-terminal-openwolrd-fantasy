@@ -1,0 +1,13 @@
+id: nightmare
+name: โลกฝันร้าย — เหวไม่มีก้น
+difficulty: 3
+difficulty_label: ฝันร้าย
+starting_area: desert_heat
+description: ยากสุด · โลกอิสระสมบูรณ์ เซฟและสถิติไม่วิ่งข้ามโลก
+independent: true
+modifiers:
+  enemy_hp_mult: 1.7
+  enemy_atk_mult: 1.55
+  xp_mult: 1.45
+  money_mult: 0.7
+  start_money_mult: 0.4

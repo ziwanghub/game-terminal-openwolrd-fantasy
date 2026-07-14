@@ -1,0 +1,301 @@
+# Party companion templates — acquisition rules HIDDEN from UI.
+# kind: player | spirit | beast | heaven_god | hell_god | heaven_beast | hell_beast | other
+
+max_party_size: 3
+# soft cost when calling party power in combat (hidden scale)
+call_base_mana: 4
+call_base_world: 0
+
+kinds:
+  - id: player
+    name: ผู้เล่น
+    desc: เงาผู้เดินทางจากโลกอื่น
+  - id: spirit
+    name: ภูต
+    desc: วิญญาณบางเบา
+  - id: beast
+    name: สัตว์อสูร
+    desc: สัตว์ป่าที่ถูกผนึก
+  - id: heaven_god
+    name: เทพสวรรค์
+    desc: เงารัศมี — หายาก
+  - id: hell_god
+    name: เทพมาร
+    desc: เงาโลหิต — หายาก
+  - id: heaven_beast
+    name: สัตว์สวรรค์
+    desc: สัตว์แห่งแสง
+  - id: hell_beast
+    name: สัตว์นรก
+    desc: สัตว์แห่งเหว
+  - id: other
+    name: ไม่ทราบชนิด
+    desc: ...
+
+# Recruitable templates (non-player). Conditions checked in code — never listed in-game.
+templates:
+  - id: spirit_mist
+    rarity: common
+    name: ภูตหมอก
+    kind: spirit
+    min_level: 5
+    affinity_need: 0.15
+    bonus_atk: 2
+    bonus_max_hp: 8
+    bonus_max_mana: 4
+    call_mana: 3
+    flavor: ไอหมอกเกาะแขนคุณเบาๆ
+
+  - id: beast_forest
+    name: หมาป่ารอยเท้า
+    kind: beast
+    min_level: 4
+    affinity_need: 0.1
+    bonus_atk: 3
+    bonus_max_hp: 10
+    call_mana: 4
+    flavor: มันไม่คำราม — แค่เดินตาม
+
+  - id: spirit_ember
+    name: ภูตเถ้า
+    kind: spirit
+    min_level: 10
+    affinity_need: 0.25
+    require_area: desert_heat
+    bonus_atk: 4
+    bonus_max_mana: 8
+    call_mana: 5
+    call_world: 5
+    flavor: ประกายไฟลอยเหนือไหล่
+
+  - id: heaven_beast_crane
+    rarity: sacred
+    name: กระเรียนสวรรค์
+    kind: heaven_beast
+    min_level: 16
+    affinity_need: 0.4
+    require_money_heaven: 3
+    bonus_atk: 3
+    bonus_max_hp: 15
+    bonus_max_mana: 10
+    call_mana: 6
+    call_heaven: 1
+    flavor: ปีกขาวทิ้งขนเส้นหนึ่ง
+
+  - id: hell_beast_hound
+    name: สุนัขนรก
+    kind: hell_beast
+    min_level: 16
+    affinity_need: 0.35
+    require_money_hell: 2
+    bonus_atk: 6
+    bonus_max_hp: 5
+    call_mana: 6
+    call_hell: 1
+    flavor: ตาแดง — แต่ไม่กัดคุณ
+
+  - id: heaven_god_shard
+    rarity: divine
+    name: เศษเทพสวรรค์
+    kind: heaven_god
+    min_level: 28
+    affinity_need: 0.55
+    require_boss_kills: 2
+    require_library: 3
+    bonus_atk: 5
+    bonus_max_hp: 20
+    bonus_max_mana: 20
+    call_mana: 10
+    call_heaven: 2
+    flavor: แสงไม่ร้อน — แต่น้ำหนัก
+
+  - id: hell_god_shard
+    name: เศษเทพมาร
+    kind: hell_god
+    min_level: 28
+    affinity_need: 0.5
+    require_boss_kills: 2
+    require_deaths: 1
+    bonus_atk: 8
+    bonus_max_hp: 12
+    call_mana: 10
+    call_hell: 2
+    flavor: เงารอยยิ้มกลับด้าน
+
+  - id: beast_stone
+    name: อสูรหิน
+    kind: beast
+    min_level: 12
+    affinity_need: 0.2
+    require_area: mountain_rock
+    bonus_atk: 2
+    bonus_max_hp: 25
+    call_mana: 5
+    flavor: แผ่นดินสั่นเบาๆ ใต้เท้า
+
+
+  - id: spirit_river
+    name: ภูตสายน้ำ
+    kind: spirit
+    min_level: 8
+    affinity_need: 0.2
+    bonus_atk: 2
+    bonus_max_mana: 12
+    call_mana: 4
+    flavor: หยดน้ำลอยวนรอบข้อมือ
+
+  - id: beast_wolf_alpha
+    name: หมาป่าราชันย์
+    kind: beast
+    min_level: 18
+    affinity_need: 0.35
+    bonus_atk: 7
+    bonus_max_hp: 18
+    call_mana: 7
+    flavor: คำรามต่ำ — แต่หันหลังให้ศัตรู
+
+  - id: heaven_spirit_bell
+    name: ภูตระฆังสวรรค์
+    kind: spirit
+    min_level: 20
+    affinity_need: 0.4
+    require_money_heaven: 2
+    bonus_atk: 3
+    bonus_max_hp: 12
+    bonus_max_mana: 14
+    call_mana: 6
+    call_heaven: 1
+    flavor: เสียงระฆังไกลๆ ที่ไม่มีใครได้ยิน
+
+  - id: hell_imp
+    name: อิมป์เหว
+    kind: hell_beast
+    min_level: 14
+    affinity_need: 0.3
+    require_money_hell: 1
+    bonus_atk: 5
+    bonus_max_hp: 6
+    call_mana: 5
+    call_hell: 1
+    flavor: หัวเราะแหบ — แล้วชี้ไปที่ศัตรู
+
+  - id: other_echo
+    name: เงาล้ำ
+    kind: other
+    min_level: 22
+    affinity_need: 0.45
+    require_library: 2
+    bonus_atk: 4
+    bonus_max_mana: 10
+    call_mana: 8
+    flavor: ไม่มีรูป — มีแค่ความรู้สึก
+
+  - id: beast_sand
+    name: อสูรทราย
+    kind: beast
+    min_level: 11
+    affinity_need: 0.22
+    require_area: desert_heat
+    bonus_atk: 4
+    bonus_max_hp: 14
+    call_mana: 5
+    flavor: ทรายรวมตัวเป็นร่าง
+
+  - id: spirit_void
+    rarity: legendary
+    name: ภูตสุญญะ
+    kind: spirit
+    min_level: 24
+    affinity_need: 0.5
+    require_area: void_rift
+    require_boss_kills: 1
+    bonus_atk: 6
+    bonus_max_mana: 16
+    call_mana: 9
+    flavor: ความเงียบดังกว่าเสียง
+
+  - id: heaven_god_ember
+    rarity: archdivine
+    name: เศษเปลวทิพย์
+    kind: heaven_god
+    min_level: 30
+    affinity_need: 0.6
+    require_boss_kills: 3
+    require_money_heaven: 5
+    bonus_atk: 7
+    bonus_max_hp: 22
+    bonus_max_mana: 18
+    call_mana: 12
+    call_heaven: 2
+    flavor: ร้อนแต่ไม่ไหม้
+
+
+  - id: spirit_leaf
+    name: ภูตใบไม้
+    kind: spirit
+    min_level: 3
+    affinity_need: 0.12
+    bonus_atk: 1
+    bonus_max_hp: 6
+    call_mana: 3
+    flavor: ใบไม้หมุนรอบข้อเท้า
+
+  - id: beast_boar
+    name: หมูป่ารอยเขี้ยว
+    kind: beast
+    min_level: 7
+    affinity_need: 0.18
+    bonus_atk: 4
+    bonus_max_hp: 16
+    call_mana: 5
+    flavor: หายใจหอบแต่ไม่พุ่งใส่คุณ
+
+  - id: heaven_fox
+    name: จิ้งจอกสวรรค์
+    kind: heaven_beast
+    min_level: 18
+    affinity_need: 0.38
+    require_money_heaven: 2
+    bonus_atk: 5
+    bonus_max_mana: 12
+    call_mana: 7
+    call_heaven: 1
+    flavor: หางเรืองแสงจาง
+
+  - id: hell_crow
+    name: อีกานรก
+    kind: hell_beast
+    min_level: 15
+    affinity_need: 0.32
+    require_money_hell: 1
+    bonus_atk: 5
+    bonus_max_hp: 8
+    call_mana: 6
+    call_hell: 1
+    flavor: กาดำเกาะไหล่ — หนักผิดปกติ
+
+  - id: spirit_mirror
+    name: ภูตกระจก
+    kind: spirit
+    min_level: 21
+    affinity_need: 0.42
+    require_library: 2
+    bonus_atk: 3
+    bonus_max_mana: 15
+    call_mana: 8
+    flavor: สะท้อนใบหน้าคุณครู่หนึ่ง
+
+  - id: other_puppet
+    name: หุ่นเงา
+    kind: other
+    min_level: 19
+    affinity_need: 0.4
+    require_boss_kills: 1
+    bonus_atk: 4
+    bonus_max_hp: 10
+    call_mana: 7
+    flavor: ข้อต่อดังกรอบแกรบโดยไร้คนเชิด
+
+# Encounter: chance to roll a recruit offer (hidden)
+recruit_sight_chance: 0.12
+player_hire_base_chance: 0.35

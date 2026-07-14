@@ -1,0 +1,63 @@
+# Soft class-change paths — conditions NEVER shown to player
+# Any matching path may unlock the class change menu (OR logic across paths)
+
+paths:
+  - id: steel_call
+    to_occupation: warrior
+    label: ทางแห่งเหล็ก
+    flavor: มือจำแรงกระแทกได้ดีกว่าคำพูด
+    # all listed conditions soft-OR within groups via min_score
+    min_score: 2
+    conditions:
+      - {type: min_level, value: 5}
+      - {type: min_alloc, stat: atk, value: 3}
+      - {type: min_alloc, stat: defense, value: 2}
+      - {type: min_kills, value: 8}
+      - {type: min_stat_points_spent, value: 4}
+
+  - id: arcane_whisper
+    to_occupation: mage
+    label: ทางแห่งม่านเวท
+    flavor: บางคืนฝันเห็นสูตรที่ยังไม่อ่านออก
+    min_score: 2
+    conditions:
+      - {type: min_level, value: 5}
+      - {type: min_alloc, stat: magic, value: 3}
+      - {type: min_alloc, stat: intelligence, value: 2}
+      - {type: min_combos, value: 5}
+      - {type: library_entries, value: 1}
+
+  - id: green_path
+    to_occupation: archer
+    label: ทางแห่งสายลม
+    flavor: เท้าเบาลงโดยไม่ตั้งใจ
+    min_score: 2
+    conditions:
+      - {type: min_level, value: 5}
+      - {type: min_alloc, stat: speed, value: 3}
+      - {type: min_alloc, stat: atk, value: 2}
+      - {type: min_explores, value: 6}
+
+  - id: shadow_edge
+    to_occupation: rogue
+    label: ทางแห่งเงา
+    flavor: เงาของคุณดูยาวผิดปกติตอนพระอาทิตย์ตก
+    min_score: 2
+    conditions:
+      - {type: min_level, value: 6}
+      - {type: min_alloc, stat: speed, value: 2}
+      - {type: min_alloc, stat: intelligence, value: 2}
+      - {type: min_flees, value: 2}
+      - {type: min_kills, value: 10}
+
+  - id: mercy_light
+    to_occupation: priest
+    label: ทางแห่งแสงอ่อน
+    flavor: บางครั้งอยากปกป้องมากกว่าจะฆ่า
+    min_score: 2
+    conditions:
+      - {type: min_level, value: 5}
+      - {type: min_alloc, stat: magic, value: 2}
+      - {type: min_alloc, stat: defense, value: 2}
+      - {type: min_heals, value: 3}
+      - {type: personality_axis, axis: compassion, min: 1}

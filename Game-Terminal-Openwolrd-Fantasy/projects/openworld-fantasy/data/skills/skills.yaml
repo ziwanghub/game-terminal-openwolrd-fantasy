@@ -1,0 +1,481 @@
+# Core + shared skills. Occupation trees also in tree_*.yaml (merged by registry).
+# Schema: slot, cost_mana, power/heal, elements, combo_ok, tree, tier, requires, learn, charge
+
+- id: basic_strike
+  name: การโจมตีพื้นฐาน
+  slot: combat
+  cost_mana: 0
+  power: 10
+  elements: [physical]
+  combo_ok: true
+  tree: warrior
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: magic_missile
+  name: กระสุนเวทย์
+  slot: combat
+  cost_mana: 8
+  power: 12
+  elements: [arcane]
+  combo_ok: true
+  tree: mage
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: arrow_shot
+  name: ยิงธนู
+  slot: combat
+  cost_mana: 0
+  power: 14
+  elements: [physical]
+  combo_ok: true
+  tree: archer
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: shadow_strike
+  name: โจมตีเงา
+  slot: combat
+  cost_mana: 6
+  power: 11
+  elements: [shadow]
+  combo_ok: true
+  tree: rogue
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: heal
+  name: รักษา
+  slot: support
+  cost_mana: 12
+  heal: 22
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: fire_ball
+  name: ลูกไฟ
+  slot: combat
+  cost_mana: 12
+  power: 28
+  elements: [fire]
+  combo_ok: true
+  tier: 2
+  requires: []
+  learn:
+    method: [discovery, self]
+    require_level: 5
+    cost_world: 60
+    require_occ: [mage, warrior, rogue]
+
+- id: water_bolt
+  name: กระสุนน้ำ
+  slot: combat
+  cost_mana: 10
+  power: 16
+  elements: [water]
+  combo_ok: true
+  tier: 2
+  requires: []
+  learn:
+    method: [discovery, master, self]
+    require_level: 4
+    cost_world: 50
+    cost_heaven: 1
+
+- id: wind_slash
+  name: ลมบาด
+  slot: combat
+  cost_mana: 9
+  power: 14
+  elements: [wind]
+  combo_ok: true
+  tier: 2
+  requires: []
+  learn:
+    method: [discovery, self]
+    require_level: 3
+    cost_world: 45
+
+- id: lightning_spark
+  name: ประกายสายฟ้า
+  slot: combat
+  cost_mana: 14
+  power: 22
+  elements: [lightning]
+  combo_ok: true
+  tier: 2
+  requires: []
+  learn:
+    method: [discovery, self]
+    require_level: 5
+    cost_world: 70
+    cost_heaven: 1
+
+- id: shadow_step
+  name: ก้าวเงา
+  slot: combat
+  cost_mana: 10
+  power: 15
+  elements: [shadow, wind]
+  combo_ok: true
+  tree: rogue
+  tier: 2
+  requires: [shadow_strike]
+  learn:
+    method: [discovery, self]
+    require_level: 8
+    cost_world: 80
+    cost_hell: 1
+
+- id: guard_basic
+  name: ตั้งการ์ด
+  slot: defense
+  cost_mana: 0
+  strong_vs: [physical]
+  weak_vs: [magic, arcane, fire, lightning]
+  damage_mult_strong: 0.25
+  damage_mult_neutral: 0.55
+  damage_mult_weak: 0.92
+  tier: 1
+  requires: []
+  learn:
+    method: [rank]
+    require_level: 1
+
+- id: guard_water_veil
+  name: ม่านน้ำ
+  slot: defense
+  cost_mana: 6
+  strong_vs: [fire, heat, burn]
+  weak_vs: [lightning, earth]
+  damage_mult_strong: 0.05
+  damage_mult_neutral: 0.55
+  damage_mult_weak: 0.95
+  tier: 2
+  requires: [guard_basic]
+  learn:
+    method: [master, discovery, self]
+    require_level: 6
+    cost_world: 55
+    master_id: master_tide
+
+- id: guard_earth
+  name: เกราะดิน
+  slot: defense
+  cost_mana: 6
+  strong_vs: [lightning, physical, wind]
+  weak_vs: [water, nature]
+  damage_mult_strong: 0.15
+  damage_mult_neutral: 0.55
+  damage_mult_weak: 0.9
+  tree: warrior
+  tier: 2
+  requires: [guard_basic]
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 65
+
+- id: guard_shadow
+  name: เงากลืน
+  slot: defense
+  cost_mana: 8
+  strong_vs: [shadow, holy, arcane]
+  weak_vs: [physical, fire]
+  damage_mult_strong: 0.1
+  damage_mult_neutral: 0.5
+  damage_mult_weak: 0.95
+  tree: rogue
+  tier: 2
+  requires: [guard_basic, shadow_strike]
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 70
+    cost_hell: 1
+
+- id: counter_guard
+  name: เกราะสวนกลับ
+  slot: defense
+  cost_mana: 8
+  strong_vs: [physical]
+  weak_vs: [magic, arcane]
+  damage_mult_strong: 0.1
+  damage_mult_neutral: 0.45
+  damage_mult_weak: 0.85
+  tree: warrior
+  tier: 2
+  requires: [guard_basic, basic_strike]
+  learn:
+    method: [rank, self]
+    require_level: 10
+    cost_world: 90
+
+- id: iron_will
+  name: ใจเหล็ก
+  slot: support
+  cost_mana: 15
+  heal: 30
+  elements: [physical]
+  combo_ok: false
+  tree: warrior
+  tier: 3
+  requires: [counter_guard]
+  learn:
+    method: [rank, self]
+    require_level: 22
+    cost_world: 150
+    cost_heaven: 2
+
+- id: arcane_surge
+  name: อาร์เคนพุ่ง
+  slot: combat
+  cost_mana: 18
+  power: 32
+  elements: [arcane]
+  combo_ok: true
+  tree: mage
+  tier: 2
+  requires: [magic_missile]
+  learn:
+    method: [rank, self]
+    require_level: 10
+    cost_world: 100
+
+- id: mana_font
+  name: บ่อมานา
+  slot: support
+  cost_mana: 0
+  heal: 0
+  elements: [arcane]
+  combo_ok: false
+  tree: mage
+  tier: 3
+  requires: [arcane_surge]
+  learn:
+    method: [rank, self]
+    require_level: 22
+    cost_world: 120
+    cost_heaven: 3
+
+- id: wind_pierce
+  name: ลมเจาะ
+  slot: combat
+  cost_mana: 12
+  power: 26
+  elements: [wind, physical]
+  combo_ok: true
+  tree: archer
+  tier: 2
+  requires: [arrow_shot]
+  learn:
+    method: [rank, self]
+    require_level: 10
+    cost_world: 95
+
+- id: rain_of_arrows
+  name: ฝนธนู
+  slot: combat
+  cost_mana: 22
+  power: 38
+  elements: [physical, wind]
+  combo_ok: true
+  tree: archer
+  tier: 3
+  requires: [wind_pierce]
+  learn:
+    method: [rank, self]
+    require_level: 22
+    cost_world: 160
+    cost_heaven: 1
+
+- id: smoke_step
+  name: ก้าวควัน
+  slot: combat
+  cost_mana: 10
+  power: 18
+  elements: [shadow, wind]
+  combo_ok: true
+  tree: rogue
+  tier: 2
+  requires: [shadow_strike]
+  learn:
+    method: [rank, self]
+    require_level: 10
+    cost_world: 95
+    cost_hell: 1
+
+- id: assassinate
+  name: ลอบสังหาร
+  slot: combat
+  cost_mana: 20
+  power: 40
+  elements: [shadow]
+  combo_ok: true
+  tree: rogue
+  tier: 3
+  requires: [smoke_step]
+  learn:
+    method: [rank, self]
+    require_level: 22
+    cost_world: 170
+    cost_hell: 3
+
+- id: blessing_ward
+  name: ปราการพร
+  slot: defense
+  cost_mana: 10
+  strong_vs: [shadow, fire]
+  weak_vs: [physical]
+  damage_mult_strong: 0.12
+  damage_mult_neutral: 0.5
+  damage_mult_weak: 0.88
+  tree: priest
+  tier: 2
+  requires: [heal, guard_basic]
+  learn:
+    method: [rank, self]
+    require_level: 10
+    cost_world: 90
+    cost_heaven: 2
+
+- id: mass_renew
+  name: ฟื้นฟูวง
+  slot: support
+  cost_mana: 18
+  heal: 40
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 3
+  requires: [blessing_ward]
+  learn:
+    method: [rank, self]
+    require_level: 22
+    cost_world: 150
+    cost_heaven: 3
+
+- id: unit_eclipse_blade
+  name: 【Unit】ดาบคราส
+  slot: combat
+  cost_mana: 25
+  power: 55
+  elements: [shadow, holy]
+  combo_ok: false
+  unit_only: true
+  tier: 5
+
+- id: unit_aegis_wall
+  name: 【Unit】กำแพงแอจิส
+  slot: defense
+  cost_mana: 12
+  strong_vs: [physical, fire, lightning, shadow]
+  weak_vs: []
+  damage_mult_strong: 0.05
+  damage_mult_neutral: 0.25
+  damage_mult_weak: 0.4
+  unit_only: true
+  tier: 5
+
+- id: unit_nova_burst
+  name: 【Unit】โนวาระเบิด
+  slot: combat
+  cost_mana: 28
+  power: 60
+  elements: [arcane, fire, lightning]
+  combo_ok: false
+  unit_only: true
+  tier: 5
+  aoe: true
+
+# bulk 1.13.9 — open skills + AoE
+- id: open_sweep
+  name: กวาดวงกว้าง
+  slot: combat
+  cost_mana: 12
+  power: 15
+  elements: [physical, wind]
+  combo_ok: true
+  aoe: true
+  tier: 1
+  learn:
+    method: [self]
+    require_level: 3
+    cost_world: 35
+
+- id: open_shockwave
+  name: คลื่นกระแทก
+  slot: combat
+  cost_mana: 16
+  power: 20
+  elements: [physical, arcane]
+  combo_ok: true
+  aoe: true
+  tier: 2
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 80
+
+- id: open_mist_veil
+  name: ม่านหมอก
+  slot: support
+  cost_mana: 9
+  heal: 12
+  elements: [water, nature]
+  combo_ok: false
+  tier: 1
+  learn:
+    method: [self]
+    require_level: 4
+    cost_world: 40
+
+- id: open_spark_fan
+  name: พัดประกาย
+  slot: combat
+  cost_mana: 14
+  power: 16
+  elements: [fire, lightning]
+  combo_ok: true
+  aoe: true
+  status: burn
+  status_chance: 0.12
+  tier: 2
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 60
+
+- id: open_void_ripple
+  name: ระลอกสุญญะ
+  slot: combat
+  cost_mana: 20
+  power: 26
+  elements: [shadow, arcane]
+  combo_ok: true
+  aoe: true
+  tier: 3
+  learn:
+    method: [self]
+    require_level: 12
+    cost_world: 140
+    cost_hell: 1

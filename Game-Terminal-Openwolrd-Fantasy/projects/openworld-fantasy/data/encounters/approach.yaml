@@ -1,0 +1,36 @@
+# Weighted outcomes when approaching a sight target
+monster:
+  - id: ambush
+    weight: 40
+  - id: fair_combat
+    weight: 40
+  - id: flee
+    weight: 12
+  - id: rare_talk
+    weight: 8
+
+npc:
+  - id: hostile
+    weight: 25
+  - id: shop
+    weight: 22
+  - id: friend
+    weight: 20
+  - id: master
+    weight: 15
+  - id: ignore
+    weight: 10
+  - id: trap_disguise
+    weight: 8
+
+chest:
+  - id: loot_good
+    weight: 38
+  - id: loot_weak
+    weight: 17
+  - id: ambush
+    weight: 30
+  - id: empty_trap
+    weight: 10
+  - id: rare_relic
+    weight: 5

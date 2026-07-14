@@ -1,0 +1,21 @@
+id: cave_shadow
+name: ถ้ำเงา
+world_tier: 2
+unlock_level: 3
+connections: [dark_forest, ancient_city, mist_marsh]
+mastery_start: 12
+ambient:
+  hp_regen: 2
+  mana_regen: 3
+monster_pools:
+  - id: cave_bat
+    weight: 35
+  - id: dark_slime
+    weight: 30
+  - id: shadow_wraith
+    weight: 25
+  - id: abyss_lurker
+    weight: 10
+
+boss_id: boss_shadow_queen
+boss_unlock_level: 8

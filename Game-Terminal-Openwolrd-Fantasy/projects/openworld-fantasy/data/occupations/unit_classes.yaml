@@ -1,0 +1,57 @@
+# Unit classes — exclusive. Only ONE unit class per character.
+# Unlock conditions are fully hidden (no UI spoilers).
+# Each grants exactly one exclusive unit skill (cannot be learned otherwise).
+
+- id: unit_eclipse
+  name: Unit · คราสเงา
+  exclusive_skill: unit_eclipse_blade
+  desc_hidden: true
+  unlock:
+    min_level: 20
+    occupation_ids: [rogue, archer]
+    min_stat_crit: 12
+    min_boss_kills: 2
+    require_library_entries: 2
+    chance: 0.35
+  latent_growth:
+    atk: 1.20
+    defense: 0.80
+    magic: 1.10
+    speed: 1.25
+    crit: 1.50
+
+- id: unit_aegis
+  name: Unit · แอจิสนิรันดร์
+  exclusive_skill: unit_aegis_wall
+  desc_hidden: true
+  unlock:
+    min_level: 20
+    occupation_ids: [warrior, priest]
+    min_stat_defense: 14
+    min_boss_kills: 2
+    require_library_entries: 2
+    chance: 0.35
+  latent_growth:
+    atk: 0.90
+    defense: 1.55
+    magic: 1.00
+    speed: 0.85
+    crit: 0.70
+
+- id: unit_nova
+  name: Unit · โนวาอาร์เคน
+  exclusive_skill: unit_nova_burst
+  desc_hidden: true
+  unlock:
+    min_level: 22
+    occupation_ids: [mage, priest]
+    min_stat_magic: 16
+    min_combos: 30
+    require_library_entries: 3
+    chance: 0.30
+  latent_growth:
+    atk: 0.75
+    defense: 0.80
+    magic: 1.60
+    speed: 1.10
+    crit: 1.20

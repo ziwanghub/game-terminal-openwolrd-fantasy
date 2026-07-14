@@ -1,0 +1,15 @@
+{
+  "gate_id": "M8C5",
+  "workdir": ".",
+  "env": {
+    "NODE_ENV": "production",
+    "ZMOS_EXEC_TARGET_KIND": "project"
+  },
+  "command": "npm run verify:all && echo '[PASS] Verification completed'",
+  "timeout_ms": 30000,
+  "expected_assertions": [
+    "[PASS] Verification completed"
+  ],
+  "next_action": "zcl report --status PASS --task validation",
+  "stop_conditions": []
+}

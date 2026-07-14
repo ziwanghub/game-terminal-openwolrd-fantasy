@@ -1,0 +1,470 @@
+- id: potion_hp_small
+  rarity: common
+  name: ยา HP ขนาดเล็ก
+  desc: ยาฟื้นเลือดเล็กน้อย ใช้ในสนามหรือไฟต์
+  kind: consumable
+  heal_hp: 30
+  price_world: 25
+
+- id: potion_hp
+  rarity: common
+  name: ยา HP
+  desc: ยาฟื้นเลือดมาตรฐาน
+  kind: consumable
+  heal_hp: 55
+  price_world: 45
+
+- id: potion_mana
+  rarity: common
+  name: ยา Mana
+  desc: ยาฟื้นมานา
+  kind: consumable
+  heal_mana: 35
+  price_world: 40
+
+- id: focus_tea
+  code: pt_tea
+  rarity: common
+  name: ชาสมาธิ
+  desc: ชาร้อน — จิตค่อยๆ โล่ง (ฟื้นความฉลาดที่ใช้ไป)
+  kind: consumable
+  restore_intel: 3
+  price_world: 40
+
+- id: mind_elixir
+  code: pt_mind
+  rarity: uncommon
+  name: ยาน้ำความคิด
+  desc: ขยายขอบเขตความคิดชั่วคราว และเติมพลังจิต
+  kind: consumable
+  restore_intel: 2
+  boost_intel_max: 2
+  price_world: 95
+
+- id: lucid_incense
+  code: pt_lucid
+  rarity: rare
+  name: ธูปแจ่มจิต
+  desc: จิตกลับมาเต็ม — ใช้ก่อนทางเลือกสำคัญ
+  kind: consumable
+  fill_intel: true
+  price_world: 160
+  price_heaven: 1
+
+- id: antidote
+  rarity: common
+  name: ยาแก้พิษ
+  desc: ล้างพิษและอาการใกล้เคียง
+  kind: consumable
+  clear_status: poison
+  price_world: 35
+
+- id: panacea
+  rarity: uncommon
+  name: ยาถอนสถานะ
+  desc: ล้างสถานะผิดปกติเกือบทั้งหมด (พิษ ไหม้ แช่แข็ง ฯลฯ)
+  kind: consumable
+  clear_all_debuffs: true
+  clear_status: all
+  price_world: 120
+  price_heaven: 2
+
+- id: balm_regen
+  rarity: common
+  name: ขี้ผึ้งฟื้นฟู
+  desc: ทาแล้วรู้สึกเลือดไหลกลับ — บัฟฟื้นฟูชั่วคราว
+  kind: consumable
+  apply_status: regen
+  price_world: 55
+
+- id: tonic_might
+  rarity: uncommon
+  name: ยาปลุกกำลัง
+  desc: กลิ่นฉุน — แรงมือหนักขึ้นชั่วคราว
+  kind: consumable
+  apply_status: might
+  price_world: 70
+
+- id: oil_ward
+  rarity: uncommon
+  name: น้ำมันเกราะ
+  desc: ทาผิว/เกราะ — ลดแรงปะทะชั่วคราว
+  kind: consumable
+  apply_status: ward
+  price_world: 65
+
+- id: tea_focus
+  rarity: common
+  name: ชาสมาธิ
+  desc: จิบแล้วจิตสงบ — ฟื้นมานาทีละน้อย
+  kind: consumable
+  apply_status: focus
+  price_world: 45
+
+# --- Phase III content pack (light) ---
+- id: forest_charm
+  rarity: uncommon
+  name: เครื่องรางใบไม้
+  desc: กลิ่นป่า — ช่วยใจนิ่งในป่ามืด
+  kind: consumable
+  apply_status: focus
+  heal_hp: 15
+  price_world: 40
+
+- id: hunter_ration
+  rarity: common
+  name: เสบียงนักล่า
+  desc: กินแล้วอิ่มท้องในสนาม
+  kind: consumable
+  heal_hp: 45
+  price_world: 30
+
+- id: iron_arrowhead
+  rarity: common
+  name: หัวลูกศรเหล็ก
+  desc: วัสดุเล็ก — ใช้คราฟ/อัปได้
+  kind: material
+  price_world: 12
+
+- id: spirit_incense
+  rarity: rare
+  name: ธูปวิญญาณ
+  desc: เผาในตลาดสวรรค์ — เรียกความสงบ (sink เงินสวรรค์)
+  kind: consumable
+  apply_status: ward
+  price_heaven: 5
+  heal_mana: 20
+
+- id: void_ash
+  rarity: rare
+  name: ขี้เถ้าสุญญะ
+  desc: ใช้ในพิธีตลาดนรก — แลกพลังชั่วคราว
+  kind: consumable
+  apply_status: might
+  price_hell: 4
+
+- id: iron_sword
+  code: sw001
+  rarity: common
+  name: ดาบเหล็ก
+  desc: ดาบเหล็กพื้นฐาน ช่องการ์ด 1 ชุด legion
+  kind: equipment
+  slot: weapon
+  atk: 6
+  sockets: 1
+  set_id: iron_legion
+  price_world: 120
+  art_id: iron_sword
+
+- id: steel_blade
+  code: sw002
+  rarity: uncommon
+  name: ดาบเหล็กกล้า
+  desc: ดาบเหล็กกล้าคมขึ้น ช่องการ์ด 2
+  kind: equipment
+  slot: weapon
+  atk: 11
+  sockets: 2
+  set_id: iron_legion
+  price_world: 280
+  art_id: iron_sword
+
+- id: shadow_dagger
+  code: sw003
+  rarity: rare
+  name: กริชเงา
+  desc: กริชเงา — แท็ก shadow
+  kind: equipment
+  slot: weapon
+  atk: 9
+  sockets: 1
+  tags: [shadow]
+  set_id: shadow_veil
+  price_world: 220
+
+- id: apprentice_staff
+  code: sw004
+  rarity: uncommon
+  name: ไม้เท้านักเรียน
+  desc: ไม้เท้านักเรียน เพิ่มมานา
+  kind: equipment
+  slot: weapon
+  atk: 4
+  max_mana: 15
+  sockets: 1
+  tags: [arcane]
+  set_id: arcane_scholar
+  price_world: 160
+
+- id: leather_armor
+  code: ar001
+  rarity: common
+  name: เกราะหนัง
+  desc: เกราะหนังเบา
+  kind: equipment
+  slot: armor
+  max_hp: 12
+  sockets: 1
+  set_id: iron_legion
+  price_world: 100
+
+- id: iron_plate
+  code: ar002
+  rarity: uncommon
+  name: เกราะเหล็ก
+  desc: เกราะเหล็กหนา
+  kind: equipment
+  slot: armor
+  max_hp: 28
+  sockets: 1
+  set_id: iron_legion
+  price_world: 260
+
+- id: mage_robe
+  code: ar003
+  rarity: uncommon
+  name: ชุดคลุมเวทย์
+  desc: ชุดคลุมเวทย์ เน้นมานา
+  kind: equipment
+  slot: armor
+  max_hp: 8
+  max_mana: 20
+  sockets: 2
+  set_id: arcane_scholar
+  price_world: 240
+
+- id: upgrade_mat
+  rarity: common
+  name: วัสดุอัพเกรด
+  desc: วัสดุหลักในพิธีอัปเกียร์ — ทุกครั้งที่อัปจะใช้ (ดูจำนวนในแผงอัปก่อนยืนยัน)
+  kind: material
+  price_world: 50
+
+- id: rare_mat
+  rarity: uncommon
+  name: วัสดุหายาก
+  desc: วัสดุหายาก ใช้ตอนอัปขั้นสูง (+3 ขึ้นไป) — เก็บไว้สำคัญ
+  kind: material
+  price_world: 120
+
+- id: shadow_cloak
+  code: ar004
+  rarity: rare
+  name: ผ้าคลุมเงา
+  desc: ผ้าคลุมเงา แท็ก shadow
+  kind: equipment
+  slot: armor
+  max_hp: 16
+  sockets: 1
+  tags: [shadow]
+  set_id: shadow_veil
+  price_world: 240
+
+- id: thorn_blade
+  code: sw005
+  rarity: sacred
+  name: ดาบหนามราชันย์
+  desc: ดาบหนาม เซ็ต thorn
+  kind: equipment
+  slot: weapon
+  atk: 14
+  sockets: 2
+  tags: [nature]
+  set_id: thorn_king
+  price_world: 400
+
+- id: thorn_mail
+  code: ar005
+  rarity: sacred
+  name: เกราะหนาม
+  desc: เกราะหนาม เซ็ต thorn
+  kind: equipment
+  slot: armor
+  max_hp: 35
+  sockets: 1
+  tags: [nature]
+  set_id: thorn_king
+  price_world: 380
+
+- id: blessed_charm
+  rarity: sacred
+  name: เครื่องรางสวรรค์
+  desc: เครื่องรางสวรรค์ ฟื้นมาก ใช้เงินสวรรค์ซื้อ
+  kind: consumable
+  heal_hp: 80
+  heal_mana: 40
+  price_heaven: 5
+
+- id: hell_contract
+  rarity: rare
+  name: สัญญานรก (บัฟ ATK ชั่วคราวในเซฟ)
+  desc: สัญญานรก เพิ่ม ATK ชั่วคราว มีราคา
+  kind: consumable
+  price_hell: 4
+
+- id: copper_ring
+  code: ac001
+  rarity: common
+  name: แหวนทองแดง
+  kind: equipment
+  slot: accessory
+  atk: 2
+  max_mana: 5
+  sockets: 0
+  price_world: 90
+  desc: เครื่องประดับเรียบง่าย เสริมพลังเล็กน้อย
+
+- id: silver_amulet
+  code: ac002
+  rarity: uncommon
+  name: สร้อยเงิน
+  kind: equipment
+  slot: accessory
+  max_hp: 10
+  max_mana: 8
+  sockets: 1
+  price_world: 180
+  desc: สร้อยเพิ่มทนทานและมานา
+
+- id: shadow_band
+  code: ac003
+  rarity: rare
+  name: วงแหวนเงา
+  kind: equipment
+  slot: accessory
+  atk: 4
+  tags: [shadow]
+  set_id: shadow_veil
+  sockets: 0
+  price_world: 260
+  desc: เข้าชุดเงา — แท็ก shadow
+
+- id: arcane_circlet
+  code: ac004
+  rarity: rare
+  name: มงกุฎอาร์เคน
+  kind: equipment
+  slot: accessory
+  atk: 1
+  max_mana: 18
+  tags: [arcane]
+  set_id: arcane_scholar
+  sockets: 1
+  price_world: 300
+  desc: เครื่องประดับนักเวทย์
+
+- id: dungeon_thread
+  name: ด้ายกลับทาง
+  kind: material
+  rarity: rare
+  price_world: 200
+  desc: เส้นด้ายเก่า รู้สึกดึงกลับเมื่ออยู่ในที่มืด — ไม่มีคำอธิบายวิธีใช้ชัด
+  # secretly: dungeon escape token
+
+- id: void_key_shard
+  name: เศษกุญแจสุญญะ
+  kind: material
+  rarity: sacred
+  price_world: 450
+  price_hell: 2
+  desc: เศษโลหะที่กลืนแสง — ได้มาอย่างไรคุณยังไม่แน่ใจ
+
+# ── 1.13.4 content pack ──
+- id: traveler_ration
+  code: pt_tr
+  rarity: common
+  name: เสบียงนักเดินทาง
+  desc: อาหารแห้งเมือง — พออิ่มท้องชั่วคราว
+  kind: consumable
+  heal_hp: 25
+  heal_mana: 10
+  price_world: 30
+
+- id: city_map_scrap
+  name: เศษแผนที่เมือง
+  kind: material
+  rarity: common
+  price_world: 15
+  desc: กระดาษยับ — เส้นทางนอกกำแพงเลือน
+
+- id: crystal_dust
+  name: ผงผลึก
+  kind: material
+  rarity: uncommon
+  price_world: 55
+  desc: ฝุ่นระยิบ — ใช้คราฟหรือขายตลาดหายาก
+
+- id: sand_cloak_mat
+  name: ผืนผ้าทราย
+  kind: material
+  rarity: uncommon
+  price_world: 48
+  desc: ผ้าทอหยาบจากทะเลทราย — ยังไม่รู้สูตรคราฟเต็ม
+
+- id: round_token
+  code: ac_round
+  rarity: rare
+  name: เหรียญรอบแรก
+  kind: equipment
+  slot: accessory
+  atk: 2
+  max_hp: 12
+  sockets: 0
+  price_world: 200
+  desc: เครื่องหมายว่าคุณเคยปิดรอบหนึ่งของโลกแล้ว — ผลแฝงเล็กน้อย
+
+- id: herb_bundle
+  rarity: common
+  name: มัดสมุนไพร
+  kind: material
+  price_world: 18
+  desc: กลิ่นเขียวสด — ขายหรือรอสูตรยา
+
+- id: bronze_charm
+  code: ac_brz
+  rarity: uncommon
+  name: เครื่องรางทองแดง
+  kind: equipment
+  slot: accessory
+  max_hp: 8
+  sockets: 0
+  price_world: 90
+  desc: รางเล็กจากตลาดเมือง — รู้สึกอุ่นมือ
+
+# bulk 1.13.8
+- id: city_bread
+  rarity: common
+  name: ขนมปังเมือง
+  kind: consumable
+  heal_hp: 18
+  price_world: 12
+  desc: อุ่นเล็กน้อย — อิ่มท้องชั่วคราว
+
+- id: bandit_knife
+  code: sw_bk
+  rarity: common
+  name: มีดปล้น
+  kind: equipment
+  slot: weapon
+  atk: 4
+  sockets: 0
+  price_world: 55
+  desc: คมพอใช้ — หาง่ายในเมือง
+
+- id: dust_veil
+  code: ar_dv
+  rarity: uncommon
+  name: ผ้าคลุมฝุ่น
+  kind: equipment
+  slot: armor
+  max_hp: 15
+  sockets: 0
+  price_world: 70
+  desc: กันลมทรายได้บ้าง
+
+- id: void_thread
+  rarity: rare
+  name: ด้ายสุญญะ
+  kind: material
+  price_world: 120
+  desc: เส้นใยที่กลืนแสง — วัตถุดิบสูง

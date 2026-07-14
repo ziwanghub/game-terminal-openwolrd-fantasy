@@ -1,0 +1,83 @@
+# Priest skill tree
+
+- id: priest_smite
+  name: ลงทัณฑ์
+  slot: combat
+  cost_mana: 10
+  power: 16
+  elements: [holy]
+  combo_ok: true
+  tree: priest
+  tier: 2
+  requires: [heal]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 50
+    cost_heaven: 1
+
+- id: priest_cleanse
+  name: ชำระ
+  slot: support
+  cost_mana: 10
+  heal: 14
+  elements: [holy, water]
+  combo_ok: false
+  tree: priest
+  tier: 2
+  requires: [heal]
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 55
+    cost_heaven: 1
+
+- id: priest_radiant
+  name: รัศมี
+  slot: combat
+  cost_mana: 16
+  power: 28
+  elements: [holy, fire]
+  combo_ok: true
+  tree: priest
+  tier: 3
+  requires: [priest_smite, blessing_ward]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 120
+    cost_heaven: 2
+
+- id: priest_sanctuary
+  name: เขตศักดิ์สิทธิ์
+  slot: defense
+  cost_mana: 14
+  strong_vs: [shadow, fire, physical]
+  weak_vs: [arcane]
+  damage_mult_strong: 0.1
+  damage_mult_neutral: 0.42
+  damage_mult_weak: 0.85
+  tree: priest
+  tier: 3
+  requires: [blessing_ward]
+  learn:
+    method: [self]
+    require_level: 16
+    cost_world: 130
+    cost_heaven: 2
+
+- id: priest_judgment
+  name: คำพิพากษา
+  slot: combat
+  cost_mana: 24
+  power: 42
+  elements: [holy, lightning]
+  combo_ok: true
+  tree: priest
+  tier: 4
+  requires: [mass_renew, priest_radiant]
+  learn:
+    method: [self]
+    require_level: 26
+    cost_world: 200
+    cost_heaven: 5

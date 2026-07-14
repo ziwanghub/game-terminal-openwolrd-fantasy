@@ -1,0 +1,8 @@
+{
+  "task_id": "ZMOS-PRODUCTION-CUTOVER-030",
+  "status": "approved",
+  "version": "zmos-evo1.2.0-clean",
+  "date": "2026-04-02",
+  "archive_path": "archive/zmos-pre-production-baseline-20260402",
+  "notes": "Archive-first cutover completed; active runtime data reset to clean baseline."
+}

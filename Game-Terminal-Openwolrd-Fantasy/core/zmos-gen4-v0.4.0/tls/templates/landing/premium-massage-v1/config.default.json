@@ -1,0 +1,74 @@
+{
+  "shop": {
+    "name": "Serenity Home Massage",
+    "slug": "serenity-massage-v1",
+    "tagline": "Professional Outcall Massage Service",
+    "logo": "/assets/images/logo.png",
+    "phone": "091-xxx-xxxx",
+    "line_id": "@serenity-massage",
+    "address": "Thong Lo, Bangkok",
+    "map_url": "https://maps.google.com/?q=Thong+Lo+Bangkok",
+    "social": {
+      "facebook": "https://facebook.com/serenity",
+      "instagram": "https://instagram.com/serenity"
+    }
+  },
+  "branding": {
+    "primary_color": "#a88860",
+    "secondary_color": "#4a3f35",
+    "font": "Inter"
+  },
+  "services": [
+    {
+      "id": "oil-massage",
+      "name": "Aromatherapy Oil Massage",
+      "tag": "Most Popular",
+      "description": "Drift into deep relaxation with our signature essential oil blends.",
+      "image": "/assets/images/service-oil-massage.jpeg",
+      "options": [
+        { "duration": "60 min", "price": 1500 },
+        { "duration": "90 min", "price": 2000 },
+        { "duration": "120 min", "price": 2500 }
+      ]
+    },
+    {
+      "id": "thai-massage",
+      "name": "Traditional Thai Massage",
+      "tag": "Signature",
+      "description": "Experience the ancient healing art of rhythmic stretching and acupressure.",
+      "image": "/assets/images/service-thai-massage.jpeg",
+      "options": [
+        { "duration": "90 min", "price": 1200 },
+        { "duration": "120 min", "price": 1600 }
+      ]
+    }
+  ],
+  "staff": [
+    {
+      "id": "t1",
+      "name": "Siriporn",
+      "role": "Senior Therapist",
+      "tag": "Most Popular",
+      "photo": "/assets/images/massage-user1.jpeg"
+    },
+    {
+      "id": "t2",
+      "name": "Nicha",
+      "role": "Thai Massage Expert",
+      "tag": "Relaxation Expert",
+      "photo": "/assets/images/massage-user2.jpeg"
+    }
+  ],
+  "hours": {
+    "mon-sun": "10:00 - 22:00"
+  },
+  "features": {
+    "booking": { "visible": true, "enabled": true },
+    "staff": { "visible": true, "enabled": true },
+    "gallery": { "visible": true, "enabled": true },
+    "promotions": { "visible": false, "enabled": false },
+    "admin": { "visible": true, "enabled": true },
+    "payments": { "visible": false, "enabled": false }
+  },
+  "package": "pro"
+}

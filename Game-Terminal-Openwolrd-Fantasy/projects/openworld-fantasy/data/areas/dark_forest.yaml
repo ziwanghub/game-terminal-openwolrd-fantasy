@@ -1,0 +1,21 @@
+id: dark_forest
+name: ป่ามืด
+world_tier: 1
+unlock_level: 1
+connections: [cave_shadow, mountain_rock, mist_marsh]
+mastery_start: 15
+ambient:
+  hp_regen: 3
+  mana_regen: 2
+monster_pools:
+  - id: goblin_hunter
+    weight: 40
+  - id: forest_wolf
+    weight: 35
+  - id: wood_ent
+    weight: 15
+  - id: forest_wraith
+    weight: 10
+
+boss_id: boss_forest_king
+boss_unlock_level: 5

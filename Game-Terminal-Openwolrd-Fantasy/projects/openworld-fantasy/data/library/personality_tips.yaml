@@ -1,0 +1,107 @@
+# Library tips about personality points — never complete by default.
+# kinds:
+#   fragment — partial truth
+#   rumor — may be false / misleading
+#   complete — full accurate method (rare when rolled)
+# weights: complete entries stay very low
+
+personality_tip_chance: 0.55
+
+tips:
+  - id: tip_frag_gift
+    kind: fragment
+    title: เศษบันทึก — "ของขวัญ"
+    body: |
+      มีผู้กล่าวว่า การยื่นของให้ผู้อื่น... เกี่ยวกับ "แต้มนิสัย"
+      แต่ไม่บอกว่ากี่ครั้ง หรือได้เมื่อไหร่
+    weight: 20
+
+  - id: tip_frag_flee
+    kind: fragment
+    title: หน้าขาด — "การหนี"
+    body: |
+      หนีบ่อย นิสัยเปลี่ยน
+      บางคนว่ารอดชีวิตแล้วได้รางวัลแปลกๆ ภายหลัง
+      อาจใช่ อาจไม่
+    weight: 18
+
+  - id: tip_rumor_kill_all
+    kind: rumor
+    title: ข่าวลือตลาด
+    body: |
+      "แค่ฆ่าให้ได้ร้อยตัว นิสัยจะเต็มเอง"
+      — พ่อค้าคนหนึ่งพูดแล้วหัวเราะ
+    weight: 15
+    is_false: true
+
+  - id: tip_frag_library
+    kind: fragment
+    title: โน้ตขอบหนังสือ
+    body: |
+      เข้าห้องสมุดซ้ำ... มีสิ่งตอบแทน
+      แต่ไม่ใช่ทุกครั้ง
+    weight: 16
+
+  - id: tip_frag_level
+    kind: fragment
+    title: รอยจารึกเลือน
+    body: |
+      เมื่อเลเวลถึง "เลขกลม" บางค่า
+      เส้นทางนิสัยเปิดช่องว่าง
+      สองหลัก... หรือยี่สิบ?
+    weight: 14
+
+  - id: tip_rumor_only_kind
+    kind: rumor
+    title: คำสอนปลอม
+    body: |
+      ต้องเป็นคนดีเท่านั้นถึงจะได้อะไร
+      คนก้าวร้าวไม่มีทาง
+    weight: 12
+    is_false: true
+
+  - id: tip_frag_combo
+    kind: fragment
+    title: กระดาษไหม้ครึ่งแผ่น
+    body: |
+      เรียงสกิลบ่อย... เกี่ยว "ความคิด" กับแต้ม
+      จำนวนชัดๆ ถูกเผาไปแล้ว
+    weight: 14
+
+  - id: tip_frag_boss
+    kind: fragment
+    title: บันทึกนักล่า
+    body: |
+      สิ่งใหญ่ล้มแล้ว บางครั้งหัวใจกว้างขึ้น
+      ครั้งแรกสำคัญ
+    weight: 16
+
+  - id: tip_complete_kind
+    kind: complete
+    title: ตำราสมบูรณ์ (หายาก) — การกระทำเมตตา
+    body: |
+      [ข้อมูลครบชุด — โชคดีมาก]
+      ทักทายสุภาพ / ของขวัญ / เสนอช่วย รวมกันครบ 3 ครั้ง
+      จะได้แต้มนิสัย 1 แต้ม (ครั้งเดียวในชีวิตตัวละครนี้)
+      จากนั้นไปที่เมนูนิสัย ลงทุนแกนที่ต้องการ
+    weight: 2
+
+  - id: tip_complete_wins
+    kind: complete
+    title: ตำราสมบูรณ์ (หายาก) — ชัยชนะ
+    body: |
+      [ข้อมูลครบชุด — โชคดีมาก]
+      ชนะการต่อสู้สะสม 8 ครั้ง → แต้มนิสัย +1 (ครั้งเดียว)
+      และทุกๆ 5 ชัยชนะหลังจากนั้น มีโอกาสได้แต้มซ้ำแบบช้าๆ
+    weight: 2
+
+  - id: tip_complete_invest
+    kind: complete
+    title: ตำราสมบูรณ์ (หายาก) — วิธีใช้แต้ม
+    body: |
+      [ข้อมูลครบชุด]
+      เมนู N → ลงทุนแต้มนิสัย
+      แต่ละแต้มดันแกนนิสัยไปทาง "สูง" ของแกนนั้น
+      (เช่น ลงทุนเมตตา → โน้มเมตตา)
+      ไม่สามารถเห็นตัวเลขแกนจริง เห็นแค่ฉลากเมื่อเด่น
+    weight: 2

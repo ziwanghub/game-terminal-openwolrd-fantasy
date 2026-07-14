@@ -1,0 +1,166 @@
+# Shop stock: string id OR {id, rarity}
+# Specialty markets:
+#   min_rarity_rank / max_rarity_rank — only trade those grades (1=common … 8=mythic)
+#   sell_ratio, price_insurance_floor, sell_tax_bonus — economy knobs
+
+- id: traveling_merchant
+  name: พ่อค้าเร่
+  min_rarity_rank: 1
+  max_rarity_rank: 4
+  stock:
+    - potion_hp_small
+    - potion_hp
+    - potion_mana
+    - antidote
+    - panacea
+    - balm_regen
+    - tonic_might
+    - oil_ward
+    - tea_focus
+    - hunter_ration
+    - forest_charm
+    - iron_arrowhead
+    - id: iron_sword
+      rarity: common
+    - id: iron_sword
+      rarity: uncommon
+    - id: leather_armor
+      rarity: common
+    - card_fire
+    - card_water
+    - card_vitality
+
+- id: city_armory
+  name: ร้านอาวุธเมือง
+  min_rarity_rank: 1
+  max_rarity_rank: 5
+  stock:
+    - id: iron_sword
+      rarity: common
+    - id: iron_sword
+      rarity: uncommon
+    - id: steel_blade
+      rarity: uncommon
+    - id: steel_blade
+      rarity: rare
+    - id: shadow_dagger
+      rarity: rare
+    - apprentice_staff
+    - leather_armor
+    - id: iron_plate
+      rarity: uncommon
+    - mage_robe
+    - upgrade_mat
+    - card_lightning
+    - card_guard_water
+    - card_wind
+    - card_shadow
+    - id: shadow_cloak
+      rarity: rare
+    - id: thorn_blade
+      rarity: sacred
+    - id: thorn_mail
+      rarity: sacred
+    - id: copper_ring
+      rarity: common
+    - id: silver_amulet
+      rarity: uncommon
+
+- id: celestial_bazaar
+  name: ตลาดสวรรค์
+  min_rarity_rank: 3
+  max_rarity_rank: 7
+  sell_ratio: 0.42
+  price_insurance_floor: 0.34
+  sell_tax_bonus: -0.03   # slightly lower tax (heaven favor)
+  stock:
+    - id: blessed_charm
+      rarity: sacred
+    - id: card_lightning
+      rarity: rare
+    - id: card_guard_water
+      rarity: rare
+    - potion_mana
+    - spirit_incense
+    - id: arcane_circlet
+      rarity: sacred
+    - id: silver_amulet
+      rarity: rare
+    - id: thorn_blade
+      rarity: sacred
+    - id: steel_blade
+      rarity: legendary
+
+- id: infernal_market
+  name: ตลาดนรก
+  min_rarity_rank: 3
+  max_rarity_rank: 7
+  sell_ratio: 0.45
+  sell_tax_bonus: 0.05    # higher tax (infernal cut)
+  stock:
+    - id: hell_contract
+      rarity: rare
+    - id: shadow_dagger
+      rarity: rare
+    - id: shadow_dagger
+      rarity: legendary
+    - id: card_shadow
+      rarity: rare
+    - id: rare_mat
+      rarity: uncommon
+    - void_ash
+    - id: shadow_band
+      rarity: rare
+    - id: shadow_cloak
+      rarity: legendary
+
+# Specialty: rare+ exchange only
+- id: rare_exchange
+  name: ตลาดแลกของหายาก
+  min_rarity_rank: 3
+  max_rarity_rank: 5
+  sell_ratio: 0.44
+  price_insurance_floor: 0.33
+  stock:
+    - id: steel_blade
+      rarity: rare
+    - id: shadow_dagger
+      rarity: rare
+    - id: shadow_cloak
+      rarity: rare
+    - id: iron_plate
+      rarity: rare
+    - id: rare_mat
+      rarity: rare
+    - id: dungeon_thread
+      rarity: rare
+    - id: card_lightning
+      rarity: rare
+    - id: silver_amulet
+      rarity: rare
+
+# Specialty: legend pavilion (ตำนาน–มหาเทพ)
+- id: legend_pavilion
+  name: ศาลาตำนาน
+  min_rarity_rank: 5
+  max_rarity_rank: 8
+  sell_ratio: 0.48
+  price_insurance_floor: 0.38
+  sell_tax_bonus: 0.08
+  stock:
+    - id: thorn_blade
+      rarity: legendary
+    - id: thorn_mail
+      rarity: legendary
+    - id: shadow_dagger
+      rarity: legendary
+    - id: arcane_circlet
+      rarity: divine
+    - id: blessed_charm
+      rarity: legendary
+    - id: rare_mat
+      rarity: sacred
+    - id: void_key_shard
+      rarity: sacred
+    - id: dungeon_thread
+      rarity: legendary

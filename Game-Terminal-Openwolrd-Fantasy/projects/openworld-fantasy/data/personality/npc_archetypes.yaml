@@ -1,0 +1,38 @@
+# NPC archetypes — hidden preferred personality vectors
+# compatibility = similarity between player traits and preferred + dislike penalties
+
+- id: merchant
+  name: พ่อค้า
+  prefers: { greed: 20, kindness: 10, caution: 15 }
+  dislikes: { aggression: 40, threaten: true }
+  # if compatible: better prices / more stock dialogue
+  shop_discount_if_friend: 0.12
+  shop_surcharge_if_foe: 0.18
+
+- id: master
+  name: อาจารย์
+  prefers: { honor: 30, curiosity: 25, kindness: 10 }
+  dislikes: { greed: 35, aggression: 30 }
+  teach_bonus_if_friend: true
+
+- id: bandit
+  name: โจร
+  prefers: { aggression: 25, greed: 20, courage: 15 }
+  dislikes: { honor: 30, kindness: 20 }
+  ambush_bias_if_foe: 0.25
+
+- id: pilgrim
+  name: นักแสวงบุญ
+  prefers: { kindness: 30, honor: 20, loyalty: 15 }
+  dislikes: { greed: 25, aggression: 35 }
+
+- id: scholar
+  name: นักปราชญ์
+  prefers: { curiosity: 40, caution: 10 }
+  dislikes: { aggression: 25 }
+  library_hint_if_friend: true
+
+- id: wanderer
+  name: นักเดินทาง
+  prefers: { courage: 15, curiosity: 15 }
+  dislikes: { threaten: true }

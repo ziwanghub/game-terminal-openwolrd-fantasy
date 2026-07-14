@@ -1,0 +1,9 @@
+export const VERSION = "0.4.0";
+export const CODENAME = "Gen4-Controlled-Trial";
+export const FULL_VERSION = "v0.4.0 \"Gen4 Controlled Trial\"";
+export const SDK_VERSION = "0.4.0";
+export const RELEASE_STATUS = "Controlled Internal Trial Authorized";
+export const PRODUCTION_DEPLOYMENT = "NOT APPROVED";
+export const FEDERATION_RUNTIME = "NOT APPROVED";
+export const SCHEMA_VERSION_AGENT = "0.4.0-agent";
+export const SCHEMA_VERSION = SCHEMA_VERSION_AGENT;

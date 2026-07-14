@@ -1,0 +1,41 @@
+{
+  "contract_version": "2.0.0-enforcer",
+  "generated_at": "2026-05-06T12:00:00.000Z",
+  "contract_hash": "3ccf7c3be82341e7f9784f4f1ebf52f0e5e8b95d2d8ac13f0cc58de9f8f8571f",
+  "code_ref": {
+    "branch": "develop",
+    "commit_sha": "a1b2c3d4e5f678901234567890abcdef12345678"
+  },
+  "runtime_ref": {
+    "mode": "ops-dist",
+    "entry": "dist/cli/gateway.js",
+    "node_version": "v22"
+  },
+  "env_ref": {
+    "target_env": "dev",
+    "target_host": "localhost",
+    "config_hash": "d70f7ef4f87112f8f996f9ac3c31f8a9d3b8b4b6b4f6521ea6a9bb33f7f7c3d1"
+  },
+  "data_ref": {
+    "schema_version": "draft-07",
+    "state_source": ".z-mos/state/project-state.json"
+  },
+  "asset_ref": {
+    "schema_bundle_hash": "79a4866f8a95c9895a9d98b7e2fcbf2a0ddf3cf1d7425a8cb8a1cb9a9d5b6712"
+  },
+  "gate_state": {
+    "current_gate": "standard",
+    "next_allowed_task": "embed into target project",
+    "blocked": false
+  },
+  "confidence": {
+    "score": 98,
+    "basis": [
+      "schema_valid",
+      "truth_first_read",
+      "preflight_pass"
+    ]
+  },
+  "unknowns": [],
+  "verdict": "SAFE_TO_CONTINUE"
+}

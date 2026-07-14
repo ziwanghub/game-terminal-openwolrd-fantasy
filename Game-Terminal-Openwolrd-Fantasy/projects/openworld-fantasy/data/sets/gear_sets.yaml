@@ -1,0 +1,37 @@
+# Set bonuses: active when player has enough matching set_id pieces
+# pieces count from equipped weapon/armor set_id fields
+- id: iron_legion
+  name: กองทัพเหล็ก
+  pieces_required: 2
+  bonuses:
+    atk: 4
+    max_hp: 20
+  flavor: "เกราะและดาบเหล็กสั่นพ้อง — แนวรบมั่นคง"
+
+- id: shadow_veil
+  name: ผ้าคลุมเงา
+  pieces_required: 2
+  bonuses:
+    atk: 6
+    pressure: 8
+  grant_tags: [shadow]
+  flavor: "เงากลืนแสง — โจมตีคมขึ้น"
+
+- id: arcane_scholar
+  name: นักปราชญ์อาร์เคน
+  pieces_required: 2
+  bonuses:
+    max_mana: 25
+    atk: 3
+  grant_tags: [arcane]
+  grant_skills: [magic_missile]
+  flavor: "มานาไหลเวียน — เวทย์ตอบสนอง"
+
+- id: thorn_king
+  name: ราชันย์หนาม (บอสเซ็ต)
+  pieces_required: 2
+  bonuses:
+    atk: 8
+    max_hp: 30
+  grant_tags: [nature]
+  flavor: "พลังราชันย์เถื่อนยังหลงเหลือในชุดเกียร์"

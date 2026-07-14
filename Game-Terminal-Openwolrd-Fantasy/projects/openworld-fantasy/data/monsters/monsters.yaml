@@ -1,0 +1,433 @@
+- id: goblin_hunter
+  name: Goblin นักล่า
+  level_min: 1
+  level_max: 4
+  hp_base: 40
+  atk_base: 7
+  elements: [physical]
+  xp_mult: 1.0
+
+- id: forest_wolf
+  name: Wolf ป่า
+  level_min: 2
+  level_max: 5
+  hp_base: 48
+  atk_base: 9
+  elements: [physical]
+  xp_mult: 1.05
+
+- id: wood_ent
+  rarity: uncommon
+  name: Ent ไม้ยักษ์
+  level_min: 3
+  level_max: 7
+  hp_base: 70
+  atk_base: 8
+  elements: [nature]
+  xp_mult: 1.2
+
+- id: forest_wraith
+  rarity: rare
+  name: วิญญาณป่า
+  level_min: 5
+  level_max: 10
+  hp_base: 55
+  atk_base: 12
+  elements: [shadow, nature]
+  xp_mult: 1.35
+  apply_status:
+    id: poison
+    chance: 0.22
+
+- id: cave_bat
+  name: Cave Bat Swarm
+  level_min: 3
+  level_max: 6
+  hp_base: 42
+  atk_base: 8
+  elements: [physical]
+  xp_mult: 1.0
+
+- id: dark_slime
+  name: Dark Slime
+  level_min: 4
+  level_max: 8
+  hp_base: 60
+  atk_base: 7
+  elements: [shadow]
+  xp_mult: 1.1
+  apply_status:
+    id: poison
+    chance: 0.28
+
+- id: shadow_wraith
+  rarity: rare
+  name: Shadow Wraith
+  level_min: 6
+  level_max: 12
+  hp_base: 65
+  atk_base: 11
+  elements: [shadow, fire]
+  xp_mult: 1.3
+  attack_profiles:
+    - id: claw
+      tags: [shadow]
+      telegraph: เงากระชาก!
+      power: 11
+      status: poison
+      status_chance: 0.22
+    - id: ember
+      tags: [fire, magic]
+      telegraph: เปลวเงาปะทุ!
+      power: 13
+      status: burn
+      status_chance: 0.30
+
+- id: abyss_lurker
+  rarity: sacred
+  name: Abyss Lurker
+  level_min: 12
+  level_max: 20
+  hp_base: 95
+  atk_base: 16
+  elements: [shadow]
+  xp_mult: 1.8
+
+- id: rock_golem
+  rarity: uncommon
+  name: Rock Golem
+  level_min: 4
+  level_max: 9
+  hp_base: 80
+  atk_base: 10
+  elements: [earth]
+  xp_mult: 1.15
+
+- id: mountain_troll
+  name: Mountain Troll
+  level_min: 5
+  level_max: 11
+  hp_base: 88
+  atk_base: 12
+  elements: [physical]
+  xp_mult: 1.25
+
+- id: stone_drake
+  name: Stone Drake
+  level_min: 8
+  level_max: 15
+  hp_base: 100
+  atk_base: 14
+  elements: [earth, fire]
+  xp_mult: 1.5
+
+- id: ruins_specter
+  name: Ruins Specter
+  level_min: 7
+  level_max: 14
+  hp_base: 70
+  atk_base: 13
+  elements: [arcane, shadow]
+  xp_mult: 1.35
+
+- id: cursed_knight
+  name: Cursed Knight
+  level_min: 8
+  level_max: 16
+  hp_base: 95
+  atk_base: 15
+  elements: [physical, shadow]
+  xp_mult: 1.45
+
+- id: ancient_guardian
+  name: Ancient Guardian
+  level_min: 12
+  level_max: 22
+  hp_base: 120
+  atk_base: 17
+  elements: [arcane, earth]
+  xp_mult: 1.7
+
+- id: sand_scorpion
+  name: Sand Scorpion
+  level_min: 7
+  level_max: 13
+  hp_base: 68
+  atk_base: 14
+  elements: [physical]
+  xp_mult: 1.2
+
+- id: desert_raider
+  name: Desert Raider
+  level_min: 8
+  level_max: 15
+  hp_base: 75
+  atk_base: 13
+  elements: [physical]
+  xp_mult: 1.25
+
+- id: fire_salamander
+  name: Fire Salamander
+  level_min: 10
+  level_max: 18
+  hp_base: 85
+  atk_base: 16
+  elements: [fire]
+  xp_mult: 1.55
+
+- id: boss_forest_king
+  rarity: legendary
+  name: ราชันย์เถื่อน — King of Thorns
+  boss: true
+  phases: 3
+  level_min: 8
+  level_max: 8
+  hp_base: 220
+  atk_base: 18
+  elements: [nature, physical]
+  xp_mult: 3.2
+
+- id: boss_shadow_queen
+  rarity: legendary
+  name: ราชินีเงา — Umbra Queen
+  boss: true
+  phases: 3
+  level_min: 12
+  level_max: 12
+  hp_base: 280
+  atk_base: 22
+  elements: [shadow, fire]
+  xp_mult: 3.5
+
+- id: boss_stone_titan
+  rarity: sacred
+  name: ไททันหิน — Stone Titan
+  boss: true
+  phases: 3
+  level_min: 14
+  level_max: 14
+  hp_base: 320
+  atk_base: 24
+  elements: [earth, physical]
+  xp_mult: 3.6
+
+- id: boss_ruin_oracle
+  rarity: sacred
+  name: นักพยากรณ์ซาก — Ruin Oracle
+  boss: true
+  phases: 3
+  level_min: 16
+  level_max: 16
+  hp_base: 300
+  atk_base: 26
+  elements: [arcane, shadow]
+  xp_mult: 3.8
+
+- id: boss_sun_scourge
+  rarity: legendary
+  name: ภัยพิบัติอาทิตย์ — Sun Scourge
+  boss: true
+  phases: 4
+  level_min: 18
+  level_max: 18
+  hp_base: 340
+  atk_base: 28
+  elements: [fire, lightning]
+  xp_mult: 4.0
+
+- id: marsh_leech
+  name: ปลิงหนอง
+  level_min: 5
+  level_max: 10
+  hp_base: 55
+  atk_base: 11
+  elements: [water, nature]
+  xp_mult: 1.15
+
+- id: fog_wisp
+  name: วิญญาณหมอก
+  level_min: 6
+  level_max: 11
+  hp_base: 48
+  atk_base: 13
+  elements: [arcane, water]
+  xp_mult: 1.2
+
+- id: bog_troll
+  name: โทรลหนอง
+  level_min: 7
+  level_max: 13
+  hp_base: 90
+  atk_base: 14
+  elements: [physical, nature]
+  xp_mult: 1.3
+
+- id: mist_horror
+  name: สยองหมอก
+  level_min: 9
+  level_max: 15
+  hp_base: 75
+  atk_base: 16
+  elements: [shadow, water]
+  xp_mult: 1.45
+
+- id: crystal_golem
+  name: โกเล็มผลึก
+  level_min: 10
+  level_max: 16
+  hp_base: 110
+  atk_base: 15
+  elements: [earth, arcane]
+  xp_mult: 1.4
+
+- id: shard_imp
+  name: อิมพ์เศษแก้ว
+  level_min: 9
+  level_max: 14
+  hp_base: 50
+  atk_base: 17
+  elements: [lightning, arcane]
+  xp_mult: 1.25
+
+- id: prism_drake
+  name: มังกรปริซึม
+  level_min: 12
+  level_max: 18
+  hp_base: 120
+  atk_base: 19
+  elements: [fire, lightning]
+  xp_mult: 1.55
+  attack_profiles:
+    - id: prism_bolt
+      tags: [lightning, magic]
+      telegraph: แสงปริซึมแยกร่าง!
+      power: 20
+      status: shock
+      status_chance: 0.28
+    - id: heat_ray
+      tags: [fire, magic]
+      telegraph: ลำแสงร้อนพุ่ง!
+      power: 19
+      status: burn
+      status_chance: 0.25
+
+- id: light_wraith
+  name: วิญญาณแสง
+  level_min: 11
+  level_max: 17
+  hp_base: 70
+  atk_base: 18
+  elements: [holy, arcane]
+  xp_mult: 1.5
+
+- id: void_crawler
+  name: คลานสุญญะ
+  level_min: 13
+  level_max: 19
+  hp_base: 85
+  atk_base: 20
+  elements: [shadow]
+  xp_mult: 1.5
+
+- id: null_mage
+  name: จอมเวทย์ศูนย์
+  level_min: 14
+  level_max: 20
+  hp_base: 78
+  atk_base: 22
+  elements: [arcane, shadow]
+  xp_mult: 1.6
+
+- id: rift_beast
+  name: อสูรรอยแยก
+  level_min: 15
+  level_max: 22
+  hp_base: 130
+  atk_base: 21
+  elements: [physical, shadow]
+  xp_mult: 1.65
+
+- id: entropy_spawn
+  name: ลูกเอนโทรปี
+  level_min: 16
+  level_max: 24
+  hp_base: 95
+  atk_base: 24
+  elements: [shadow, fire, lightning]
+  xp_mult: 1.8
+
+- id: boss_mist_hydra
+  rarity: legendary
+  name: ไฮดราหมอก — Mist Hydra
+  boss: true
+  phases: 3
+  level_min: 11
+  level_max: 11
+  hp_base: 300
+  atk_base: 23
+  elements: [water, nature, shadow]
+  xp_mult: 3.6
+  mechanic: multi_head
+
+- id: boss_prism_sovereign
+  rarity: divine
+  name: เจ้าแห่งปริซึม — Prism Sovereign
+  boss: true
+  phases: 3
+  level_min: 15
+  level_max: 15
+  hp_base: 340
+  atk_base: 27
+  elements: [arcane, lightning, holy]
+  xp_mult: 3.9
+  mechanic: reflect
+
+- id: boss_void_herald
+  rarity: divine
+  name: ผู้ประกาศสุญญะ — Void Herald
+  boss: true
+  phases: 4
+  level_min: 18
+  level_max: 18
+  hp_base: 400
+  atk_base: 30
+  elements: [shadow, arcane]
+  xp_mult: 4.2
+  mechanic: drain
+
+# ── bulk 1.13.8 ──
+- id: city_rat
+  name: หนูเมือง
+  level_min: 1
+  level_max: 2
+  hp_base: 22
+  atk_base: 4
+  elements: [physical]
+  xp_mult: 0.7
+
+- id: alley_thug
+  name: นักเลงซอย
+  level_min: 1
+  level_max: 3
+  hp_base: 35
+  atk_base: 6
+  elements: [physical]
+  xp_mult: 0.9
+
+- id: crystal_mite
+  name: ไรผลึก
+  level_min: 6
+  level_max: 11
+  hp_base: 38
+  atk_base: 10
+  elements: [arcane]
+  xp_mult: 1.2
+
+- id: void_mote
+  name: ละอองสุญญะ
+  level_min: 12
+  level_max: 16
+  hp_base: 45
+  atk_base: 14
+  elements: [shadow, arcane]
+  xp_mult: 1.2

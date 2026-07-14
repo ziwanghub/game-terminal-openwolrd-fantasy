@@ -1,0 +1,30 @@
+export type FederationSimulationErrorCode =
+  | "MALFORMED_NODE_REF"
+  | "INVALID_NODE_PARTICIPATION"
+  | "TRUST_ENVELOPE_INCOMPATIBLE"
+  | "MEMBERSHIP_INCOMPATIBLE"
+  | "LINEAGE_MISMATCH"
+  | "SCOPE_INCOMPATIBLE"
+  | "STALE_MEMBERSHIP_STATE"
+  | "QUARANTINE_REQUIRED";
+
+export const FEDERATION_SIMULATION_ERROR_CODES = {
+  MALFORMED_NODE_REF: "MALFORMED_NODE_REF",
+  INVALID_NODE_PARTICIPATION: "INVALID_NODE_PARTICIPATION",
+  TRUST_ENVELOPE_INCOMPATIBLE: "TRUST_ENVELOPE_INCOMPATIBLE",
+  MEMBERSHIP_INCOMPATIBLE: "MEMBERSHIP_INCOMPATIBLE",
+  LINEAGE_MISMATCH: "LINEAGE_MISMATCH",
+  SCOPE_INCOMPATIBLE: "SCOPE_INCOMPATIBLE",
+  STALE_MEMBERSHIP_STATE: "STALE_MEMBERSHIP_STATE",
+  QUARANTINE_REQUIRED: "QUARANTINE_REQUIRED",
+} as const;
+
+export class FederationSimulationValidationError extends Error {
+  public readonly code: FederationSimulationErrorCode;
+
+  constructor(code: FederationSimulationErrorCode, message: string) {
+    super(message);
+    this.code = code;
+    this.name = "FederationSimulationValidationError";
+  }
+}

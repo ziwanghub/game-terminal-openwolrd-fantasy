@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Hardened Color Tokens */
+    --background: #faf9f7;
+    --warm-ivory: #faf9f7;
+    --warm-cream: #f5f3f0;
+    --soft-beige: #ede8e3;
+    --champagne: #e8e3dc;
+    --foreground: #3d3530;
+    --warm-charcoal: #3d3530;
+    --deep-cocoa: #4a3f35;
+    --dark-taupe: #5c5248;
+    --accent-gold: #c4a57b;
+    --soft-bronze: #b5956f;
+    --warm-caramel: #a88860;
+    --border: rgba(61, 53, 48, 0.08);
+
+    /* Hardened Typography Scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+
+    /* Hardened Spacing Rhythm & Widths */
+    --section-py: 5rem;
+    --container-px: 1.5rem;
+    --max-w-ui: 80rem;
+
+    /* Hardened Effects (Radius & Shadow) */
+    --radius-soft: 1rem;
+    --shadow-premium: 0 4px 20px rgba(61, 53, 48, 0.04);
+  }
+
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+

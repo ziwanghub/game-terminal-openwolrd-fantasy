@@ -1,0 +1,223 @@
+# Primary occupations — starter path. Hidden growth is not shown in UI.
+# latent_growth: secret multipliers when player invests visible stat points
+# (player never sees these numbers)
+
+# Default start — no fixed class (เมือง · ภารกิจง่าย · เลือกทางอาชีพทีหลัง)
+- id: vagabond
+  name: นักเดินทาง
+  path: free
+  path_name: ไร้สาย
+  hp: 105
+  mana: 55
+  atk: 4
+  pressure: 10
+  skill: basic_strike
+  desc: เพิ่งเข้าเมือง ยังไม่มีอาชีพชัด — โลกจะค่อยๆ ดึงทางให้
+  primary_stats: []
+  secondary_stats: []
+  weak_stats: []
+  points_per_level: 3
+  is_starter: true
+  can_class_change: true
+  latent_growth:
+    atk: 1.0
+    defense: 1.0
+    magic: 1.0
+    speed: 1.0
+    intelligence: 1.05
+    crit: 1.0
+  ranks:
+    - id: vagabond_r1
+      title: ผู้มาใหม่
+      min_level: 1
+
+- id: warrior
+  name: นักรบ
+  path: steel
+  path_name: สายเหล็ก
+  hp: 130
+  mana: 40
+  atk: 6
+  pressure: 8
+  skill: basic_strike
+  desc: แข็งแกร่ง แนวหน้า รับและสวนกลับ
+  primary_stats: [atk, defense]
+  secondary_stats: [crit]
+  weak_stats: [magic]
+  points_per_level: 3
+  latent_growth:
+    atk: 1.35
+    defense: 1.40
+    magic: 0.55
+    speed: 0.85
+    intelligence: 0.80
+    crit: 0.95
+  ranks:
+    - id: warrior_r1
+      title: นักรบฝึกหัด
+      # conditions hidden from player — only checked in code
+      min_level: 1
+    - id: warrior_r2
+      title: นักรบเหล็ก
+      min_level: 12
+      min_stat_atk: 8
+      min_kills: 25
+      reward_skill: counter_guard
+    - id: warrior_r3
+      title: เกราะพิฆาต
+      min_level: 28
+      min_stat_defense: 12
+      min_boss_kills: 2
+      reward_skill: iron_will
+
+- id: mage
+  name: นักเวทย์
+  path: arcane
+  path_name: สายอาร์เคน
+  hp: 85
+  mana: 90
+  atk: 2
+  pressure: 6
+  skill: magic_missile
+  desc: เวทย์มนต์ มานาสูง ควบคุมธาตุ
+  primary_stats: [magic]
+  secondary_stats: [crit, speed]
+  weak_stats: [defense]
+  points_per_level: 3
+  latent_growth:
+    atk: 0.60
+    defense: 0.65
+    magic: 1.50
+    speed: 1.05
+    intelligence: 1.35
+    crit: 1.15
+  ranks:
+    - id: mage_r1
+      title: นักเรียนเวทย์
+      min_level: 1
+    - id: mage_r2
+      title: จอมเวทย์ธาตุ
+      min_level: 12
+      min_stat_magic: 10
+      min_combos: 15
+      reward_skill: arcane_surge
+    - id: mage_r3
+      title: ปราชญ์แห่งม่าน
+      min_level: 28
+      min_stat_magic: 20
+      library_entries: 3
+      reward_skill: mana_font
+
+- id: archer
+  name: นักธนู
+  path: wind
+  path_name: สายลมไกล
+  hp: 95
+  mana: 45
+  atk: 9
+  pressure: 5
+  skill: arrow_shot
+  desc: ระยะไกล แม่นยำ เน้นคริ
+  primary_stats: [atk, crit, speed]
+  secondary_stats: []
+  weak_stats: [magic]
+  points_per_level: 3
+  latent_growth:
+    atk: 1.25
+    defense: 0.75
+    magic: 0.70
+    speed: 1.30
+    intelligence: 0.95
+    crit: 1.45
+  ranks:
+    - id: archer_r1
+      title: มือธนู
+      min_level: 1
+    - id: archer_r2
+      title: ลมกรด
+      min_level: 12
+      min_stat_crit: 8
+      min_stat_speed: 6
+      reward_skill: wind_pierce
+    - id: archer_r3
+      title: เงาไกล
+      min_level: 28
+      min_stat_crit: 18
+      min_kills: 80
+      reward_skill: rain_of_arrows
+
+- id: rogue
+  name: โจรเงา
+  path: shadow
+  path_name: สายเงา
+  hp: 90
+  mana: 50
+  atk: 5
+  pressure: 18
+  skill: shadow_strike
+  desc: กดดันสูง หลอกลวง เน้นจังหวะ
+  primary_stats: [speed, crit]
+  secondary_stats: [atk]
+  weak_stats: [defense]
+  points_per_level: 3
+  latent_growth:
+    atk: 1.10
+    defense: 0.70
+    magic: 0.90
+    speed: 1.40
+    intelligence: 1.10
+    crit: 1.35
+  ranks:
+    - id: rogue_r1
+      title: เงาฝึก
+      min_level: 1
+    - id: rogue_r2
+      title: โจรราตรี
+      min_level: 12
+      min_stat_speed: 8
+      min_flees: 3
+      reward_skill: smoke_step
+    - id: rogue_r3
+      title: เงาไร้ชื่อ
+      min_level: 28
+      min_stat_crit: 15
+      min_stat_speed: 15
+      reward_skill: assassinate
+
+- id: priest
+  name: นักบวช
+  path: holy
+  path_name: สายศักดิ์สิทธิ์
+  hp: 110
+  mana: 70
+  atk: 3
+  pressure: 7
+  skill: heal
+  desc: ฟื้นฟู ปกป้อง แนวสนับสนุน
+  primary_stats: [magic, defense]
+  secondary_stats: [speed]
+  weak_stats: [crit]
+  points_per_level: 3
+  latent_growth:
+    atk: 0.70
+    defense: 1.25
+    magic: 1.35
+    speed: 1.00
+    intelligence: 1.15
+    crit: 0.60
+  ranks:
+    - id: priest_r1
+      title: ศิษย์วัด
+      min_level: 1
+    - id: priest_r2
+      title: ผู้รักษา
+      min_level: 12
+      min_stat_magic: 8
+      min_stat_defense: 6
+      reward_skill: blessing_ward
+    - id: priest_r3
+      title: แสงคุ้มครอง
+      min_level: 28
+      min_stat_magic: 16
+      min_stat_defense: 12
+      reward_skill: mass_renew

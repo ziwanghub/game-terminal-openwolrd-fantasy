@@ -1,0 +1,80 @@
+# Rogue skill tree
+
+- id: rogue_poison_edge
+  name: คมพิษ
+  slot: combat
+  cost_mana: 9
+  power: 14
+  elements: [shadow, nature]
+  combo_ok: true
+  tree: rogue
+  tier: 2
+  requires: [shadow_strike]
+  learn:
+    method: [self]
+    require_level: 6
+    cost_world: 55
+    cost_hell: 1
+
+- id: rogue_backstab
+  name: แทงหลัง
+  slot: combat
+  cost_mana: 12
+  power: 24
+  elements: [shadow, physical]
+  combo_ok: true
+  tree: rogue
+  tier: 2
+  requires: [shadow_strike]
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 75
+
+- id: rogue_fan_knives
+  name: พัดมีด
+  slot: combat
+  cost_mana: 14
+  power: 22
+  elements: [physical, wind]
+  combo_ok: true
+  tree: rogue
+  tier: 3
+  requires: [rogue_backstab]
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 115
+
+- id: rogue_nightfall
+  name: ราตรีร่วง
+  slot: combat
+  cost_mana: 22
+  power: 40
+  elements: [shadow]
+  combo_ok: true
+  tree: rogue
+  tier: 4
+  requires: [assassinate, rogue_poison_edge]
+  learn:
+    method: [self, master]
+    require_level: 26
+    cost_world: 200
+    cost_hell: 4
+    master_id: master_shade
+
+- id: rogue_vanish
+  name: ลับหาย
+  slot: support
+  cost_mana: 10
+  heal: 5
+  elements: [shadow]
+  combo_ok: false
+  tree: rogue
+  tier: 3
+  requires: [smoke_step]
+  learn:
+    method: [self]
+    require_level: 16
+    cost_world: 100
+    cost_hell: 1

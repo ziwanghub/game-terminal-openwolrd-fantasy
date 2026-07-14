@@ -1,0 +1,43 @@
+{
+  "schema_version": "3.0.0-agent",
+  "intent": {
+    "objective": "Governed execution under Z-MOS v3.0.0 Purity",
+    "strategy": "Use runWithIntent() as the only execution gate",
+    "risk_acknowledgement": "None"
+  },
+  "system": {
+    "scope_files": [],
+    "required_tests": [
+      "node --import tsx --test tests/integration/run-with-intent.test.ts"
+    ],
+    "stop_conditions": [
+      "schema validation fail",
+      "critical drift detected"
+    ],
+    "rollback_plan": "Revert to previous known-good commit and re-run integration tests",
+    "truth_snapshot_ref": ".z-mos/truth.contract.json",
+    "allowed_hosts": [
+      "localhost"
+    ],
+    "allowed_databases": [
+      "zmos_local_dev"
+    ]
+  },
+  "agent": {
+    "allowed_tools": [
+      "functions.exec_command",
+      "functions.apply_patch"
+    ],
+    "allowed_actions": [
+      "read",
+      "write",
+      "test",
+      "command"
+    ],
+    "max_steps": 50,
+    "termination_conditions": [
+      "attempted out-of-scope mutation"
+    ],
+    "enforcement": "hard-block"
+  }
+}

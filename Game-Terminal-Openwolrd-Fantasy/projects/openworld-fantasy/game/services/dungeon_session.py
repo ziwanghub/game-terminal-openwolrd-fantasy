@@ -1,0 +1,156 @@
+"""Dungeon field session — enter, floor turns, boss, escape."""
+from __future__ import annotations
+
+import random
+from typing import Any, Dict, Optional
+
+from game.data_load.registry import DataRegistry
+from game.domain.boss import spawn_boss
+from game.domain.dungeon import (
+    advance_floor,
+    begin_dungeon,
+    dungeon_by_id,
+    dungeon_menu_actions,
+    exit_dungeon,
+    explore_floor_event,
+    format_dungeon_panel,
+    get_run,
+    in_dungeon,
+    soft_difficulty_text,
+    tick_dungeon_time,
+    try_escape,
+)
+from game.domain.party import format_party_panel
+from game.ports.io import IO
+from game.services.combat_session import _run_combat
+from game.services.field_menus import _party_menu
+
+def _enter_dungeon_flow(
+    player: Dict[str, Any],
+    reg: DataRegistry,
+    io: IO,
+    rng: random.Random,
+    dungeon_id: str,
+) -> None:
+    """Confirm party prep then enter — difficulty unknown."""
+    d = dungeon_by_id(reg, dungeon_id)
+    if not d:
+        io.write_line("ทางเข้าจางหาย...")
+        return
+    soft = soft_difficulty_text(player, reg, d)
+    io.write_line(f"\n══ ปากดันเจียน: {d.get('name')} ══")
+    io.write_line(f" สัญญาณ: {soft}")
+    io.write_line(" ความยากตัวเลข: ซ่อน (ต้องสังเกต/หาข้อมูลเอง)")
+    io.write_line(f" ปาร์ตี้ปัจจุบัน: {len(player.get('party') or [])}/3")
+    for line in format_party_panel(player, reg):
+        if "ปาร์ตี้" in line or "·" in line:
+            io.write_line(line)
+    io.write_line(" 1. เข้าไปเคลียร์ (ทางออกอาจล็อก)")
+    io.write_line(" 2. จัดปาร์ตี้ก่อน (Y)")
+    io.write_line(" 0. ถอย")
+    ch = io.read_line("เลือก: ").strip()
+    if ch == "2":
+        _party_menu(player, reg, io)
+        conf = io.read_line("เข้าดันเจียนเลย? (1=ใช่): ").strip()
+        if conf != "1":
+            io.write_line("คุณถอยจากปากถ้ำ")
+            return
+    elif ch != "1":
+        io.write_line("คุณถอยจากปากถ้ำ")
+        return
+    for line in begin_dungeon(player, reg, dungeon_id, rng):
+        io.write_line(line)
+
+
+def _dungeon_field_turn(
+    player: Dict[str, Any],
+    reg: DataRegistry,
+    io: IO,
+    rng: random.Random,
+) -> bool:
+    """
+    Restricted loop while locked in dungeon.
+    Returns False to exit main loop (quit save), True to continue.
+    """
+    run = get_run(player)
+    if not run:
+        return True
+    for line in format_dungeon_panel(player, reg):
+        io.write_line(line)
+    for line in dungeon_menu_actions(player):
+        io.write_line(line)
+    ch = io.read_line("\nในดันเจียน เลือก: ").strip()
+    acted = False
+    if ch == "1":
+        io.write_line("สำรวจชั้นนี้...")
+        ev = explore_floor_event(player, reg, rng)
+        for line in ev.get("notes") or []:
+            io.write_line(line)
+        if ev.get("trigger_combat"):
+            _run_combat(player, reg, io, rng)
+        acted = True
+    elif ch == "2":
+        for line in advance_floor(player, reg, rng):
+            io.write_line(line)
+        acted = True
+    elif ch == "3":
+        run = get_run(player) or {}
+        floor = int(run.get("floor") or 1)
+        floors = int(run.get("floors") or 1)
+        if floor < floors and not run.get("boss_defeated"):
+            io.write_line("บอสยังอยู่ชั้นในสุด — ลงลึกกว่านี้ก่อน")
+        elif run.get("boss_defeated"):
+            io.write_line("บอสล้มแล้ว — เก็บของ/ออกได้")
+        else:
+            boss_id = run.get("boss_id")
+            from game.domain.boss import spawn_boss
+
+            area_for_boss = str(run.get("area_id") or "dark_forest")
+            boss = spawn_boss(reg, area_for_boss, rng)
+            if not boss:
+                base = reg.monsters.get(str(boss_id)) or {}
+                if base:
+                    boss = {
+                        "id": boss_id,
+                        "name": base.get("name") or boss_id,
+                        "level": int(base.get("level_min") or 10),
+                        "hp": int(base.get("hp_base") or 200),
+                        "max_hp": int(base.get("hp_base") or 200),
+                        "atk": int(base.get("atk_base") or 20),
+                        "elements": list(base.get("elements") or ["physical"]),
+                        "xp_mult": float(base.get("xp_mult") or 3),
+                        "attack_profiles": [],
+                        "statuses": [],
+                        "boss": True,
+                        "dungeon_boss": True,
+                    }
+            if boss:
+                boss["dungeon_boss"] = True
+                boss["boss"] = True
+                io.write_line(f"\n☠ เผชิญบอสดันเจียน: {boss.get('name')}")
+                _run_combat(player, reg, io, rng, mon=boss, ambush=False)
+            else:
+                io.write_line("ไม่พบบอส — ข้อมูลหาย")
+            acted = True
+    elif ch == "4":
+        for line in try_escape(player, reg, rng):
+            io.write_line(line)
+        acted = True
+    elif ch == "5":
+        for line in format_dungeon_panel(player, reg):
+            io.write_line(line)
+        io.read_line("Enter...")
+    elif ch in ("y", "Y"):
+        _party_menu(player, reg, io)
+    elif ch == "0":
+        for line in exit_dungeon(player, reg, success=True):
+            io.write_line(line)
+    else:
+        io.write_line("เลือกไม่ถูกต้อง")
+    # time pressure after meaningful actions
+    if acted and in_dungeon(player):
+        for line in tick_dungeon_time(player, reg, rng, cost=1):
+            io.write_line(line)
+    return True
+
+

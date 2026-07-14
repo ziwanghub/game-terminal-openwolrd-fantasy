@@ -1,0 +1,79 @@
+# Hidden social rules for player-echo encounters (never shown in UI)
+# Affinity is computed server/engine-side only.
+
+id: world_social
+# base chance to see another player-echo when others exist in same world+area
+sight_chance: 0.42
+# approach styles player can pick — only labels shown, weights hidden
+approaches:
+  - id: polite
+    label: ทักทายอย่างนอบน้อม
+  - id: gift
+    label: ยื่นของขวัญ (เสียเงินโลก 40 ถ้ามี)
+    cost_world: 40
+  - id: challenge
+    label: ท้าประลอง / แสดงแสนยานุภาพ
+  - id: threaten
+    label: กดดัน / ข่มขู่
+  - id: cautious
+    label: รักษาระยะ เฝ้าสังเกต
+  - id: aid
+    label: เสนอช่วยเหลือโดยไม่ขออะไร
+
+# Hidden weights: how each approach shifts affinity (not in UI)
+approach_affinity_delta:
+  polite: 12
+  gift: 22
+  challenge: -8
+  threaten: -28
+  cautious: 2
+  aid: 18
+
+# Friend if affinity >= friend_threshold after modifiers; else foe (with band)
+friend_threshold: 15
+hostile_threshold: -10
+# Between thresholds → neutral_leave or random slight tilt
+
+# Hidden component weights for affinity (sum-ish, then clamp)
+weights:
+  path_same: 18
+  path_adjacent: 6
+  path_rival: -14
+  unit_both: 10
+  unit_mismatch: -4
+  gear_tag_overlap_per: 4
+  gear_tag_overlap_cap: 16
+  stat_vector_similarity: 20   # scaled 0..1 * weight
+  pressure_close: 6
+  pressure_far: -8
+  prior_friend: 25
+  prior_rival: -30
+  rank_gap_penalty: -0.4       # per rank index difference (hidden ranking score buckets)
+  noise_range: 10              # ± random
+
+# path adjacency / rivalry (hidden)
+path_adjacent:
+  steel: [holy]
+  holy: [steel, arcane]
+  arcane: [holy, wind]
+  wind: [arcane, shadow]
+  shadow: [wind]
+path_rival:
+  steel: [shadow]
+  shadow: [steel, holy]
+  holy: [shadow]
+  arcane: [steel]
+  wind: [steel]
+
+# Ranking: order by hidden score, display only title bands (no level/power numbers)
+rank_titles:
+  - min_score: 0
+    title: นักเดินทางนิรนาม
+  - min_score: 50
+    title: เงาในตำนานท้องถิ่น
+  - min_score: 120
+    title: ชื่อที่ลมกระซิบ
+  - min_score: 250
+    title: ตำนานแห่งโลกนี้
+  - min_score: 450
+    title: เงาที่โลกจดจำ

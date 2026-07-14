@@ -1,0 +1,146 @@
+# Combo 2.0 — length scales by player level (see combo_length_by_level).
+# Absolute hard max 6. Mana/power mult index = length-1.
+max_combo_length: 6
+
+combo_length_by_level:
+  - max_level: 9
+    max_combo: 2
+  - max_level: 19
+    max_combo: 3
+  - max_level: 34
+    max_combo: 4
+  - max_level: 49
+    max_combo: 5
+  - max_level: 999
+    max_combo: 6
+
+# unit mastery can add +1 (capped at max_combo_length) via code
+mana_mult: [1.0, 1.12, 1.28, 1.48, 1.75, 2.10]
+power_mult: [1.0, 1.10, 1.22, 1.38, 1.58, 1.85]
+
+# optional pressure gain per combo length beyond 3
+pressure_per_long_combo: 1
+
+fusions:
+  - sequence: [water, wind]
+    result_elements: [ice]
+    result_status: freeze
+    status_chance: 0.55
+    power_bonus: 0.2
+    flavor: ไอน้ำเย็นจัดกลายเป็นน้ำแข็ง!
+
+  - sequence: [wind, water]
+    result_elements: [ice]
+    result_status: freeze
+    status_chance: 0.45
+    power_bonus: 0.15
+    flavor: ลมพัดน้ำแข็งสาดใส่!
+
+  - sequence: [fire, wind]
+    result_elements: [fire]
+    power_bonus: 0.25
+    flavor: เปลวไฟลุกลามตามลม!
+
+  - sequence: [water, fire]
+    result_elements: [steam, water]
+    power_bonus: 0.18
+    flavor: ไอน้ำร้อนปะทุ!
+
+  - sequence: [lightning, water]
+    result_elements: [lightning]
+    power_bonus: 0.3
+    flavor: กระแสไฟวิ่งในน้ำ!
+
+  - sequence: [lightning, ice]
+    result_elements: [lightning, ice]
+    power_bonus: 0.4
+    flavor: สายฟ้าผ่าน้ำแข็ง — แตกกระจาย!
+
+  - sequence: [shadow, fire]
+    result_elements: [shadow, fire]
+    power_bonus: 0.22
+    result_status: burn
+    status_chance: 0.4
+    flavor: เปลวม่วงกลืนกิน...
+
+  - sequence: [fire, lightning]
+    result_elements: [fire, lightning]
+    power_bonus: 0.28
+    result_status: burn
+    status_chance: 0.35
+    flavor: เปลวไฟถูกสายฟ้าจุด!
+
+  - sequence: [holy, shadow]
+    result_elements: [holy, shadow]
+    power_bonus: 0.35
+    flavor: แสงกับเงาบิดเป็นคราส!
+
+  - sequence: [shadow, holy]
+    result_elements: [shadow, holy]
+    power_bonus: 0.32
+    flavor: คราสกลับด้าน...
+
+  - sequence: [wind, lightning]
+    result_elements: [wind, lightning]
+    power_bonus: 0.26
+    flavor: พายุสายฟ้า!
+
+  - sequence: [physical, wind]
+    result_elements: [physical, wind]
+    power_bonus: 0.15
+    flavor: คมดาบลมพัด!
+
+  - sequence: [arcane, fire]
+    result_elements: [arcane, fire]
+    power_bonus: 0.24
+    flavor: อาร์เคนลุกเป็นเปลว!
+
+  - sequence: [arcane, water]
+    result_elements: [arcane, ice]
+    power_bonus: 0.22
+    result_status: freeze
+    status_chance: 0.3
+    flavor: ม่านเวทย์แข็งตัว!
+
+  - sequence: [nature, fire]
+    result_elements: [fire, nature]
+    power_bonus: 0.2
+    result_status: burn
+    status_chance: 0.3
+    flavor: ป่าลุกไหม้!
+
+  - sequence: [holy, fire]
+    result_elements: [holy, fire]
+    power_bonus: 0.3
+    flavor: เปลวศักดิ์สิทธิ์!
+
+  - sequence: [fire, wind, lightning]
+    result_elements: [fire, lightning, wind]
+    power_bonus: 0.45
+    result_status: burn
+    status_chance: 0.5
+    flavor: พายุเพลิงสามธาตุ!
+
+  - sequence: [water, wind, lightning]
+    result_elements: [ice, lightning]
+    power_bonus: 0.48
+    result_status: freeze
+    status_chance: 0.45
+    flavor: พายุน้ำแข็งสายฟ้า!
+
+  - sequence: [shadow, fire, arcane]
+    result_elements: [shadow, arcane, fire]
+    power_bonus: 0.5
+    result_status: burn
+    status_chance: 0.45
+    flavor: วงจรเถ้าอาร์เคน!
+
+  - sequence: [holy, water, wind]
+    result_elements: [holy, ice]
+    power_bonus: 0.42
+    flavor: รัศมีน้ำแข็งศักดิ์สิทธิ์!
+
+  - sequence: [physical, shadow, wind]
+    result_elements: [shadow, physical]
+    power_bonus: 0.38
+    flavor: คมเงาพายุ!

@@ -1,0 +1,20 @@
+# How to unlock library access — all hidden from default UI
+id: library_access
+# Any ONE of these groups may open the door (OR between groups, AND inside group)
+access_groups:
+  - id: scholar_path
+    min_level: 8
+    min_reactions: 2
+    min_quests_done: 2
+  - id: blood_path
+    min_level: 10
+    min_boss_kills: 1
+    min_kills: 30
+  - id: gift_path
+    # rewarded by special event/chest rare — sets flag library_key_item
+    require_flag: library_key_item
+
+# Each successful visit grants 1 random unread entry
+entries_per_visit: 1
+# Cooldown in field time_units between visits
+visit_cooldown: 8

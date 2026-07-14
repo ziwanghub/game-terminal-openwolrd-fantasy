@@ -1,0 +1,23 @@
+id: ancient_city
+name: เมืองโบราณ
+world_tier: 3
+unlock_level: 7
+connections: [cave_shadow, desert_heat, void_rift]
+mastery_start: 10
+ambient:
+  hp_regen: 2
+  mana_regen: 4
+monster_pools:
+  - id: city_rat
+    weight: 45
+  - id: alley_thug
+    weight: 30
+  - id: ruins_specter
+    weight: 15
+  - id: cursed_knight
+    weight: 7
+  - id: ancient_guardian
+    weight: 3
+
+boss_id: boss_ruin_oracle
+boss_unlock_level: 12

@@ -1,0 +1,19 @@
+id: mountain_rock
+name: ภูเขาหิน
+world_tier: 2
+unlock_level: 4
+connections: [dark_forest, desert_heat, crystal_peak]
+mastery_start: 12
+ambient:
+  hp_regen: 2
+  mana_regen: 2
+monster_pools:
+  - id: rock_golem
+    weight: 35
+  - id: mountain_troll
+    weight: 35
+  - id: stone_drake
+    weight: 30
+
+boss_id: boss_stone_titan
+boss_unlock_level: 10

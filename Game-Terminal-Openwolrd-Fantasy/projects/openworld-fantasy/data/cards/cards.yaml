@@ -1,0 +1,89 @@
+- id: card_fire
+  name: การ์ดไฟ
+  rarity: uncommon
+  art_id: card_fire
+  compatible: [weapon]
+  bonuses: { atk: 4 }
+  grant_tags: [fire]
+  on_hit:
+    status: burn
+    chance: 0.25
+  grant_skills: []
+  price_world: 80
+
+- id: card_water
+  name: การ์ดน้ำ
+  rarity: uncommon
+  art_id: card_water
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, max_mana: 8 }
+  grant_tags: [water]
+  grant_skills: [water_bolt]
+  price_world: 85
+
+- id: card_wind
+  name: การ์ดลม
+  rarity: uncommon
+  compatible: [weapon]
+  bonuses: { atk: 3 }
+  grant_tags: [wind]
+  grant_skills: [wind_slash]
+  price_world: 80
+
+- id: card_lightning
+  name: การ์ดสายฟ้า
+  rarity: rare
+  compatible: [weapon]
+  bonuses: { atk: 5 }
+  grant_tags: [lightning]
+  on_hit:
+    status: shock
+    chance: 0.2
+  grant_skills: [lightning_spark]
+  price_world: 140
+
+- id: card_shadow
+  name: การ์ดเงา
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, pressure: 5 }
+  grant_tags: [shadow]
+  grant_skills: []
+  price_world: 90
+
+- id: card_guard_water
+  name: การ์ดม่านน้ำ
+  rarity: rare
+  compatible: [armor, weapon]
+  bonuses: { max_hp: 10 }
+  grant_tags: [water]
+  grant_skills: [guard_water_veil]
+  price_world: 120
+
+- id: card_vitality
+  name: การ์ดชีวิต
+  rarity: common
+  compatible: [armor]
+  bonuses: { max_hp: 18 }
+  grant_tags: []
+  grant_skills: []
+  price_world: 70
+
+- id: card_holy
+  name: การ์ดศักดิ์สิทธิ์
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_hp: 12 }
+  grant_tags: [holy]
+  price_heaven: 6
+
+- id: card_inferno
+  name: การ์ดนรกไฟ
+  rarity: rare
+  compatible: [weapon]
+  bonuses: { atk: 7 }
+  grant_tags: [fire, shadow]
+  on_hit:
+    status: burn
+    chance: 0.3
+  price_hell: 5

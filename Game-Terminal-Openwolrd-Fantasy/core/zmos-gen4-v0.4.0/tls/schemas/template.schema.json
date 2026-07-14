@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TLS Template Manifest",
+  "description": "Schema for template.json — every template in TLS must conform to this",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "type",
+    "status",
+    "description",
+    "compatible_with",
+    "required_modules",
+    "config_schema",
+    "package_support",
+    "created_from_project",
+    "validation_stage",
+    "customer_live_status",
+    "source_project",
+    "source_project_version",
+    "last_extracted_at",
+    "last_promoted_at",
+    "author"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique template identifier (kebab-case)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["landing", "booking", "admin", "member", "bundle"],
+      "description": "Template category"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "tested", "proven", "stable", "deployable", "deprecated"],
+      "description": "Maturity level"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable purpose"
+    },
+    "compatible_with": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of compatible template/module names"
+    },
+    "required_modules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Module dependencies required for this template"
+    },
+    "config_schema": {
+      "type": "string",
+      "description": "Relative path to config JSON schema"
+    },
+    "package_support": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["basic", "pro", "premium"]
+      },
+      "description": "Which packages include this template"
+    },
+    "created_from_project": {
+      "type": "string",
+      "description": "Original project this was extracted from"
+    },
+    "last_validated_at": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of last QA validation"
+    },
+    "author": {
+      "type": "string",
+      "description": "Agent or person who created/extracted this template"
+    },
+    "validation_stage": {
+      "type": "string",
+      "description": "Current stage of validation (e.g., awaiting-real-world-use, staging-verified)"
+    },
+    "customer_live_status": {
+      "type": "string",
+      "enum": ["none", "sold-not-yet-live", "live", "feedback-loop", "deprecated"],
+      "description": "Actual deployment status with real customers"
+    },
+    "source_project": {
+      "type": "string",
+      "description": "The name of the source project (e.g., massageV1-zmos-coreV0.2.2)"
+    },
+    "source_project_version": {
+      "type": "string",
+      "description": "The version of the source project at time of extraction"
+    },
+    "last_extracted_at": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of last extraction from source"
+    },
+    "last_promoted_at": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of last status promotion"
+    },
+    "promotion_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "agent": { "type": "string" },
+          "note": { "type": "string" }
+        },
+        "required": ["status", "date", "agent"]
+      },
+      "description": "Audit trail of status promotions"
+    },
+    "entry_point": {
+      "type": "string",
+      "description": "Main entry point file (e.g., src/main.ts)"
+    },
+    "build_command": {
+      "type": "string",
+      "description": "Command to build the project (default: npm run build)"
+    },
+    "install_command": {
+      "type": "string",
+      "description": "Command to install dependencies (default: npm install)"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": ".",
+    "outDir": "dist",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["cli/**/*.ts", "contracts/**/*.ts", "core/**/*.ts", "governance/**/*.ts", "trace/**/*.ts"],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "cli/commands/ai/analyze.ts",
+    "cli/commands/ai/review.ts",
+    "cli/commands/ai/summarize.ts",
+    "cli/commands/ai/_shared.ts"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "templates": [
+    {
+      "name": "premium-massage-v1",
+      "type": "landing",
+      "version": "1.1.1",
+      "status": "tested",
+      "path": "templates/landing/premium-massage-v1",
+      "description": "Premium massage business landing page with multi-language support (EN/ZH/TH), service grid, team section, and booking contact.",
+      "package_support": "premium",
+      "last_validated_at": "2026-04-16",
+      "author": "z-mos-core"
+    },
+    {
+      "name": "minimal-service-v1",
+      "type": "landing",
+      "version": "0.1.0",
+      "status": "draft",
+      "path": "templates/landing/minimal-service-v1",
+      "description": "Minimal single-service landing page scaffold. Hero, services, contact. No multi-language.",
+      "package_support": "basic",
+      "last_validated_at": null,
+      "author": "z-mos-core"
+    }
+  ]
+}

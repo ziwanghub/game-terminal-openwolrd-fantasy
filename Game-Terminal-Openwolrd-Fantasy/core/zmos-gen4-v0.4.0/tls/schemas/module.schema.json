@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TLS Module Manifest",
+  "description": "Schema for module.json — every module in TLS must conform to this",
+  "type": "object",
+  "required": ["name", "version", "type", "status", "description", "provides", "author"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["auth", "payments", "notifications", "scheduling", "analytics", "integration"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "tested", "proven", "stable", "deprecated"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "provides": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Capabilities this module provides (e.g. 'line-oauth', 'stripe-payment')"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Other modules this one depends on"
+    },
+    "author": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
