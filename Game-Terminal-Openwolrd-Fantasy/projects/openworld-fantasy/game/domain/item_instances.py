@@ -236,9 +236,15 @@ def ensure_item_instances(
 
     player["inventory_items"] = items
 
-    # equipped instances — preserve inst_id
+    # equipped instances — preserve inst_id (multi-slot EL0+)
+    from game.domain.equipment import EQUIP_SLOTS, migrate_equip_loadout
+
+    try:
+        migrate_equip_loadout(player)  # type: ignore
+    except Exception:
+        pass
     eq_inst = dict(player.get("equip_instances") or {})
-    for slot in ("weapon", "armor", "accessory"):
+    for slot in EQUIP_SLOTS:
         eq_inst.setdefault(slot, None)
         tid = (player.get("equip_ids") or {}).get(slot)
         if not tid:
@@ -449,8 +455,13 @@ def get_equipped_instance(
     player: Mapping[str, Any],
     slot: str,
 ) -> Optional[Dict[str, Any]]:
+    from game.domain.equipment import normalize_slot
+
     eq = player.get("equip_instances") or {}
-    inst = eq.get(slot)
+    ns = normalize_slot(slot)
+    inst = eq.get(ns)
+    if not inst and slot in eq:
+        inst = eq.get(slot)
     return dict(inst) if inst else None
 
 

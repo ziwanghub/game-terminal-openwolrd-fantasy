@@ -32,8 +32,16 @@ def render_status_l0(player: Mapping[str, Any], current_area: str) -> str:
     )
 
 
-def render_status_l1c(player: Mapping[str, Any], current_area: str) -> str:
-    """Field-compact vitals (~4 lines). Default every field turn."""
+def format_personal_hub_lines(
+    player: Mapping[str, Any],
+    current_area: str,
+    *,
+    mission_line: str = "",
+) -> List[str]:
+    """
+    Single PERSONAL hub frame — no duplicated vitals/Tama/money/points.
+    Sections: identity · vitals · place/money · tama · menu hints.
+    """
     name = player.get("name", "?")
     level = player.get("level", 1)
     occ = player.get("occupation", "-")
@@ -54,28 +62,132 @@ def render_status_l1c(player: Mapping[str, Any], current_area: str) -> str:
 
     party = player.get("party") or []
     party_n = len(party) if isinstance(party, list) else 0
-    head = f" {name}  Lv.{level} {occ}"
+    head = f" {name}   Lv.{level}  {occ}"
     if rank:
         head += f" · {rank}"
 
-    lines = [
+    lines: List[str] = [
+        " ตัวละคร",
+        "---",
         head,
-        f" HP [{ratio_bar(hp, max_hp)}] {hp}/{max_hp}  "
-        f"MP [{ratio_bar(mana, max_mana)}] {mana}/{max_mana}  กดดัน {pressure}",
-        f" เงิน โลก {player.get('money_world', 0)} · "
-        f"สวรรค์ {player.get('money_heaven', 0)} · "
-        f"นรก {player.get('money_hell', 0)}   "
-        f"{current_area} · ชำนาญ {mastery}%   ปาร์ตี้ {party_n}/3",
+        "---",
+        f" HP  [{ratio_bar(hp, max_hp, width=8)}] {hp}/{max_hp}"
+        f"   MP  [{ratio_bar(mana, max_mana, width=8)}] {mana}/{max_mana}",
+        f" กดดัน {pressure}",
+        "---",
+        f" พื้นที่  {current_area}   ·  ชำนาญ {mastery}%   ·  ปาร์ตี้ {party_n}/3",
+        f" เงิน     โลก {player.get('money_world', 0)}"
+        f"  ·  สวรรค์ {player.get('money_heaven', 0)}"
+        f"  ·  นรก {player.get('money_hell', 0)}",
+        "---",
+        " Tama",
     ]
+    try:
+        from game.domain.needs import (
+            ensure_needs,
+            format_needs_bar_line,
+            format_tama_ascii,
+            needs_pressure_hint,
+        )
+
+        ensure_needs(player)  # type: ignore
+        for ln in format_tama_ascii(player, with_identity=False):
+            lines.append(ln)
+        lines.append(f" {format_needs_bar_line(player, width=6)}")
+        hint = needs_pressure_hint(player)
+        if hint:
+            lines.append(hint)
+    except Exception:
+        pass
+
+    if mission_line:
+        lines.append("---")
+        lines.append(f" {str(mission_line).strip()}")
+
+    pts = int(player.get("stat_points") or 0)
+    ppts = int(player.get("personality_points") or 0)
+    if pts > 0 or ppts > 0:
+        lines.append("---")
+        bits = []
+        if pts > 0:
+            bits.append(f"แต้มสถานะ {pts} → P")
+        if ppts > 0:
+            bits.append(f"แต้มนิสัย {ppts} → N")
+        lines.append(" ✦ " + "  ·  ".join(bits))
+
+    raw_st = player.get("statuses") or []
+    if raw_st:
+        try:
+            from game.domain.status_fx import format_status_short
+
+            st_line = format_status_short(player, None)
+            if st_line and st_line != "-":
+                lines.append(f" สถานะ  {st_line}")
+        except Exception:
+            pass
+    return lines
+
+
+def render_status_l1c(player: Mapping[str, Any], current_area: str) -> str:
+    """
+    Field-compact vitals — sectioned for scanability:
+      ตัวละคร | เลือด/มานา | สถานที่·เงิน | soft needs | แต้ม
+    """
+    name = player.get("name", "?")
+    level = player.get("level", 1)
+    occ = player.get("occupation", "-")
+    rank = player.get("occ_rank_title") or ""
+    hp = int(player.get("hp", 0))
+    max_hp = max(1, int(player.get("max_hp", 1)))
+    mana = int(player.get("mana", 0))
+    max_mana = max(1, int(player.get("max_mana", 1)))
+    pressure = int(player.get("pressure", 0) or 0)
+
+    mastery = 0
+    loc = player.get("location")
+    area_mastery = player.get("area_mastery") or {}
+    if loc and loc in area_mastery:
+        mastery = int(area_mastery[loc])
+    elif current_area in area_mastery:
+        mastery = int(area_mastery[current_area])
+
+    party = player.get("party") or []
+    party_n = len(party) if isinstance(party, list) else 0
+    head = f" {name}   Lv.{level}  {occ}"
+    if rank:
+        head += f" · {rank}"
+
+    lines: List[str] = [
+        head,
+        "---",
+        f" HP  [{ratio_bar(hp, max_hp, width=8)}] {hp}/{max_hp}"
+        f"   MP  [{ratio_bar(mana, max_mana, width=8)}] {mana}/{max_mana}",
+        f" กดดัน {pressure}",
+        "---",
+        f" พื้นที่  {current_area}   ·  ชำนาญ {mastery}%   ·  ปาร์ตี้ {party_n}/3",
+        f" เงิน     โลก {player.get('money_world', 0)}"
+        f"  ·  สวรรค์ {player.get('money_heaven', 0)}"
+        f"  ·  นรก {player.get('money_hell', 0)}",
+    ]
+    # soft needs one-liner (Tama)
+    try:
+        from game.domain.needs import ensure_needs, format_needs_bar_line
+
+        ensure_needs(player)  # type: ignore
+        lines.append(f" {format_needs_bar_line(player, width=6)}")
+    except Exception:
+        pass
+
     pts = int(player.get("stat_points") or 0)
     ppts = int(player.get("personality_points") or 0)
     hints: List[str] = []
     if pts > 0:
-        hints.append(f"แต้มสถานะ {pts} (P)")
+        hints.append(f"แต้มสถานะ {pts} → P")
     if ppts > 0:
-        hints.append(f"แต้มนิสัย {ppts} (N)")
+        hints.append(f"แต้มนิสัย {ppts} → N")
     if hints:
-        lines.append(" ✦ " + " · ".join(hints))
+        lines.append("---")
+        lines.append(" ✦ " + "  ·  ".join(hints))
     # compact abnormal status line (if any)
     raw_st = player.get("statuses") or []
     if raw_st:
@@ -84,10 +196,59 @@ def render_status_l1c(player: Mapping[str, Any], current_area: str) -> str:
 
             st_line = format_status_short(player, None)
             if st_line and st_line != "-":
-                lines.append(f" สถานะ {st_line}")
+                lines.append(f" สถานะ  {st_line}")
         except Exception:
             pass
     return render_box(lines, double=False)
+
+
+def _sight_kind_th(kind: str) -> str:
+    k = str(kind or "").lower()
+    return {
+        "chest": "หีบ",
+        "monster": "มอน",
+        "npc": "คน",
+        "event": "เหตุ",
+        "dungeon": "ดัน",
+        "boss": "บอส",
+    }.get(k, k or "?")
+
+
+def format_sights_panel_lines(
+    sights: Sequence[Mapping[str, Any]],
+    *,
+    flavor: str = "",
+) -> List[str]:
+    """
+    Zone: things you notice — scannable numbered list.
+    """
+    lines: List[str] = [
+        " สิ่งที่สังเกต",
+        "---",
+    ]
+    if flavor:
+        lines.append(f" {flavor.strip()}")
+        lines.append("---")
+    if not sights:
+        lines.append(" (ยังไม่เห็นเป้าชัด — ลอง 2 สำรวจ)")
+        return lines
+    for i, s in enumerate(sights, 1):
+        h = str(s.get("handle") or f"#{i}")
+        kind_th = _sight_kind_th(str(s.get("kind") or ""))
+        label = str(s.get("label") or "???")
+        hint = str(s.get("hint") or "").strip()
+        risk = s.get("risk", "?")
+        lines.append(f" {i}.  {h:<6}  [{kind_th}]  {label}")
+        detail = []
+        if hint:
+            detail.append(hint)
+        detail.append(f"เสี่ยง {risk}")
+        lines.append(f"      {' · '.join(detail)}")
+        if i < len(sights):
+            lines.append("")
+    lines.append("---")
+    lines.append(" เข้าหา: 3 แล้วเลข  หรือ  f_mn01 / o_ch01 / talk_np01")
+    return lines
 
 
 def render_combat_vitals(
@@ -97,8 +258,12 @@ def render_combat_vitals(
     known: bool = True,
     situation: str = "",
     round_no: Optional[int] = None,
+    banner: str = "",
 ) -> str:
-    """Combat B/C zones — multi-line strip without heavy double box."""
+    """
+    Combat vitals — sectioned box:
+      header · you · foe · ATB · situation
+    """
     php = int(player.get("hp", 0))
     pmax = max(1, int(player.get("max_hp", 1)))
     pmp = int(player.get("mana", 0))
@@ -110,40 +275,71 @@ def render_combat_vitals(
         for s in (mon.get("statuses") or [])
     ]
     st_txt = f"  [{', '.join(str(x) for x in mon_st)}]" if mon_st else ""
+    mon_name = str(mon.get("name") or "???")
 
     show_hp = known or bool(mon.get("boss"))
-    if show_hp:
-        e_line = (
-            f" ศัตรู {mon.get('name', '???')}  "
-            f"HP [{ratio_bar(mhp, mmax)}] {mhp}/{mmax}{st_txt}"
-        )
-    else:
-        e_line = f" ศัตรู ???  HP ???/???{st_txt}"
-
     phase_txt = ""
     if mon.get("boss"):
         phase_txt = f" · เฟส {mon.get('phase', 1)}/{mon.get('max_phases', 1)}"
 
-    lines: List[str] = []
+    head = " ไฟต์"
     if round_no is not None:
-        lines.append(f"── จังหวะ {round_no} ──{phase_txt}")
+        head = f" จังหวะ {round_no}{phase_txt}"
     elif phase_txt:
-        lines.append(f"── ไฟต์{phase_txt} ──")
-    lines.append(
-        f" คุณ  HP [{ratio_bar(php, pmax)}] {php}/{pmax}  "
-        f"MP [{ratio_bar(pmp, pmm)}] {pmp}/{pmm}"
-    )
-    lines.append(e_line)
-    # ATB gauges — fill to act (rate formula never shown)
-    try:
-        from game.domain.combat_atb import format_atb_strip
+        head = f" ไฟต์{phase_txt}"
+    if banner:
+        head = f" {banner.strip()}"
 
-        lines.append(format_atb_strip(player, mon))
+    lines: List[str] = [head, "---", " คุณ"]
+    lines.append(
+        f"  HP  [{ratio_bar(php, pmax, width=8)}] {php}/{pmax}"
+    )
+    lines.append(
+        f"  MP  [{ratio_bar(pmp, pmm, width=8)}] {pmp}/{pmm}"
+    )
+    # player status short
+    try:
+        from game.domain.status_fx import format_status_short
+
+        pst = format_status_short(player, None)
+        if pst and pst != "-":
+            lines.append(f"  สถานะ  {pst}")
     except Exception:
         pass
+
+    lines.append("---")
+    lines.append(" ศัตรู")
+    if show_hp:
+        lines.append(f"  {mon_name}")
+        lines.append(f"  HP  [{ratio_bar(mhp, mmax, width=8)}] {mhp}/{mmax}{st_txt}")
+    else:
+        lines.append(f"  {mon_name if known else '???'}")
+        lines.append(f"  HP  ???/???{st_txt}")
+
+    lines.append("---")
+    lines.append(" จังหวะ (แท่งเต็ม = ลงมือ)")
+    try:
+        from game.domain.combat_atb import format_atb_bar, soft_atb_label
+
+        pb = format_atb_bar(player)
+        mb = format_atb_bar(mon)
+        pl = soft_atb_label(player)
+        ml = soft_atb_label(mon)
+        lines.append(f"  คุณ    [{pb}]  {pl}")
+        lines.append(f"  ศัตรู   [{mb}]  {ml}")
+    except Exception:
+        try:
+            from game.domain.combat_atb import format_atb_strip
+
+            lines.append(format_atb_strip(player, mon))
+        except Exception:
+            pass
+
     if situation:
-        lines.append(f"  ▸ {situation}")
-    return "\n".join(lines)
+        lines.append("---")
+        lines.append(f" ▸ {situation}")
+
+    return render_box(lines, double=False)
 
 
 def render_field_actions(
@@ -214,9 +410,20 @@ def render_status_l1(player: Mapping[str, Any], current_area: str) -> str:
         head += f" [{path}]"
     lines = [head + f"   ราศี{zodiac}"]
     if unit:
-        lines.append(f" Unit: {unit}")
+        lines.append(f" อาชีพลับ: {unit}")
     if pts > 0:
         lines.append(f" แต้มสถานะค้าง: {pts} (กด P)")
+    if (player.get("flags") or {}).get("class_offer_pending"):
+        try:
+            from game.domain.class_paths import list_available_class_paths
+            from game.data_load.registry import get_registry
+
+            if list_available_class_paths(player, get_registry()):
+                lines.append(" …มีข้อเสนออาชีพ (กด C · รับหรือปฏิเสธ)")
+            else:
+                player.setdefault("flags", {})["class_offer_pending"] = False
+        except Exception:
+            lines.append(" …มีข้อเสนออาชีพ (กด C)")
     lines.extend(
         [
             f" XP  [{xp_bar(xp_pct)}] {xp_pct:.0f}%  ({xp_cur}/{xp_need})",
@@ -225,7 +432,17 @@ def render_status_l1(player: Mapping[str, Any], current_area: str) -> str:
             f" MP  [{ratio_bar(mana, max_mana)}] {mana}/{max_mana}",
             f" กดดัน {pressure}   สถานะ: {st_txt}",
             f" ลงทุน: โจม{alloc.get('atk', 0)} กัน{alloc.get('defense', 0)} "
-            f"เวท{alloc.get('magic', 0)} เร็ว{alloc.get('speed', 0)} คริ{alloc.get('crit', 0)}",
+            f"เวท{alloc.get('magic', 0)} เร็ว{alloc.get('speed', 0)}",
+        ]
+    )
+    try:
+        from game.domain.combo_mind import soft_combo_mind_hint
+
+        lines.append(f" {soft_combo_mind_hint(player)}")
+    except Exception:
+        pass
+    lines.extend(
+        [
             "---",
             f" เงิน  โลก {player.get('money_world', 0)} | "
             f"สวรรค์ {player.get('money_heaven', 0)} | "
@@ -236,14 +453,17 @@ def render_status_l1(player: Mapping[str, Any], current_area: str) -> str:
     )
 
     equip = player.get("equip") or {}
-    if equip.get("weapon"):
-        socks = (player.get("sockets") or {}).get("weapon") or []
+    from game.domain.equipment import EQUIP_SLOT_UI
+
+    for slot, lab in EQUIP_SLOT_UI:
+        shown = equip.get(slot)
+        if not shown:
+            continue
+        socks = (player.get("sockets") or {}).get(slot) or []
         filled = sum(1 for s in socks if s)
-        lines.append(f" อาวุธ {equip['weapon']}" + (f"  การ์ด {filled}/{len(socks)}" if socks else ""))
-    if equip.get("armor"):
-        socks = (player.get("sockets") or {}).get("armor") or []
-        filled = sum(1 for s in socks if s)
-        lines.append(f" เกราะ {equip['armor']}" + (f"  การ์ด {filled}/{len(socks)}" if socks else ""))
+        lines.append(
+            f" {lab} {shown}" + (f"  การ์ด {filled}/{len(socks)}" if socks else "")
+        )
     bag = player.get("card_bag") or []
     if bag:
         lines.append(f" การ์ดในถุง {len(bag)} ใบ")

@@ -20,8 +20,11 @@
 - เรียกใช้ (ปุ่ม 5) ยังเป็นบัฟหนักชั่วคราว
 
 ## Unit
-- **claim** ต่อ `world_id`: ไฟล์ `saves/<world>/unit_claims.json`
-- ชนิดละ 1 เจ้าของในโลก
+- **33 ชนิด** (3 ดั้งเดิม + 30 ขยาย) · สกิล `unit_only` อย่างละ 1
+- **1 ผู้เล่น = 1 Unit** ตลอด · **1 โลก = 1 เจ้าของต่อชนิด/สกิล**
+- **claim** ต่อ `world_id`: `saves/<world>/unit_claims.json`
+- **โอกาสปลุกต่ำมาก** (YAML ~1.2–5% · code cap ≤6%) · เงื่อนไขซ่อนทั้งหมด
+- **power_tier ซ่อน:** `broken` (แทบโกง open world) · `strong` · `mid` · `weak` · `joke` (แทบไร้ค่า แต่กิน claim)
 - **mastery 0–5**: เริ่มอ่อน (power×0.55, mana×1.35) → ตื่นเต็ม
 - เกจซ่อน: ใช้ unit skill / คอมโบยาว / โจมตี
 

@@ -1,5 +1,9 @@
 """
-Soft class-change eligibility — free-form conditions, never shown to player.
+Soft class-change eligibility + permanent accept/decline offers.
+
+Player never sees unlock conditions.
+If they decline an offered occupation, that occupation path is gone for the
+character — other occupations may still appear later when eligible.
 """
 from __future__ import annotations
 
@@ -11,6 +15,21 @@ from game.data_load.registry import DataRegistry
 def _paths(reg: DataRegistry) -> List[Dict[str, Any]]:
     cfg = getattr(reg, "class_paths", None) or {}
     return list(cfg.get("paths") or [])
+
+
+def ensure_class_offer_state(player: MutableMapping[str, Any]) -> None:
+    player.setdefault("declined_occupations", [])
+    player.setdefault("declined_class_path_ids", [])
+    player.setdefault("class_change_log", [])
+    player.setdefault("pending_class_offers", [])  # soft ids offered this session
+
+
+def declined_occupations(player: Mapping[str, Any]) -> List[str]:
+    return [str(x) for x in (player.get("declined_occupations") or [])]
+
+
+def is_occupation_declined(player: Mapping[str, Any], occupation_id: str) -> bool:
+    return str(occupation_id) in declined_occupations(player)
 
 
 def _cond_ok(player: Mapping[str, Any], reg: DataRegistry, c: Mapping[str, Any]) -> bool:
@@ -60,26 +79,42 @@ def evaluate_path(
     return score >= need, score
 
 
-def list_available_class_paths(
-    player: Mapping[str, Any],
-    reg: DataRegistry,
-) -> List[Dict[str, Any]]:
-    """Paths player can take now (from vagabond or any can_class_change)."""
+def can_receive_class_offers(player: Mapping[str, Any], reg: DataRegistry) -> bool:
+    """True while player may still be offered a main occupation path."""
     occ = reg.occupations.get(str(player.get("occupation_id") or "")) or {}
-    # Only offer if starter / flagged, or still free path
-    if not (
+    if (
         occ.get("is_starter")
         or occ.get("can_class_change")
         or str(player.get("occupation_id")) == "vagabond"
     ):
-        # allow rare second path if flag
-        if not (player.get("flags") or {}).get("allow_reclass"):
-            return []
+        return True
+    if (player.get("flags") or {}).get("allow_reclass"):
+        return True
+    return False
+
+
+def list_available_class_paths(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+) -> List[Dict[str, Any]]:
+    """
+    Paths the system may offer now.
+    Hides declined occupations and current occupation.
+    Conditions never shown.
+    """
+    ensure_class_offer_state(player)  # type: ignore
+    if not can_receive_class_offers(player, reg):
+        return []
+    declined = set(declined_occupations(player))
+    declined_paths = {str(x) for x in (player.get("declined_class_path_ids") or [])}
     out: List[Dict[str, Any]] = []
     cur = str(player.get("occupation_id") or "")
     for path in _paths(reg):
+        pid = str(path.get("id") or "")
         to_id = str(path.get("to_occupation") or "")
-        if to_id == cur:
+        if not to_id or to_id == cur:
+            continue
+        if to_id in declined or pid in declined_paths:
             continue
         if to_id not in (reg.occupations or {}):
             continue
@@ -88,7 +123,44 @@ def list_available_class_paths(
             d = dict(path)
             d["_score"] = score
             out.append(d)
+    # stable soft order by score then id
+    out.sort(key=lambda p: (-int(p.get("_score") or 0), str(p.get("id") or "")))
     return out
+
+
+def decline_class_offer(
+    player: MutableMapping[str, Any],
+    path: Mapping[str, Any],
+) -> List[str]:
+    """
+    Permanently refuse this occupation offer.
+    That occupation will not be offered again; other paths may still appear.
+    """
+    ensure_class_offer_state(player)
+    to_id = str(path.get("to_occupation") or "")
+    pid = str(path.get("id") or "")
+    declined = list(player.get("declined_occupations") or [])
+    if to_id and to_id not in declined:
+        declined.append(to_id)
+    player["declined_occupations"] = declined
+    dpaths = list(player.get("declined_class_path_ids") or [])
+    if pid and pid not in dpaths:
+        dpaths.append(pid)
+    player["declined_class_path_ids"] = dpaths
+    label = path.get("label") or to_id
+    # clear pending if no more offers
+    try:
+        from game.data_load.registry import get_registry
+
+        reg = get_registry()
+        if not list_available_class_paths(player, reg):
+            player.setdefault("flags", {})["class_offer_pending"] = False
+    except Exception:
+        pass
+    return [
+        f"…คุณผลักทาง「{label}」ออกไป — ทางนั้นปิดสำหรับคุณแล้ว",
+        " (อาชีพอื่นยังอาจมาเสนอเองหากเงื่อนไขที่มองไม่เห็นถึง)",
+    ]
 
 
 def apply_class_change(
@@ -96,11 +168,14 @@ def apply_class_change(
     reg: DataRegistry,
     path: Mapping[str, Any],
 ) -> List[str]:
-    """Switch occupation — soft, no refund of stats."""
+    """Accept offer — switch occupation. Stats already invested are kept (free alloc)."""
+    ensure_class_offer_state(player)
     to_id = str(path.get("to_occupation") or "")
     occ = reg.occupations.get(to_id)
     if not occ:
         return ["ทางนั้นใช้ไม่ได้"]
+    if is_occupation_declined(player, to_id):
+        return ["ทางนี้ถูกปิดไปแล้ว — เลือกไม่ได้"]
     old = player.get("occupation") or player.get("occupation_id")
     player["occupation_id"] = to_id
     player["occupation"] = occ.get("name") or to_id
@@ -120,8 +195,9 @@ def apply_class_change(
             base.append(sk)
             player["base_skills"] = base
     player.setdefault("flags", {})["had_class_change"] = True
+    player.setdefault("flags", {})["no_class_yet"] = False
     player.setdefault("class_change_log", []).append(to_id)
-    # recompute latent powers
+    # recompute latent powers (growth mult changes with class)
     try:
         from game.domain.progression import recompute_powers
         from game.domain.equipment import recompute_stats
@@ -130,11 +206,38 @@ def apply_class_change(
         recompute_stats(player, reg)
     except Exception:
         pass
+    prim = list(occ.get("primary_stats") or [])
+    soft_hint = ""
+    if prim:
+        soft_map = {
+            "atk": "โจมตี",
+            "defense": "อึด",
+            "magic": "เวท",
+            "speed": "เร็ว",
+            "intelligence": "สติ",
+            "crit": "คม",
+        }
+        soft_hint = " · ".join(soft_map.get(p, p) for p in prim[:3])
     notes = [
-        f"✦ ทางแยกอาชีพ: จาก {old} → {occ.get('name')}",
+        f"✦ รับทางอาชีพ: {old} → {occ.get('name')}",
         f"  {path.get('flavor') or 'โลกดึงคุณไปทางหนึ่ง…'}",
-        "  (คุณไม่รู้แน่ชัดว่าทำไมทางนี้ถึงเปิด)",
+        "  คุณเดินหน้าในสายนี้แล้ว (ขั้นอาชีพ · ต้นไม้สกิล)",
+        "  แต้มสถานะลงได้อิสระ — ไม่บังคับตามสาย",
     ]
+    if soft_hint:
+        notes.append(f"  (สายนี้มักเข้ากับ: {soft_hint} — แต่ประยุกต์เองได้)")
     if sk and sk in (reg.skills or {}):
-        notes.append(f"  ได้สกิล: {(reg.skills.get(sk) or {}).get('name', sk)}")
+        notes.append(f"  ได้สกิลพื้นฐาน: {(reg.skills.get(sk) or {}).get('name', sk)}")
+    notes.append("  (คุณไม่รู้แน่ชัดว่าทำไมทางนี้ถึงเปิด)")
+    player.setdefault("flags", {})["class_offer_pending"] = False
     return notes
+
+
+def soft_offer_hint(player: Mapping[str, Any], reg: DataRegistry) -> Optional[str]:
+    """One-line soft notify when offers exist (no spoilers)."""
+    paths = list_available_class_paths(player, reg)
+    if not paths:
+        return None
+    if len(paths) == 1:
+        return "…มีทางอาชีพหนึ่งกำลังยื่นมือมา (กด C · รับหรือปฏิเสธ)"
+    return f"…มีทางอาชีพ {len(paths)} ทางกำลังยื่นมือมา (กด C · รับหรือปฏิเสธ)"

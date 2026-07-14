@@ -65,22 +65,41 @@ def _explore_actions(
     personality_points: int,
     boss_line: str,
 ) -> str:
-    lines: List[str] = ["── สำรวจ · ทำอะไรต่อ ──"]
+    """
+    Action panel — three bands: หลัก / ระบบ / ออก
+    Returned as plain lines (caller may wrap in box).
+    """
+    from game.ui_terminal.layout import render_box
+
+    lines: List[str] = [
+        " ทำอะไรต่อ",
+        "---",
+        " หลัก",
+        "  1  พัก        2  สำรวจ       3  เข้าหา",
+        "  4  เดินทาง    5  ตัวละคร(I)  6  ร้าน/คราฟ",
+        "---",
+        " ระบบ",
+        "  7  ออโต้   B  บอส   G  ขอแรง   H  ช่วย   T  บทเรียน",
+        "  A  อันดับ/ท้า   P  แต้มสถานะ   N  แต้มนิสัย   S  สถานะ",
+        "---",
+        "  0  ออก (เซฟ)",
+    ]
     if boss_line:
-        lines.append(boss_line)
-    lines.extend(
-        [
-            " 1 พัก   2 สำรวจ   3 เข้าหา   4 เดินทาง",
-            " 5 / I  ตัวละคร   6 ร้าน/ตลาด/คราฟ",
-            " 7 ออโต้   G สัญญาณขอแรง   B บอส   H ช่วย   T บทเรียน",
-            " 0 ออก(เซฟ)  |  คำสั่ง f_mn01 · hotkey P/S/…",
-        ]
-    )
-    if stat_points > 0:
-        lines.append(f" ✦ แต้มสถานะค้าง {stat_points} — กด I แล้ว 6 หรือ P")
-    if personality_points > 0:
-        lines.append(f" ✦ แต้มนิสัย {personality_points} — กด I แล้ว 6 หรือ N")
-    return "\n".join(lines)
+        bl = str(boss_line).strip()
+        if not bl.startswith("☠") and "บอส" not in bl:
+            bl = f"☠ {bl}"
+        lines.append("---")
+        lines.append(f" {bl}")
+    if stat_points > 0 or personality_points > 0:
+        lines.append("---")
+        bits = []
+        if stat_points > 0:
+            bits.append(f"แต้มสถานะ {stat_points} → P")
+        if personality_points > 0:
+            bits.append(f"แต้มนิสัย {personality_points} → N")
+        lines.append(" ✦ " + "  ·  ".join(bits))
+    # keep marker for tests that search "ทำอะไรต่อ"
+    return render_box(lines, double=False)
 
 
 def _personal_actions(
@@ -90,44 +109,86 @@ def _personal_actions(
     mission_line: str,
     money_world: Optional[int],
 ) -> str:
-    lines: List[str] = ["── ตัวละคร (PERSONAL) ──"]
-    if money_world is not None:
-        lines.append(f" เงินโลก {money_world}")
+    """
+    Menu-only block (no vitals/money/points dump — hub frame owns those).
+    Still accepts money_world for API compat; unused when embedded in hub.
+    """
+    from game.ui_terminal.layout import render_box
+
+    lines: List[str] = [
+        " เมนูตัวละคร",
+        "---",
+        " ดูแล",
+        "  R  พักดูแล      E  กินเสบียง",
+        "---",
+        " จัดการ",
+        "  1  สถานะเต็ม     2  กระเป๋า      3  เกียร์",
+        "  4  ภารกิจ        5  เงินย่อ      6  แต้ม P/N/C",
+        "  7  สกิล·ปาร์ตี้·ห้องสมุด",
+        "  8  ตั้งค่า/เซฟ",
+        "---",
+        "  0  กลับสำรวจ",
+    ]
     if mission_line:
-        lines.append(mission_line)
-    lines.extend(
-        [
-            " 1 สถานะเต็ม   2 กระเป๋า(ของ)   3 สวมใส่/เกียร์",
-            " 4 ภารกิจ   5 เงินย่อ   6 แต้ม P/N/C",
-            " 7 สกิล·ปาร์ตี้·ห้องสมุด   8 ตั้งค่า/เซฟ",
-            " ร้าน/ตลาด → กลับสำรวจแล้วกด 6   |   0 กลับสำรวจ",
-        ]
-    )
-    if stat_points > 0:
-        lines.append(f" ✦ แต้มสถานะ {stat_points} — เลือก 6 แล้ว P")
-    if personality_points > 0:
-        lines.append(f" ✦ แต้มนิสัย {personality_points} — เลือก 6 แล้ว N")
-    return "\n".join(lines)
+        lines.append("---")
+        lines.append(f" {str(mission_line).strip()}")
+    if stat_points > 0 or personality_points > 0:
+        lines.append("---")
+        bits = []
+        if stat_points > 0:
+            bits.append(f"แต้มสถานะ {stat_points} → P (หรือ 6)")
+        if personality_points > 0:
+            bits.append(f"แต้มนิสัย {personality_points} → N (หรือ 6)")
+        lines.append(" ✦ " + "  ·  ".join(bits))
+    # money_world kept out of menu to avoid dup with status frame
+    _ = money_world
+    return render_box(lines, double=False)
 
 
 def _combat_actions() -> str:
-    return "\n".join(
+    from game.ui_terminal.layout import render_box
+
+    return render_box(
         [
-            "── ไฟต์ · คำสั่ง (แท่งเต็ม) ──",
-            " 1 โจมตี   2 สกิล/คอมโบ   3 ยา/ล้าง/บัฟ",
-            " 4 หนี   5 ปาร์ตี้   6 สติเร่งจังหวะ",
-            " (ไม่เปิดตัวละคร/ร้านในไฟต์)",
-        ]
+            " ไฟต์ · คำสั่ง",
+            "---",
+            " โจมตี",
+            "  1  โจมตีปกติ      2  สกิล / คอมโบ",
+            "---",
+            " ช่วยเหลือ",
+            "  3  ยา / ล้าง / บัฟ",
+            "  5  ปาร์ตี้         6  สติเร่งจังหวะ",
+            "---",
+            "  4  หนี           7  เจรจา soft (บางศัตรู)",
+            "---",
+            " (แท่งจังหวะเต็มก่อนเลือก · เจรจาได้ครั้งเดียวต่อไฟต์)",
+        ],
+        double=False,
     )
 
 
 def _shop_actions() -> str:
-    return "\n".join(
+    from game.ui_terminal.layout import render_box
+
+    return render_box(
         [
-            "── ร้าน (SHOP) ──",
-            " 1 ร้านท้องถิ่น   2 ตลาดสวรรค์/นรก   3 ตลาดหายาก/ตำนาน",
-            " 4 / M  ตลาดผู้เล่น   5 คราฟ   6 ดูเงินย่อ   0 กลับสำรวจ",
-        ]
+            " โหมดร้าน",
+            "---",
+            " ร้านระบบ",
+            "  1  ร้านท้องถิ่น          ของใช้ทั่วไป",
+            "  2  ตลาดสวรรค์ / นรก      สกุลเงินพิเศษ",
+            "  3  ตลาดหายาก / ศาลา      วัสดุ · รับซื้อแรงก์สูง",
+            "---",
+            " ผู้เล่น · อื่น",
+            "  4 / M  ตลาดผู้เล่น        ตั้งราคา · ภาษี",
+            "  5      คราฟ",
+            "  6      ดูเงินย่อ",
+            "---",
+            "  0  กลับสำรวจ",
+            "---",
+            " ในร้าน: 1 ซื้อ → เลือกหมวด → เลือกชิ้น",
+        ],
+        double=False,
     )
 
 
@@ -154,7 +215,8 @@ def active_mission_line(player: Mapping[str, Any]) -> str:
 
 def money_summary_lines(player: Mapping[str, Any]) -> List[str]:
     lines = [
-        "── เงิน / เศรษฐกิจย่อ ──",
+        " เงิน / เศรษฐกิจย่อ",
+        "---",
         f" โลก {int(player.get('money_world') or 0)} · "
         f"สวรรค์ {int(player.get('money_heaven') or 0)} · "
         f"นรก {int(player.get('money_hell') or 0)}",

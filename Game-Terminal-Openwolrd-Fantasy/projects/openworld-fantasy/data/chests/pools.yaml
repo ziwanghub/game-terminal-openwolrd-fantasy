@@ -1,0 +1,121 @@
+# Loot pools by bucket — IC5 economy close (1.33)
+buckets:
+  material:
+    - upgrade_mat
+    - iron_arrowhead
+    - herb_bundle
+    - city_map_scrap
+    - crystal_dust
+    - sand_cloak_mat
+    - rare_mat
+    - bird_quill
+    - chitin_plate_mat
+    - undead_ash
+    - plant_heart
+    - marsh_slime
+    - forest_moss
+    - cave_crystal_shard
+    - scroll_guard_level
+    - scroll_guard_break
+    - wolf_fang
+    - goblin_scrap
+    - bat_wing
+    - slime_core
+    - ent_bark
+    - stone_chip
+    - troll_hide
+    - scorpion_stinger
+    - leech_sac
+    - mist_dew
+    - rat_tail
+    - eagle_feather
+    - jackal_fang
+    - wraith_dust
+    - travel_pass_city
+    - repair_kit_basic
+  food:
+    - city_bread
+    - hunter_ration
+    - traveler_ration
+    - trail_stew
+    - inn_feast
+  heal:
+    - potion_hp_small
+    - potion_hp
+    - potion_mana
+    - antidote
+    - balm_regen
+    - tea_focus
+    - balm_nature
+    - focus_tea
+    - mind_elixir
+    - oil_ward
+    - tonic_might
+    - incense_focus_bulk
+  equipment:
+    - iron_sword
+    - bandit_knife
+    - bone_dagger
+    - leather_armor
+    - copper_ring
+    - wood_shield
+    - bronze_buckler
+    - iron_kite_shield
+    - ash_longbow
+    - ridge_spear
+    - desert_scimitar
+    - cave_miner_helm
+    - vine_wrap_body
+    - climber_boots
+    - dune_sandals
+    - chitin_vest
+    - quill_bow
+    - fang_charm
+    - bone_circlet
+    - steel_blade
+    - iron_plate
+    - mid_steel_glaive
+    - mid_storm_boots
+    - hydra_fang
+    - apprentice_staff
+    - marsh_reed_staff
+    - silver_amulet
+    - iron_helm
+    - iron_greaves
+    - oracle_sash
+    - umbra_steps
+    - titan_greaves
+    - prism_ring
+  special:
+    - upgrade_mat
+    - rare_mat
+    - scroll_guard_break
+    - scroll_guard_level
+    - dungeon_thread
+    - void_thread
+    - crystal_dust
+    - inn_feast
+    - sealed_chest_common
+    - sealed_chest_uncommon
+    - sealed_chest_rare
+    - lucid_incense
+    - panacea
+  soft_empty:
+    - city_bread
+    - potion_hp_small
+    - iron_arrowhead
+    - herb_bundle
+  unit_unique:
+    - unit_blade_of_ash
+    - unit_veil_of_dusk
+    - unit_heart_of_ember
+
+# sealed chest items (inventory) by rank id
+sealed_items:
+  common: sealed_chest_common
+  uncommon: sealed_chest_uncommon
+  rare: sealed_chest_rare
+  s: sealed_chest_s
+  ss: sealed_chest_ss
+  sss: sealed_chest_sss
+  unit: sealed_chest_unit

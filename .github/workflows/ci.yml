@@ -5,6 +5,11 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   openworld-fantasy-pytest:
@@ -34,4 +39,5 @@ jobs:
         run: python -m pytest -q --tb=short
 
       - name: Show app version
+        if: always()
         run: python -c "from game.config import APP_NAME, APP_VERSION, PHASE; print(f'{APP_NAME} {APP_VERSION} ({PHASE})')"

@@ -406,16 +406,30 @@ def party_member_turns(
         kind = str(m.get("kind") or "")
         base = max(1, int(m.get("bonus_atk") or 2))
         hp_ratio = int(player.get("hp") or 0) / max(1, int(player.get("max_hp") or 1))
-        # choose action soft
+        mon_ratio = int(mon.get("hp") or 0) / max(1, int(mon.get("max_hp") or 1))
+        # choose action soft — situational (player low · finish elite · kind)
         action = "attack"
-        if kind in ("spirit", "heaven_god", "heaven_beast") and hp_ratio < 0.45:
+        if hp_ratio < 0.30:
+            # emergency heal bias for any kind
+            if kind in ("spirit", "heaven_god", "heaven_beast", "player") or rng.random() < 0.55:
+                action = "heal"
+            else:
+                action = "attack"
+        elif kind in ("spirit", "heaven_god", "heaven_beast") and hp_ratio < 0.45:
             action = "heal"
         elif kind in ("spirit",) and rng.random() < 0.35:
             action = "heal"
+        elif mon_ratio <= 0.22 and (mon.get("elite") or mon.get("boss") or mon_ratio <= 0.15):
+            # finish wounded high-value foe
+            action = "attack"
         elif kind in ("player", "beast", "hell_beast", "hell_god") or rng.random() < 0.7:
             action = "attack"
         else:
             action = "buff"
+        # finishing blow slightly stronger when mon is nearly done
+        finish_mult = 1.0
+        if action == "attack" and mon_ratio <= 0.25:
+            finish_mult = 1.12 + (0.08 if mon.get("elite") or mon.get("boss") else 0.0)
 
         if action == "heal":
             heal = max(2, int(round(base * (1.2 + bond * 0.1) + rng.randint(1, 4))))
@@ -437,7 +451,10 @@ def party_member_turns(
                 "hell_god": 1.4,
                 "spirit": 0.95,
             }.get(kind, 1.0)
-            dmg = max(1, int(round(base * kmult * (0.85 + rng.random() * 0.55))))
+            dmg = max(
+                1,
+                int(round(base * kmult * finish_mult * (0.85 + rng.random() * 0.55))),
+            )
             mon["hp"] = int(mon.get("hp", 0)) - dmg
             try:
                 from game.domain.narrative import narrate

@@ -4,18 +4,54 @@
   level_max: 4
   hp_base: 40
   atk_base: 7
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.0
-
+  card_id: card_goblin_hunter
+  card_rate: very_rare
+  drops:
+  - item: goblin_scrap
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: upgrade_mat
+    rate: uncommon
+    note: วัสดุ
+  - item: bandit_knife
+    rate: rare
+    note: อุปกรณ์
+  - item: ash_club
+    rate: rare
+    note: อุปกรณ์
 - id: forest_wolf
   name: Wolf ป่า
   level_min: 2
   level_max: 5
   hp_base: 48
   atk_base: 9
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.05
-
+  card_id: card_forest_wolf
+  card_rate: very_rare
+  drops:
+  - item: wolf_fang
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: herb_bundle
+    rate: uncommon
+    note: สมุนไพร
+  - item: leather_cap
+    rate: rare
+    note: อุปกรณ์
+  - item: leather_greaves
+    rate: very_rare
+    note: อุปกรณ์
 - id: wood_ent
   rarity: uncommon
   name: Ent ไม้ยักษ์
@@ -23,9 +59,29 @@
   level_max: 7
   hp_base: 70
   atk_base: 8
-  elements: [nature]
+  elements:
+  - nature
   xp_mult: 1.2
-
+  card_id: card_wood_ent
+  card_rate: very_rare
+  drops:
+  - item: ent_bark
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: herb_bundle
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: woodsman_axe
+    rate: rare
+    note: อุปกรณ์
+  - item: scout_spear
+    rate: rare
+    note: อุปกรณ์
 - id: forest_wraith
   rarity: rare
   name: วิญญาณป่า
@@ -33,33 +89,75 @@
   level_max: 10
   hp_base: 55
   atk_base: 12
-  elements: [shadow, nature]
+  elements:
+  - shadow
+  - nature
   xp_mult: 1.35
   apply_status:
     id: poison
     chance: 0.22
-
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: wraith_dust
+    rate: uncommon
+    note: ชิ้นส่วนมอน
+  - item: herb_bundle
+    rate: common
+  - item: rare_mat
+    rate: rare
+    note: วัสดุหายาก
+  - item: shadow_cloak
+    rate: very_rare
+    note: อุปกรณ์
 - id: cave_bat
   name: Cave Bat Swarm
   level_min: 3
   level_max: 6
   hp_base: 42
   atk_base: 8
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.0
-
+  card_id: card_cave_bat_swarm
+  card_rate: very_rare
+  drops:
+  - item: bat_wing
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: potion_hp_small
+    rate: uncommon
+    note: ใช้ได้
+  - item: trail_boots
+    rate: rare
+    note: อุปกรณ์
 - id: dark_slime
   name: Dark Slime
   level_min: 4
   level_max: 8
   hp_base: 60
   atk_base: 7
-  elements: [shadow]
+  elements:
+  - shadow
   xp_mult: 1.1
   apply_status:
     id: poison
     chance: 0.28
-
+  card_id: card_dark_slime
+  card_rate: very_rare
+  drops:
+  - item: slime_core
+    rate: common
+    note: ชิ้นส่วนมอน
+  - item: antidote
+    rate: uncommon
+    note: ใช้ได้
+  - item: ranger_leggings
+    rate: rare
+    note: อุปกรณ์
 - id: shadow_wraith
   rarity: rare
   name: Shadow Wraith
@@ -67,22 +165,39 @@
   level_max: 12
   hp_base: 65
   atk_base: 11
-  elements: [shadow, fire]
+  elements:
+  - shadow
+  - fire
   xp_mult: 1.3
+  card_id: card_shadow_wraith
+  card_rate: rare
   attack_profiles:
-    - id: claw
-      tags: [shadow]
-      telegraph: เงากระชาก!
-      power: 11
-      status: poison
-      status_chance: 0.22
-    - id: ember
-      tags: [fire, magic]
-      telegraph: เปลวเงาปะทุ!
-      power: 13
-      status: burn
-      status_chance: 0.30
-
+  - id: claw
+    tags:
+    - shadow
+    telegraph: เงากระชาก!
+    power: 11
+    status: poison
+    status_chance: 0.22
+  - id: ember
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวเงาปะทุ!
+    power: 13
+    status: burn
+    status_chance: 0.3
+  drops:
+  - item: wraith_dust
+    rate: common
+    note: ชิ้นส่วนมอน
+  - item: slime_core
+    rate: uncommon
+  - item: rare_mat
+    rate: uncommon
+  - item: focus_crystal
+    rate: rare
+    note: อุปกรณ์
 - id: abyss_lurker
   rarity: sacred
   name: Abyss Lurker
@@ -90,9 +205,28 @@
   level_max: 20
   hp_base: 95
   atk_base: 16
-  elements: [shadow]
+  elements:
+  - shadow
   xp_mult: 1.8
-
+  card_id: card_inferno
+  card_rate: rare
+  drops:
+  - item: wraith_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: iron_sabatons
+    rate: rare
+    note: อุปกรณ์
+  - item: iron_greaves
+    rate: rare
+    note: อุปกรณ์
 - id: rock_golem
   rarity: uncommon
   name: Rock Golem
@@ -100,334 +234,2263 @@
   level_max: 9
   hp_base: 80
   atk_base: 10
-  elements: [earth]
+  elements:
+  - earth
   xp_mult: 1.15
-
+  card_id: card_rock_golem
+  card_rate: very_rare
+  drops:
+  - item: stone_chip
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: upgrade_mat
+    rate: uncommon
+    note: วัสดุ
+  - item: iron_helm
+    rate: rare
+    note: อุปกรณ์
+  - item: chain_coif
+    rate: very_rare
+    note: อุปกรณ์
 - id: mountain_troll
   name: Mountain Troll
   level_min: 5
   level_max: 11
   hp_base: 88
   atk_base: 12
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.25
-
+  card_id: card_mountain_troll
+  card_rate: very_rare
+  drops:
+  - item: troll_hide
+    rate: common
+    note: ชิ้นส่วนมอน
+  - item: stone_chip
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: woodsman_axe
+    rate: rare
+    note: อุปกรณ์
+  - item: iron_greaves
+    rate: rare
+    note: อุปกรณ์
 - id: stone_drake
   name: Stone Drake
   level_min: 8
   level_max: 15
   hp_base: 100
   atk_base: 14
-  elements: [earth, fire]
+  elements:
+  - earth
+  - fire
   xp_mult: 1.5
-
+  card_id: card_fire
+  card_rate: rare
+  drops:
+  - item: stone_chip
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+  - item: iron_plate
+    rate: rare
+    note: อุปกรณ์
+  - item: iron_sabatons
+    rate: rare
+    note: อุปกรณ์
 - id: ruins_specter
   name: Ruins Specter
   level_min: 7
   level_max: 14
   hp_base: 70
   atk_base: 13
-  elements: [arcane, shadow]
+  elements:
+  - arcane
+  - shadow
   xp_mult: 1.35
-
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: wraith_dust
+    rate: common
+    note: ชิ้นส่วนมอน
+  - item: upgrade_mat
+    rate: uncommon
+  - item: silver_amulet
+    rate: rare
+    note: อุปกรณ์
+  - item: mage_robe
+    rate: very_rare
+    note: อุปกรณ์
 - id: cursed_knight
   name: Cursed Knight
   level_min: 8
   level_max: 16
   hp_base: 95
   atk_base: 15
-  elements: [physical, shadow]
+  elements:
+  - physical
+  - shadow
   xp_mult: 1.45
-
+  card_id: card_cursed_knight
+  card_rate: rare
+  drops:
+  - item: goblin_scrap
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: upgrade_mat
+    rate: common
+  - item: iron_sword
+    rate: rare
+    note: อุปกรณ์
+  - item: iron_shield
+    rate: rare
+    note: อุปกรณ์
+  - item: steel_blade
+    rate: very_rare
+    note: อุปกรณ์
 - id: ancient_guardian
   name: Ancient Guardian
   level_min: 12
   level_max: 22
   hp_base: 120
   atk_base: 17
-  elements: [arcane, earth]
+  elements:
+  - arcane
+  - earth
   xp_mult: 1.7
-
+  card_id: card_holy
+  card_rate: rare
+  drops:
+  - item: stone_chip
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+  - item: iron_plate
+    rate: rare
+  - item: arcane_circlet
+    rate: very_rare
+    note: อุปกรณ์
 - id: sand_scorpion
   name: Sand Scorpion
   level_min: 7
   level_max: 13
   hp_base: 68
   atk_base: 14
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.2
-
+  card_id: card_sand_scorpion
+  card_rate: very_rare
+  drops:
+  - item: scorpion_stinger
+    rate: common
+    note: ชิ้นส่วนมอน
+  - item: sand_cloak_mat
+    rate: uncommon
+  - item: antidote
+    rate: uncommon
+    note: ใช้ได้
+  - item: dust_veil
+    rate: rare
+    note: อุปกรณ์
 - id: desert_raider
   name: Desert Raider
   level_min: 8
   level_max: 15
   hp_base: 75
   atk_base: 13
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 1.25
-
+  card_id: card_desert_raider
+  card_rate: very_rare
+  drops:
+  - item: sand_cloak_mat
+    rate: common
+  - item: upgrade_mat
+    rate: uncommon
+  - item: bandit_knife
+    rate: rare
+  - item: scout_spear
+    rate: rare
+  - item: hardened_boots
+    rate: very_rare
 - id: fire_salamander
   name: Fire Salamander
   level_min: 10
   level_max: 18
   hp_base: 85
   atk_base: 16
-  elements: [fire]
+  elements:
+  - fire
   xp_mult: 1.55
-
+  card_id: card_inferno
+  card_rate: rare
+  drops:
+  - item: void_ash
+    rate: uncommon
+    note: ชิ้นส่วนมอน
+  - item: rare_mat
+    rate: uncommon
+  - item: oil_ward
+    rate: rare
+    note: ใช้ได้
+  - item: mage_robe
+    rate: very_rare
 - id: boss_forest_king
   rarity: legendary
   name: ราชันย์เถื่อน — King of Thorns
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 8
   level_max: 8
   hp_base: 220
   atk_base: 18
-  elements: [nature, physical]
+  elements:
+  - nature
+  - physical
   xp_mult: 3.2
-
+  card_id: card_boss_forest_king
+  card_rate: uncommon
+  drops:
+  - item: ent_bark
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: thorn_blade
+    rate: rare
+  - item: thorn_mail
+    rate: rare
+  - item: woodsman_axe
+    rate: uncommon
+  - item: sealed_chest_s
+    rate: uncommon
+    note: หีบ
 - id: boss_shadow_queen
   rarity: legendary
   name: ราชินีเงา — Umbra Queen
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 12
   level_max: 12
   hp_base: 280
   atk_base: 22
-  elements: [shadow, fire]
+  elements:
+  - shadow
+  - fire
   xp_mult: 3.5
-
+  card_id: card_boss_shadow_queen
+  card_rate: uncommon
+  drops:
+  - item: wraith_dust
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: shadow_dagger
+    rate: uncommon
+  - item: shadow_cloak
+    rate: rare
+  - item: sealed_chest_s
+    rate: uncommon
+  - item: umbra_veil_helm
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: umbra_steps
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: boss_stone_titan
   rarity: sacred
   name: ไททันหิน — Stone Titan
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 14
   level_max: 14
   hp_base: 320
   atk_base: 24
-  elements: [earth, physical]
+  elements:
+  - earth
+  - physical
   xp_mult: 3.6
-
+  card_id: card_boss_stone_titan
+  card_rate: uncommon
+  drops:
+  - item: stone_chip
+    rate: always
+    qty:
+    - 2
+    - 4
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: iron_plate
+    rate: uncommon
+  - item: iron_shield
+    rate: uncommon
+  - item: iron_greaves
+    rate: rare
+  - item: sealed_chest_s
+    rate: uncommon
+  - item: titan_plate
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: titan_greaves
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: boss_ruin_oracle
   rarity: sacred
   name: นักพยากรณ์ซาก — Ruin Oracle
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 16
   level_max: 16
   hp_base: 300
   atk_base: 26
-  elements: [arcane, shadow]
+  elements:
+  - arcane
+  - shadow
   xp_mult: 3.8
-
+  card_id: card_boss_ruin_oracle
+  card_rate: uncommon
+  drops:
+  - item: rare_mat
+    rate: always
+    qty:
+    - 1
+    - 2
+  - item: crystal_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: arcane_circlet
+    rate: uncommon
+  - item: mage_robe
+    rate: uncommon
+  - item: sealed_chest_ss
+    rate: rare
+  - item: oracle_tome_focus
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: oracle_sash
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: boss_sun_scourge
   rarity: legendary
   name: ภัยพิบัติอาทิตย์ — Sun Scourge
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 4
   level_min: 18
   level_max: 18
   hp_base: 340
   atk_base: 28
-  elements: [fire, lightning]
+  elements:
+  - fire
+  - lightning
   xp_mult: 4.0
-
+  card_id: card_boss_sun_scourge
+  card_rate: uncommon
+  drops:
+  - item: void_ash
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: rare_mat
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: steel_blade
+    rate: uncommon
+  - item: sealed_chest_ss
+    rate: uncommon
+  - item: sunscourge_blade
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: sunscourge_wrap
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: marsh_leech
   name: ปลิงหนอง
   level_min: 5
   level_max: 10
   hp_base: 55
   atk_base: 11
-  elements: [water, nature]
+  elements:
+  - water
+  - nature
   xp_mult: 1.15
-
+  card_id: card_marsh_leech
+  card_rate: very_rare
+  drops:
+  - item: leech_sac
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: herb_bundle
+    rate: uncommon
+  - item: antidote
+    rate: uncommon
+  - item: potion_hp_small
+    rate: common
 - id: fog_wisp
   name: วิญญาณหมอก
   level_min: 6
   level_max: 11
   hp_base: 48
   atk_base: 13
-  elements: [arcane, water]
+  elements:
+  - arcane
+  - water
   xp_mult: 1.2
-
+  card_id: card_water
+  card_rate: very_rare
+  drops:
+  - item: mist_dew
+    rate: common
+  - item: focus_tea
+    rate: uncommon
+  - item: potion_mana
+    rate: rare
+  - item: upgrade_mat
+    rate: uncommon
 - id: bog_troll
   name: โทรลหนอง
   level_min: 7
   level_max: 13
   hp_base: 90
   atk_base: 14
-  elements: [physical, nature]
+  elements:
+  - physical
+  - nature
   xp_mult: 1.3
-
+  card_id: card_vitality
+  card_rate: very_rare
+  drops:
+  - item: troll_hide
+    rate: common
+  - item: leech_sac
+    rate: uncommon
+  - item: leather_armor
+    rate: rare
+  - item: woodsman_axe
+    rate: rare
 - id: mist_horror
   name: สยองหมอก
   level_min: 9
   level_max: 15
   hp_base: 75
   atk_base: 16
-  elements: [shadow, water]
+  elements:
+  - shadow
+  - water
   xp_mult: 1.45
-
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: mist_dew
+    rate: common
+  - item: wraith_dust
+    rate: uncommon
+  - item: rare_mat
+    rate: rare
+  - item: shadow_cloak
+    rate: very_rare
 - id: crystal_golem
   name: โกเล็มผลึก
   level_min: 10
   level_max: 16
   hp_base: 110
   atk_base: 15
-  elements: [earth, arcane]
+  elements:
+  - earth
+  - arcane
   xp_mult: 1.4
-
+  card_id: card_crystal_golem
+  card_rate: rare
+  drops:
+  - item: crystal_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: stone_chip
+    rate: uncommon
+  - item: focus_crystal
+    rate: rare
+  - item: chain_coif
+    rate: rare
 - id: shard_imp
   name: อิมพ์เศษแก้ว
   level_min: 9
   level_max: 14
   hp_base: 50
   atk_base: 17
-  elements: [lightning, arcane]
+  elements:
+  - lightning
+  - arcane
   xp_mult: 1.25
-
+  card_id: card_lightning
+  card_rate: very_rare
+  drops:
+  - item: crystal_dust
+    rate: common
+  - item: upgrade_mat
+    rate: uncommon
+  - item: apprentice_staff
+    rate: rare
 - id: prism_drake
   name: มังกรปริซึม
   level_min: 12
   level_max: 18
   hp_base: 120
   atk_base: 19
-  elements: [fire, lightning]
+  elements:
+  - fire
+  - lightning
   xp_mult: 1.55
   attack_profiles:
-    - id: prism_bolt
-      tags: [lightning, magic]
-      telegraph: แสงปริซึมแยกร่าง!
-      power: 20
-      status: shock
-      status_chance: 0.28
-    - id: heat_ray
-      tags: [fire, magic]
-      telegraph: ลำแสงร้อนพุ่ง!
-      power: 19
-      status: burn
-      status_chance: 0.25
-
+  - id: prism_bolt
+    tags:
+    - lightning
+    - magic
+    telegraph: แสงปริซึมแยกร่าง!
+    power: 20
+    status: shock
+    status_chance: 0.28
+  - id: heat_ray
+    tags:
+    - fire
+    - magic
+    telegraph: ลำแสงร้อนพุ่ง!
+    power: 19
+    status: burn
+    status_chance: 0.25
+  card_id: card_lightning
+  card_rate: rare
+  drops:
+  - item: crystal_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+  - item: steel_blade
+    rate: rare
+  - item: arcane_circlet
+    rate: very_rare
 - id: light_wraith
   name: วิญญาณแสง
   level_min: 11
   level_max: 17
   hp_base: 70
   atk_base: 18
-  elements: [holy, arcane]
+  elements:
+  - holy
+  - arcane
   xp_mult: 1.5
-
+  card_id: card_holy
+  card_rate: rare
+  drops:
+  - item: wraith_dust
+    rate: common
+  - item: crystal_dust
+    rate: uncommon
+  - item: silver_amulet
+    rate: rare
+  - item: spirit_incense
+    rate: uncommon
 - id: void_crawler
   name: คลานสุญญะ
   level_min: 13
   level_max: 19
   hp_base: 85
   atk_base: 20
-  elements: [shadow]
+  elements:
+  - shadow
   xp_mult: 1.5
-
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: void_ash
+    rate: common
+  - item: wraith_dust
+    rate: uncommon
+  - item: rare_mat
+    rate: uncommon
+  - item: shadow_dagger
+    rate: very_rare
 - id: null_mage
   name: จอมเวทย์ศูนย์
   level_min: 14
   level_max: 20
   hp_base: 78
   atk_base: 22
-  elements: [arcane, shadow]
+  elements:
+  - arcane
+  - shadow
   xp_mult: 1.6
-
+  card_id: card_inferno
+  card_rate: rare
+  drops:
+  - item: void_ash
+    rate: common
+  - item: rare_mat
+    rate: uncommon
+  - item: mage_robe
+    rate: rare
+  - item: focus_crystal
+    rate: rare
 - id: rift_beast
   name: อสูรรอยแยก
   level_min: 15
   level_max: 22
   hp_base: 130
   atk_base: 21
-  elements: [physical, shadow]
+  elements:
+  - physical
+  - shadow
   xp_mult: 1.65
-
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: void_ash
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: troll_hide
+    rate: uncommon
+  - item: iron_plate
+    rate: rare
+  - item: thorn_blade
+    rate: very_rare
 - id: entropy_spawn
   name: ลูกเอนโทรปี
   level_min: 16
   level_max: 24
   hp_base: 95
   atk_base: 24
-  elements: [shadow, fire, lightning]
+  elements:
+  - shadow
+  - fire
+  - lightning
   xp_mult: 1.8
-
+  card_id: card_inferno
+  card_rate: rare
+  drops:
+  - item: void_ash
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: shadow_cloak
+    rate: rare
+  - item: sealed_chest_rare
+    rate: very_rare
+    note: หีบ
 - id: boss_mist_hydra
   rarity: legendary
   name: ไฮดราหมอก — Mist Hydra
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 11
   level_max: 11
   hp_base: 300
   atk_base: 23
-  elements: [water, nature, shadow]
+  elements:
+  - water
+  - nature
+  - shadow
   xp_mult: 3.6
   mechanic: multi_head
-
+  card_id: card_boss_mist_hydra
+  card_rate: uncommon
+  drops:
+  - item: mist_dew
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: leech_sac
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: common
+  - item: sealed_chest_s
+    rate: uncommon
+  - item: hydra_scale_mail
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: hydra_fang
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: boss_prism_sovereign
   rarity: divine
   name: เจ้าแห่งปริซึม — Prism Sovereign
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 3
   level_min: 15
   level_max: 15
   hp_base: 340
   atk_base: 27
-  elements: [arcane, lightning, holy]
+  elements:
+  - arcane
+  - lightning
+  - holy
   xp_mult: 3.9
   mechanic: reflect
-
+  card_id: card_boss_prism
+  card_rate: uncommon
+  drops:
+  - item: crystal_dust
+    rate: always
+    qty:
+    - 2
+    - 4
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: focus_crystal
+    rate: uncommon
+  - item: sealed_chest_ss
+    rate: uncommon
+  - item: prism_staff
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: prism_ring
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: boss_void_herald
   rarity: divine
   name: ผู้ประกาศสุญญะ — Void Herald
   boss: true
+  intel_tier: 3
+  never_flee: true
   phases: 4
   level_min: 18
   level_max: 18
   hp_base: 400
   atk_base: 30
-  elements: [shadow, arcane]
+  elements:
+  - shadow
+  - arcane
   xp_mult: 4.2
   mechanic: drain
-
-# ── bulk 1.13.8 ──
+  card_id: card_boss_void_herald
+  card_rate: uncommon
+  drops:
+  - item: void_ash
+    rate: always
+    qty:
+    - 2
+    - 4
+  - item: rare_mat
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: shadow_cloak
+    rate: uncommon
+  - item: sealed_chest_sss
+    rate: rare
+  - item: void_herald_cloak
+    rate: rare
+    note: ของบอสเฉพาะ
+  - item: void_sigil
+    rate: rare
+    note: ของบอสเฉพาะ
 - id: city_rat
   name: หนูเมือง
   level_min: 1
   level_max: 2
   hp_base: 22
   atk_base: 4
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 0.7
-
+  card_id: card_city_rat
+  card_rate: very_rare
+  drops:
+  - item: rat_tail
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: city_bread
+    rate: uncommon
+  - item: potion_hp_small
+    rate: uncommon
 - id: alley_thug
   name: นักเลงซอย
   level_min: 1
   level_max: 3
   hp_base: 35
   atk_base: 6
-  elements: [physical]
+  elements:
+  - physical
   xp_mult: 0.9
-
+  card_id: card_wind
+  card_rate: very_rare
+  drops:
+  - item: thug_badge
+    rate: common
+  - item: upgrade_mat
+    rate: uncommon
+  - item: bandit_knife
+    rate: rare
+  - item: copper_ring
+    rate: rare
 - id: crystal_mite
   name: ไรผลึก
   level_min: 6
   level_max: 11
   hp_base: 38
   atk_base: 10
-  elements: [arcane]
+  elements:
+  - arcane
   xp_mult: 1.2
-
+  card_id: card_lightning
+  card_rate: very_rare
+  drops:
+  - item: crystal_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: upgrade_mat
+    rate: uncommon
+  - item: focus_tea
+    rate: uncommon
 - id: void_mote
   name: ละอองสุญญะ
   level_min: 12
   level_max: 16
   hp_base: 45
   atk_base: 14
-  elements: [shadow, arcane]
+  elements:
+  - shadow
+  - arcane
   xp_mult: 1.2
+  card_id: card_void_mote
+  card_rate: very_rare
+  drops:
+  - item: void_ash
+    rate: common
+  - item: wraith_dust
+    rate: uncommon
+  - item: potion_mana
+    rate: uncommon
+- id: cliff_eagle
+  name: นกผา
+  level_min: 4
+  level_max: 9
+  hp_base: 52
+  atk_base: 11
+  elements:
+  - physical
+  - wind
+  xp_mult: 1.15
+  card_id: card_cliff_eagle
+  card_rate: very_rare
+  attack_profiles:
+  - id: dive
+    tags:
+    - physical
+    - wind
+    telegraph: บินโฉบจากยอดผา!
+    power: 12
+  - id: talon
+    tags:
+    - physical
+    telegraph: เล็บพุ่ง!
+    power: 10
+  drops:
+  - item: eagle_feather
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วนมอน
+  - item: upgrade_mat
+    rate: uncommon
+  - item: climber_boots
+    rate: rare
+    note: อุปกรณ์
+- id: stone_mole
+  name: ตุ่นหิน
+  level_min: 3
+  level_max: 8
+  hp_base: 58
+  atk_base: 9
+  elements:
+  - earth
+  - physical
+  xp_mult: 1.1
+  card_id: card_vitality
+  card_rate: very_rare
+  drops:
+  - item: mole_claw
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: stone_chip
+    rate: common
+  - item: padded_helm
+    rate: rare
+    note: อุปกรณ์
+- id: ridge_reaver
+  name: โจรสันผา
+  rarity: uncommon
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  level_min: 6
+  level_max: 12
+  hp_base: 78
+  atk_base: 13
+  elements:
+  - physical
+  xp_mult: 1.35
+  card_id: card_wind
+  card_rate: rare
+  attack_profiles:
+  - id: slash
+    tags:
+    - physical
+    - slash
+    telegraph: ดาบสะบัดตามลมผา!
+    power: 14
+  - id: throw
+    tags:
+    - physical
+    - pierce
+    telegraph: ขว้างมีดสั้น!
+    power: 11
+  drops:
+  - item: goblin_scrap
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: upgrade_mat
+    rate: common
+  - item: ridge_spear
+    rate: rare
+    note: อุปกรณ์
+  - item: bronze_buckler
+    rate: rare
+    note: อุปกรณ์
+- id: sand_viper
+  name: งูทราย
+  level_min: 7
+  level_max: 13
+  hp_base: 60
+  atk_base: 14
+  elements:
+  - physical
+  - nature
+  xp_mult: 1.2
+  card_id: card_sand_viper
+  card_rate: very_rare
+  apply_status:
+    id: poison
+    chance: 0.26
+  attack_profiles:
+  - id: strike
+    tags:
+    - physical
+    - pierce
+    telegraph: พุ่งจากเนิน!
+    power: 13
+    status: poison
+    status_chance: 0.28
+  - id: coil
+    tags:
+    - physical
+    telegraph: ขดตัวรัด!
+    power: 11
+  drops:
+  - item: sand_scale
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: antidote
+    rate: uncommon
+    note: ใช้ได้
+  - item: dune_sandals
+    rate: rare
+    note: อุปกรณ์
+- id: dust_wisp
+  name: วิญญาณฝุ่น
+  rarity: uncommon
+  level_min: 8
+  level_max: 14
+  hp_base: 48
+  atk_base: 15
+  elements:
+  - wind
+  - arcane
+  xp_mult: 1.25
+  card_id: card_dust_wisp
+  card_rate: rare
+  attack_profiles:
+  - id: blast
+    tags:
+    - wind
+    - arcane
+    telegraph: ฝุ่นหมุนวน!
+    power: 15
+  - id: sting
+    tags:
+    - arcane
+    telegraph: เม็ดทรายแทงจิต!
+    power: 12
+  drops:
+  - item: dust_core
+    rate: common
+  - item: sand_cloak_mat
+    rate: uncommon
+  - item: storm_hood
+    rate: very_rare
+    note: อุปกรณ์
+- id: oasis_jackal
+  name: หมาจิ้งจอกโอเอซิส
+  level_min: 7
+  level_max: 12
+  hp_base: 65
+  atk_base: 12
+  elements:
+  - physical
+  xp_mult: 1.18
+  card_id: card_wind
+  card_rate: very_rare
+  elite: false
+  drops:
+  - item: jackal_fang
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: hunter_ration
+    rate: uncommon
+    note: อาหาร
+  - item: desert_scimitar
+    rate: rare
+    note: อุปกรณ์
+  - item: dune_wraps
+    rate: rare
+    note: อุปกรณ์
+- id: dune_stalker
+  name: เงาเนินทราย
+  rarity: rare
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  level_min: 10
+  level_max: 16
+  hp_base: 88
+  atk_base: 16
+  elements:
+  - shadow
+  - physical
+  xp_mult: 1.45
+  card_id: card_shadow
+  card_rate: rare
+  attack_profiles:
+  - id: ambush
+    tags:
+    - shadow
+    - physical
+    telegraph: เงาผุดจากเนิน!
+    power: 17
+  - id: slash
+    tags:
+    - physical
+    - slash
+    telegraph: ดาบโค้งสะบัด!
+    power: 14
+  drops:
+  - item: dust_core
+    rate: uncommon
+  - item: rare_mat
+    rate: uncommon
+  - item: desert_scimitar
+    rate: uncommon
+    note: อุปกรณ์
+  - item: scale_greaves
+    rate: rare
+    note: อุปกรณ์
+- id: cave_glow_beetle
+  name: ด้วงเรืองถ้ำ
+  level_min: 3
+  level_max: 7
+  hp_base: 42
+  atk_base: 8
+  elements:
+  - nature
+  - physical
+  xp_mult: 1.05
+  card_id: card_cave_bat
+  card_rate: rare
+  drops:
+  - item: cave_crystal_shard
+    rate: common
+    qty:
+    - 1
+    - 2
+    note: ชิ้นส่วน
+  - item: upgrade_mat
+    rate: uncommon
+  - item: cave_miner_helm
+    rate: rare
+    note: อุปกรณ์
+  - item: bone_dagger
+    rate: very_rare
+- id: marsh_toad
+  name: คางคกบึงยักษ์
+  level_min: 4
+  level_max: 9
+  hp_base: 58
+  atk_base: 9
+  elements:
+  - water
+  - nature
+  xp_mult: 1.1
+  card_id: card_marsh_toad
+  card_rate: rare
+  apply_status: poison
+  drops:
+  - item: marsh_slime
+    rate: common
+    qty:
+    - 1
+    - 3
+  - item: herb_bundle
+    rate: uncommon
+  - item: vine_wrap_body
+    rate: rare
+  - item: marsh_reed_staff
+    rate: very_rare
+- id: moss_sprite
+  name: ภูตมอส
+  level_min: 2
+  level_max: 6
+  hp_base: 36
+  atk_base: 7
+  elements:
+  - nature
+  xp_mult: 1.0
+  card_id: card_moss_sprite
+  card_rate: very_rare
+  drops:
+  - item: forest_moss
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: herb_bundle
+    rate: uncommon
+  - item: ash_longbow
+    rate: rare
+  - item: leather_cap
+    rate: rare
+- id: city_pickpocket
+  name: จอมล้วงเมือง
+  level_min: 5
+  level_max: 10
+  hp_base: 50
+  atk_base: 11
+  elements:
+  - physical
+  - shadow
+  xp_mult: 1.12
+  card_id: card_shadow
+  card_rate: rare
+  drops:
+  - item: upgrade_mat
+    rate: uncommon
+  - item: bone_dagger
+    rate: rare
+  - item: bronze_buckler
+    rate: rare
+  - item: rare_mat
+    rate: very_rare
+- id: cave_crystal_spider
+  name: แมงมุมคริสตัลถ้ำ
+  level_min: 4
+  level_max: 8
+  hp_base: 46
+  atk_base: 10
+  elements:
+  - physical
+  - arcane
+  xp_mult: 1.08
+  card_id: card_cave_crystal_spider
+  card_rate: rare
+  drops:
+  - item: cave_crystal_shard
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: upgrade_mat
+    rate: uncommon
+  - item: iron_kite_shield
+    rate: very_rare
+  - item: bone_dagger
+    rate: rare
+- id: forest_boar
+  name: หมูป่าดงดิบ
+  level_min: 2
+  level_max: 6
+  hp_base: 55
+  atk_base: 9
+  elements:
+  - physical
+  xp_mult: 1.06
+  card_id: card_forest_boar
+  card_rate: uncommon
+  drops:
+  - item: forest_moss
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: hunter_ration
+    rate: uncommon
+  - item: leather_greaves
+    rate: rare
+  - item: woodsman_axe
+    rate: rare
+- id: marsh_gas_blob
+  name: ก้อนแก๊สบึง
+  level_min: 5
+  level_max: 10
+  hp_base: 40
+  atk_base: 11
+  elements:
+  - nature
+  - water
+  xp_mult: 1.1
+  card_id: card_marsh_gas
+  card_rate: rare
+  apply_status: poison
+  drops:
+  - item: marsh_slime
+    rate: common
+    qty:
+    - 1
+    - 3
+  - item: antidote
+    rate: uncommon
+  - item: vine_wrap_body
+    rate: rare
+  - item: scroll_guard_level
+    rate: very_rare
+- id: peak_ice_sprite
+  name: ภูตน้ำแข็งยอด
+  level_min: 8
+  level_max: 14
+  hp_base: 48
+  atk_base: 12
+  elements:
+  - water
+  - arcane
+  xp_mult: 1.15
+  card_id: card_peak_ice
+  card_rate: rare
+  drops:
+  - item: cave_crystal_shard
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: potion_mana
+    rate: uncommon
+  - item: marsh_reed_staff
+    rate: rare
+  - item: rare_mat
+    rate: rare
+- id: void_shade_larva
+  name: ตัวอ่อนเงาสุญญะ
+  level_min: 12
+  level_max: 18
+  hp_base: 62
+  atk_base: 14
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.2
+  card_id: card_void_larva
+  card_rate: rare
+  drops:
+  - item: rare_mat
+    rate: uncommon
+  - item: upgrade_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: shadow_dagger
+    rate: rare
+  - item: scroll_guard_break
+    rate: very_rare
+- id: ridge_goat
+  name: แพะผาหิน
+  level_min: 4
+  level_max: 9
+  hp_base: 52
+  atk_base: 9
+  elements:
+  - physical
+  xp_mult: 1.05
+  card_id: card_ridge_goat
+  card_rate: uncommon
+  drops:
+  - item: hunter_ration
+    rate: common
+  - item: upgrade_mat
+    rate: uncommon
+  - item: climber_boots
+    rate: rare
+  - item: ridge_spear
+    rate: rare
+- id: forest_mantrap
+  name: พืชกินคนดง
+  level_min: 3
+  level_max: 7
+  hp_base: 60
+  atk_base: 9
+  elements:
+  - nature
+  xp_mult: 1.1
+  card_id: card_forest_mantrap
+  card_rate: rare
+  role_tag: plant
+  drops:
+  - item: plant_heart
+    rate: common
+    qty:
+    - 1
+    - 1
+  - item: forest_moss
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: balm_nature
+    rate: uncommon
+  - item: vine_wrap_body
+    rate: rare
+- id: forest_hornet
+  name: ต่อยักษ์ป่า
+  level_min: 2
+  level_max: 6
+  hp_base: 34
+  atk_base: 11
+  elements:
+  - nature
+  - physical
+  xp_mult: 1.1
+  card_id: card_forest_hornet
+  card_rate: rare
+  role_tag: insect
+  drops:
+  - item: chitin_plate_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: herb_bundle
+    rate: uncommon
+  - item: antidote
+    rate: uncommon
+  - item: iron_arrowhead
+    rate: common
+    qty:
+    - 1
+    - 3
+- id: cave_skull_crawler
+  name: หัวกะโหลกคลาน
+  level_min: 5
+  level_max: 9
+  hp_base: 48
+  atk_base: 11
+  elements:
+  - shadow
+  - physical
+  xp_mult: 1.1
+  card_id: card_cave_skull
+  card_rate: rare
+  role_tag: undead
+  drops:
+  - item: undead_ash
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: bat_wing
+    rate: uncommon
+  - item: bone_circlet
+    rate: rare
+  - item: oil_shadow
+    rate: uncommon
+- id: city_bone_walker
+  name: โครงกระดูกตรอก
+  level_min: 6
+  level_max: 11
+  hp_base: 55
+  atk_base: 12
+  elements:
+  - shadow
+  - physical
+  xp_mult: 1.1
+  card_id: card_city_bone
+  card_rate: rare
+  role_tag: undead
+  drops:
+  - item: undead_ash
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rat_tail
+    rate: uncommon
+  - item: bone_dagger
+    rate: rare
+  - item: upgrade_mat
+    rate: uncommon
+- id: desert_vulture
+  name: แร้งทะเลทราย
+  level_min: 7
+  level_max: 12
+  hp_base: 44
+  atk_base: 12
+  elements:
+  - wind
+  - physical
+  xp_mult: 1.1
+  card_id: card_desert_vulture
+  card_rate: rare
+  role_tag: bird
+  drops:
+  - item: bird_quill
+    rate: common
+    qty:
+    - 1
+    - 3
+  - item: scorpion_stinger
+    rate: uncommon
+  - item: quill_bow
+    rate: rare
+  - item: hunter_ration
+    rate: uncommon
+- id: desert_scarab
+  name: ด้วงสคารับ
+  level_min: 6
+  level_max: 11
+  hp_base: 50
+  atk_base: 10
+  elements:
+  - physical
+  - nature
+  xp_mult: 1.1
+  card_id: card_desert_scarab
+  card_rate: rare
+  role_tag: insect
+  drops:
+  - item: chitin_plate_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: sand_cloak_mat
+    rate: uncommon
+  - item: chitin_vest
+    rate: rare
+  - item: upgrade_mat
+    rate: uncommon
+- id: marsh_reed_horror
+  name: สยองกอหญ้า
+  level_min: 5
+  level_max: 10
+  hp_base: 58
+  atk_base: 10
+  elements:
+  - nature
+  - water
+  xp_mult: 1.1
+  card_id: card_marsh_reed
+  card_rate: rare
+  role_tag: plant
+  drops:
+  - item: plant_heart
+    rate: common
+    qty:
+    - 1
+    - 1
+  - item: marsh_slime
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: balm_nature
+    rate: uncommon
+  - item: marsh_reed_staff
+    rate: rare
+- id: crystal_songbird
+  name: นกเพลงผลึก
+  level_min: 9
+  level_max: 14
+  hp_base: 40
+  atk_base: 13
+  elements:
+  - wind
+  - lightning
+  xp_mult: 1.1
+  card_id: card_crystal_song
+  card_rate: rare
+  role_tag: bird
+  drops:
+  - item: bird_quill
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: cave_crystal_shard
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: quill_bow
+    rate: rare
+  - item: potion_mana
+    rate: uncommon
+- id: mountain_carrion_crow
+  name: กาซากเขา
+  level_min: 4
+  level_max: 9
+  hp_base: 42
+  atk_base: 10
+  elements:
+  - wind
+  - shadow
+  xp_mult: 1.1
+  card_id: card_carrion_crow
+  card_rate: rare
+  role_tag: bird
+  drops:
+  - item: bird_quill
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: stone_chip
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: fang_charm
+    rate: rare
+  - item: upgrade_mat
+    rate: uncommon
+- id: void_bone_moth
+  name: มอดกระดูกสุญญะ
+  level_min: 13
+  level_max: 18
+  hp_base: 58
+  atk_base: 15
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.1
+  card_id: card_void_moth
+  card_rate: rare
+  role_tag: insect
+  drops:
+  - item: undead_ash
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: chitin_plate_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: oil_shadow
+    rate: rare
+  - item: rare_mat
+    rate: rare
+- id: elite_forest_alpha_wolf
+  name: 【Elite】หมาป่าอัลฟาดง
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 5
+  level_max: 9
+  hp_base: 95
+  atk_base: 16
+  elements:
+  - physical
+  - wind
+  xp_mult: 1.85
+  card_id: card_elite_alpha_wolf
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: wolf_fang
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: fang_charm
+    rate: uncommon
+  - item: mid_storm_boots
+    rate: rare
+  - item: rare_mat
+    rate: uncommon
+  attack_profiles:
+  - id: howl_strike
+    tags:
+    - physical
+    - wind
+    telegraph: ฝูงเงารวมตัว — อัลฟากระโจน!
+    power: 17
+  - id: pack_bite
+    tags:
+    - physical
+    telegraph: เขี้ยวฉีกตามจังหวะฝูง!
+    power: 15
+  - id: cripple
+    tags:
+    - physical
+    - wind
+    telegraph: เล็บเกี่ยวขา — ชะลอจังหวะ!
+    power: 13
+- id: elite_cave_abyss_matron
+  name: 【Elite】แม่มดเหวถ้ำ
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 7
+  level_max: 12
+  hp_base: 110
+  atk_base: 17
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.85
+  card_id: card_elite_abyss_matron
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: wraith_dust
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: oil_shadow
+    rate: uncommon
+  - item: bone_circlet
+    rate: rare
+  - item: rare_mat
+    rate: uncommon
+  attack_profiles:
+  - id: abyss_veil
+    tags:
+    - shadow
+    - arcane
+    telegraph: เงาเหวกลืนแสง!
+    power: 18
+  - id: hex_bolt
+    tags:
+    - arcane
+    - shadow
+    telegraph: คำสาปพุ่งจากครรภ์ถ้ำ!
+    power: 16
+    status: poison
+    status_chance: 0.24
+  - id: lash
+    tags:
+    - shadow
+    telegraph: เงาเหวหวด!
+    power: 14
+- id: elite_ridge_warlord
+  name: 【Elite】ขุนศึกสันผา
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 8
+  level_max: 13
+  hp_base: 120
+  atk_base: 18
+  elements:
+  - physical
+  xp_mult: 1.85
+  card_id: card_elite_ridge_warlord
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: stone_chip
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: mid_steel_glaive
+    rate: rare
+  - item: titan_greaves
+    rate: very_rare
+  - item: rare_mat
+    rate: common
+  attack_profiles:
+  - id: war_cleave
+    tags:
+    - physical
+    - slash
+    telegraph: ขุนศึกสะบัดดาบใหญ่!
+    power: 20
+  - id: shield_bash
+    tags:
+    - physical
+    telegraph: โล่กระแทกอก!
+    power: 15
+  - id: rally_thrust
+    tags:
+    - physical
+    - pierce
+    telegraph: แทงตรงจุดอ่อน!
+    power: 17
+- id: elite_dune_warlock
+  name: 【Elite】จอมเวทย์เนินทราย
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 10
+  level_max: 15
+  hp_base: 105
+  atk_base: 19
+  elements:
+  - fire
+  - arcane
+  xp_mult: 1.85
+  card_id: card_elite_dune_warlock
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: sand_cloak_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: sunscourge_wrap
+    rate: very_rare
+  - item: potion_mana
+    rate: uncommon
+  - item: rare_mat
+    rate: uncommon
+  attack_profiles:
+  - id: sun_hex
+    tags:
+    - fire
+    - arcane
+    telegraph: อักขระทรายลุกเป็นไฟ!
+    power: 19
+    status: burn
+    status_chance: 0.28
+  - id: sand_bind
+    tags:
+    - arcane
+    - earth
+    telegraph: ทรายรัดแขนขา!
+    power: 14
+  - id: ember_lance
+    tags:
+    - fire
+    - magic
+    telegraph: หอกเถ้าพุ่ง!
+    power: 17
+- id: elite_marsh_plague_toad
+  name: 【Elite】คางคกโรคระบาด
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 9
+  level_max: 14
+  hp_base: 115
+  atk_base: 17
+  elements:
+  - nature
+  - water
+  xp_mult: 1.85
+  card_id: card_elite_plague_toad
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: marsh_slime
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: balm_nature
+    rate: uncommon
+  - item: hydra_fang
+    rate: very_rare
+  - item: rare_mat
+    rate: uncommon
+  attack_profiles:
+  - id: plague_spit
+    tags:
+    - nature
+    - water
+    telegraph: น้ำลายโรคกระเด็น!
+    power: 16
+    status: poison
+    status_chance: 0.32
+  - id: belly_slam
+    tags:
+    - physical
+    - nature
+    telegraph: ตัวโตกระแทกโคลน!
+    power: 18
+  - id: miasma
+    tags:
+    - nature
+    telegraph: หมอกพิษแผ่!
+    power: 13
+    status: poison
+    status_chance: 0.2
+- id: elite_city_hex_captain
+  name: 【Elite】หัวหน้าคำสาปเมือง
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 10
+  level_max: 15
+  hp_base: 118
+  atk_base: 18
+  elements:
+  - shadow
+  - physical
+  xp_mult: 1.85
+  card_id: card_elite_hex_captain
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: undead_ash
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: oracle_sash
+    rate: very_rare
+  - item: upgrade_mat
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+  attack_profiles:
+  - id: hex_blade
+    tags:
+    - shadow
+    - physical
+    telegraph: ดาบคำสาปตวัด!
+    power: 18
+  - id: order_strike
+    tags:
+    - physical
+    telegraph: คำสั่งโจมตีพร้อมกัน!
+    power: 16
+  - id: shadow_mark
+    tags:
+    - shadow
+    telegraph: เครื่องหมายเงาวางบนคุณ!
+    power: 14
+- id: elite_prism_sentinel
+  name: 【Elite】เซนทิเนลปริซึม
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 12
+  level_max: 17
+  hp_base: 125
+  atk_base: 20
+  elements:
+  - lightning
+  - arcane
+  xp_mult: 1.85
+  card_id: card_elite_prism_sentinel
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: cave_crystal_shard
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: prism_ring
+    rate: very_rare
+  - item: mid_storm_boots
+    rate: rare
+  - item: rare_mat
+    rate: common
+  attack_profiles:
+  - id: prism_beam
+    tags:
+    - lightning
+    - arcane
+    telegraph: ลำแสงปริซึมแยกร่าง!
+    power: 21
+    status: shock
+    status_chance: 0.26
+  - id: refract
+    tags:
+    - arcane
+    - lightning
+    telegraph: แสงหักเหพุ่งซ้ำ!
+    power: 17
+  - id: crystal_slam
+    tags:
+    - physical
+    - lightning
+    telegraph: ร่างผลึกกระแทก!
+    power: 19
+- id: elite_void_riven_knight
+  name: 【Elite】อัศวินรอยแยก
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 15
+  level_max: 20
+  hp_base: 140
+  atk_base: 22
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.85
+  card_id: card_elite_void_knight
+  card_rate: uncommon
+  role_tag: elite
+  drops:
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: void_sigil
+    rate: very_rare
+  - item: mid_steel_glaive
+    rate: rare
+  - item: scroll_guard_break
+    rate: rare
+  attack_profiles:
+  - id: rift_slash
+    tags:
+    - shadow
+    - slash
+    telegraph: ดาบรอยแยกผ่าอากาศ!
+    power: 23
+  - id: null_guard
+    tags:
+    - shadow
+    - arcane
+    telegraph: โล่ศูนย์กลืนแรง!
+    power: 16
+  - id: void_thrust
+    tags:
+    - shadow
+    - pierce
+    telegraph: แทงทะลุมิติ!
+    power: 20
+- id: crystal_shard_swarm
+  name: ฝูงเศษปริซึม
+  level_min: 10
+  level_max: 15
+  hp_base: 52
+  atk_base: 14
+  elements:
+  - lightning
+  - arcane
+  xp_mult: 1.25
+  card_id: card_crystal_swarm
+  card_rate: rare
+  drops:
+  - item: prism_shard
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: cave_crystal_shard
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: potion_mana
+    rate: uncommon
+  - item: late_prism_veil
+    rate: very_rare
+- id: crystal_echo_wraith
+  name: วิญญาณสะท้อนผลึก
+  level_min: 11
+  level_max: 16
+  hp_base: 70
+  atk_base: 15
+  elements:
+  - arcane
+  - holy
+  xp_mult: 1.25
+  card_id: card_crystal_echo
+  card_rate: rare
+  drops:
+  - item: prism_shard
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: wraith_dust
+    rate: uncommon
+  - item: prism_ring
+    rate: very_rare
+  - item: rare_mat
+    rate: uncommon
+- id: void_rift_mite
+  name: ไรรอยแยก
+  level_min: 13
+  level_max: 18
+  hp_base: 55
+  atk_base: 16
+  elements:
+  - shadow
+  xp_mult: 1.25
+  card_id: card_void_mite
+  card_rate: rare
+  drops:
+  - item: void_filament
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: rare_mat
+    rate: uncommon
+  - item: oil_shadow
+    rate: uncommon
+  - item: late_void_edge
+    rate: very_rare
+- id: void_whisperer
+  name: กระซิบสุญญะ
+  level_min: 14
+  level_max: 19
+  hp_base: 78
+  atk_base: 17
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.25
+  card_id: card_void_whisper
+  card_rate: rare
+  drops:
+  - item: void_filament
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: undead_ash
+    rate: uncommon
+  - item: void_sigil
+    rate: very_rare
+  - item: scroll_guard_break
+    rate: rare
+- id: elite_crystal_prism_guard
+  name: 【Elite】องครักษ์ปริซึม
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 14
+  level_max: 18
+  hp_base: 135
+  atk_base: 21
+  elements:
+  - lightning
+  - arcane
+  xp_mult: 1.9
+  card_id: card_elite_prism_guard
+  card_rate: rare
+  drops:
+  - item: prism_shard
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: late_prism_veil
+    rate: rare
+  - item: prism_staff
+    rate: very_rare
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  attack_profiles:
+  - id: prism_wall
+    tags:
+    - lightning
+    - arcane
+    telegraph: กำแพงแสงกระแทก!
+    power: 20
+    status: shock
+    status_chance: 0.22
+  - id: shard_rain
+    tags:
+    - arcane
+    telegraph: เศษปริซึมโปรย!
+    power: 17
+  - id: guard_pike
+    tags:
+    - physical
+    - lightning
+    telegraph: ทวนองครักษ์พุ่ง!
+    power: 19
+- id: elite_void_null_archon
+  name: 【Elite】อาร์คอนศูนย์
+  elite: true
+  intel_tier: 2
+  can_flee: true
+  rarity: rare
+  level_min: 16
+  level_max: 22
+  hp_base: 150
+  atk_base: 24
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.9
+  card_id: card_elite_null_archon
+  card_rate: rare
+  drops:
+  - item: void_filament
+    rate: always
+    qty:
+    - 2
+    - 3
+  - item: late_void_edge
+    rate: rare
+  - item: void_herald_cloak
+    rate: very_rare
+  - item: rare_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  attack_profiles:
+  - id: null_wave
+    tags:
+    - shadow
+    - arcane
+    telegraph: คลื่นศูนย์ลบการรับรู้!
+    power: 24
+  - id: entropy_bolt
+    tags:
+    - shadow
+    telegraph: ลูกธนูเอนโทรปี!
+    power: 21
+  - id: archon_grasp
+    tags:
+    - arcane
+    - shadow
+    telegraph: มือมืดฉุดจิต!
+    power: 18
+- id: desert_sand_golem
+  name: โกเล็มทราย
+  level_min: 9
+  level_max: 14
+  hp_base: 100
+  atk_base: 15
+  elements:
+  - physical
+  - fire
+  xp_mult: 1.25
+  card_id: card_sand_golem
+  card_rate: rare
+  drops:
+  - item: sand_cloak_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: stone_chip
+    rate: uncommon
+    qty:
+    - 1
+    - 2
+  - item: mid_steel_glaive
+    rate: rare
+  - item: upgrade_mat
+    rate: uncommon

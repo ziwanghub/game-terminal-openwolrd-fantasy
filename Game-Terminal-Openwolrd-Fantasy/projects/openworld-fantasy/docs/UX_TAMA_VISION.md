@@ -1,8 +1,9 @@
 # วิสัยทัศน์: UX-Tama · สถานะมีชีวิต · เวลาใน Terminal
 
-**สถานะ:** Vision + **T0 implement แล้ว** (1.13.15) · T1–T3 ยังไม่ทำ  
-**เกมปัจจุบันอ้างอิง:** `1.13.15-alpha`  
-**เอกสารแผนรวม:** [`IMPROVEMENT_PLAN.md`](IMPROVEMENT_PLAN.md)  
+**สถานะ:** **T0–T3 implement แล้ว** (`1.20.0-alpha`)  
+**เกมปัจจุบันอ้างอิง:** `1.20.0-alpha` (`t3-h5-lite`)  
+**เอกสารแผนรวม:** [`IMPROVEMENT_PLAN.md`](IMPROVEMENT_PLAN.md) · [`ROADMAP.md`](ROADMAP.md)  
+**โค้ด:** `domain/needs.py` (load delta · tama panel) · `save_service` · `personal_hub`  
 **เกี่ยวข้อง:** [`MODE_SHELL_DESIGN.md`](MODE_SHELL_DESIGN.md) (จอ PERSONAL) · soft / anti-spoiler
 
 ---
@@ -98,9 +99,9 @@
 | เฟส | ชื่อ | ขอบเขต | สถานะ |
 |-----|------|--------|--------|
 | **T0** | Needs data + tick | ฟิลด์ needs บน player · อัปจาก rest/explore/travel/combat/eat · soft labels | **1.13.15** |
-| **T1** | Load delta + แถบ UI | `saved_at` · จำลองตอนโหลด · แถบใน PERSONAL + ย่อสนาม | **รอ** |
-| **T2** | Tama panel เต็ม | ASCII frame · เมนูกิน/พักใน PERSONAL · soft mood lines | **รอ** |
-| **T3** | Live optional | refresh เบาตอนเปิด panel / non-blocking (optional) | **รอ** |
+| **T1** | Load delta + แถบ UI | `saved_at` · จำลองตอนโหลด · soft notes | **1.15.0** |
+| **T2** | Tama panel เต็ม | ASCII · R พัก / E กิน ใน PERSONAL · mood | **1.15.0** |
+| **T3** | Live optional | refresh เบาตอนเปิด panel / enter anim | **1.20.0** |
 
 ### T0 — รายละเอียด
 

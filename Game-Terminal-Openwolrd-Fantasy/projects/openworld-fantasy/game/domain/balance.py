@@ -36,6 +36,16 @@ def apply_soft_death(player: MutableMapping[str, Any], reg: DataRegistry) -> str
         bump_stat(player, "deaths", 1)
     except Exception:
         pass
+    # N5: survive soft death while starving → hunger memory
+    try:
+        from game.domain.needs import band, get_needs, note_n5_hunger_survived
+
+        n = get_needs(player)
+        if band("hunger", n["hunger"]) in ("crit", "bad"):
+            for line in note_n5_hunger_survived(player):
+                notes.append(line)
+    except Exception:
+        pass
     detail = " · ".join(notes) if notes else "ไม่เสียทรัพยากร (จนเกินไป)"
     return f"สลบ... ฟื้นครึ่งเลือด · {detail}"
 

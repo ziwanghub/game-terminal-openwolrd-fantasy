@@ -21,10 +21,12 @@ from game.ports.io import ScriptedIO
 from tests.harness import create_script, run_create_session
 
 
-def test_allocate_keys_include_intelligence_not_luck():
-    assert "intelligence" in ALLOCATE_KEYS
+def test_allocate_keys_no_intelligence_not_luck():
+    # CM3: intelligence not free-P; still not luck
+    assert "intelligence" not in ALLOCATE_KEYS
     assert "luck" not in ALLOCATE_KEYS
     assert "atk" in ALLOCATE_KEYS
+    assert "magic" in ALLOCATE_KEYS
 
 
 def test_starting_points_vary_by_seed():

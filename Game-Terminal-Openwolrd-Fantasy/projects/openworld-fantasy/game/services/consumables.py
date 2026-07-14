@@ -149,6 +149,47 @@ def _use_potion(
         else:
             io.write_line(f"{prefix}(ไม่มีสถานะที่ล้างได้)")
 
+    # N4: food first — relieve hunger, optional small heal + buff
+    try:
+        from game.domain.needs import apply_food_relief, is_food_item
+
+        if is_food_item(it):
+            hr = int(it.get("hunger_relief") or (20 + 12 * int(it.get("food_tier") or 1)))
+            fr = int(it.get("fatigue_relief") or max(0, 2 * int(it.get("food_tier") or 1)))
+            mb = int(it.get("morale_boost") or max(2, 3 * int(it.get("food_tier") or 1)))
+            for line in apply_food_relief(
+                player, hunger_relief=hr, fatigue_relief=fr, morale_boost=mb
+            ):
+                io.write_line(line)
+            if it.get("heal_hp"):
+                h = int(it["heal_hp"])
+                player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + h)
+                io.write_line(f"อุ่นกาย ฟื้น HP +{h}")
+            if it.get("heal_mana"):
+                m = int(it["heal_mana"])
+                player["mana"] = min(int(player["max_mana"]), int(player["mana"]) + m)
+                io.write_line(f"ชุ่มคอ MP +{m}")
+            buff = it.get("food_buff") or it.get("apply_status")
+            if buff:
+                from game.domain.status_fx import apply_status, status_display_name as sname
+
+                sid = str(buff.get("id") if isinstance(buff, dict) else buff)
+                applied = apply_status(
+                    player,
+                    sid,
+                    reg,
+                    random.Random(),
+                    chance=1.0,
+                    source=item_id or "food",
+                    ignore_resist=True,
+                )
+                if applied:
+                    io.write_line(f"ได้รสอาหาร: {sname(reg, applied)}")
+            io.write_line(f"กิน「{it.get('name') or item_name}」")
+            return True
+    except Exception:
+        pass
+
     if it.get("clear_all_debuffs") or str(it.get("clear_status") or "").lower() in (
         "all",
         "*",
@@ -217,12 +258,14 @@ def _use_potion(
         if it.get("clear_status"):
             clear_statuses(player, reg, clear_spec=it.get("clear_status"))
         io.write_line(f"ฟื้น HP +{heal}")
-    # T0: consumables that heal also ease hunger/morale soft
+    # potions: tiny hunger ease only (not a meal)
     try:
-        from game.domain.needs import apply_needs_event
+        from game.domain.needs import apply_food_relief, is_food_item
 
-        if it.get("heal_hp") or it.get("kind") == "consumable" or "ยา" in item_name or "food" in str(it.get("tags") or []):
-            for line in apply_needs_event(player, "eat"):
+        if not is_food_item(it) and it.get("heal_hp"):
+            for line in apply_food_relief(
+                player, hunger_relief=4, fatigue_relief=0, morale_boost=1
+            ):
                 io.write_line(line)
     except Exception:
         pass

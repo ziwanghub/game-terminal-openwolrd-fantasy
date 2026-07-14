@@ -1,0 +1,48 @@
+# Skill Rank rules (SK-R0+) — numbers hidden from player UI
+# Ranks: N ธรรมดา · H สูง · R หายาก · S · SS · SSS
+
+ranks: [N, H, R, S, SS, SSS]
+
+soft_label:
+  N: ธรรมดา
+  H: สูง
+  R: หายาก
+  S: S
+  SS: SS
+  SSS: SSS
+
+soft_feel:
+  N: รู้สึกพอใช้
+  H: รู้สึกคมขึ้น
+  R: น้ำหนักผิดปกติ
+  S: ดุชัด
+  SS: น่ากลัว
+  SSS: เกือบควบคุมไม่อยู่
+
+# index aligned with ranks list
+power_mult:  [1.00, 1.08, 1.18, 1.32, 1.50, 1.72]
+heal_mult:   [1.00, 1.06, 1.14, 1.24, 1.38, 1.55]
+mana_mult:   [1.00, 1.10, 1.25, 1.48, 1.85, 2.40]
+status_chance_mult: [1.00, 1.05, 1.12, 1.22, 1.35, 1.48]
+reflect_mult: [1.00, 1.08, 1.16, 1.28, 1.42, 1.58]
+counter_mult: [1.00, 1.08, 1.16, 1.28, 1.45, 1.65]
+
+# first-learn roll weights (relative) — SSS rare
+learn_roll_weights:
+  N: 52
+  H: 28
+  R: 14
+  S: 5
+  SS: 0.9
+  SSS: 0.1
+
+# early jackpot tax when player level <= max_level and rank is SSS/SS
+early_high_rank_tax:
+  max_level: 6
+  ranks: [SS, SSS]
+  mana_mult_extra: 1.35
+  force_charge_max: 3
+
+# soft mastery thresholds for future SK-R3 (hidden)
+mastery_to_try_upgrade: 18
+upgrade_base_chance: 0.22

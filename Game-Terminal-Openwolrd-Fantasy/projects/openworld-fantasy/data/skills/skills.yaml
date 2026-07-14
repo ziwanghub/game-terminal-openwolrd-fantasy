@@ -6,6 +6,7 @@
   slot: combat
   cost_mana: 0
   power: 10
+  damage_class: physical
   elements: [physical]
   combo_ok: true
   tree: warrior
@@ -20,6 +21,7 @@
   slot: combat
   cost_mana: 8
   power: 12
+  damage_class: arcane
   elements: [arcane]
   combo_ok: true
   tree: mage
@@ -48,6 +50,7 @@
   slot: combat
   cost_mana: 6
   power: 11
+  damage_class: dark
   elements: [shadow]
   combo_ok: true
   tree: rogue
@@ -76,10 +79,16 @@
   slot: combat
   cost_mana: 12
   power: 28
+  damage_class: arcane
   elements: [fire]
   combo_ok: true
   tier: 2
   requires: []
+  rank_default: N
+  rank_cap: SSS
+  apply_status:
+    id: burn
+    chance: 0.22
   learn:
     method: [discovery, self]
     require_level: 5
@@ -147,6 +156,7 @@
     cost_hell: 1
 
 - id: guard_basic
+  guard_class: physical
   name: ตั้งการ์ด
   slot: defense
   cost_mana: 0
@@ -164,6 +174,7 @@
 - id: guard_water_veil
   name: ม่านน้ำ
   slot: defense
+  guard_class: elemental
   cost_mana: 6
   strong_vs: [fire, heat, burn]
   weak_vs: [lightning, earth]
@@ -181,6 +192,7 @@
 - id: guard_earth
   name: เกราะดิน
   slot: defense
+  guard_class: elemental
   cost_mana: 6
   strong_vs: [lightning, physical, wind]
   weak_vs: [water, nature]
@@ -198,6 +210,7 @@
 - id: guard_shadow
   name: เงากลืน
   slot: defense
+  guard_class: elemental
   cost_mana: 8
   strong_vs: [shadow, holy, arcane]
   weak_vs: [physical, fire]
@@ -216,6 +229,9 @@
 - id: counter_guard
   name: เกราะสวนกลับ
   slot: defense
+  defense_mode: counter
+  counter_power: 12
+  guard_class: physical
   cost_mana: 8
   strong_vs: [physical]
   weak_vs: [magic, arcane]
@@ -225,21 +241,49 @@
   tree: warrior
   tier: 2
   requires: [guard_basic, basic_strike]
+  rank_default: N
+  rank_cap: SS
   learn:
     method: [rank, self]
     require_level: 10
     cost_world: 90
 
+- id: thorn_reflect
+  name: หนามสะท้อน
+  slot: defense
+  defense_mode: reflect
+  reflect_pct: 0.14
+  guard_class: physical
+  cost_mana: 10
+  strong_vs: [physical, nature]
+  weak_vs: [fire, arcane]
+  damage_mult_strong: 0.15
+  damage_mult_neutral: 0.5
+  damage_mult_weak: 0.9
+  tree: warrior
+  tier: 2
+  requires: [guard_basic]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 9
+    cost_world: 75
+
 - id: iron_will
   name: ใจเหล็ก
-  slot: support
+  slot: buff
+  buff_status: might
+  buff_category: atk
   cost_mana: 15
-  heal: 30
+  heal: 12
   elements: [physical]
   combo_ok: false
   tree: warrior
   tier: 3
   requires: [counter_guard]
+  rank_default: N
+  rank_cap: SS
   learn:
     method: [rank, self]
     require_level: 22
@@ -343,6 +387,7 @@
 - id: blessing_ward
   name: ปราการพร
   slot: defense
+  guard_class: elemental
   cost_mana: 10
   strong_vs: [shadow, fire]
   weak_vs: [physical]
@@ -374,6 +419,7 @@
     cost_world: 150
     cost_heaven: 3
 
+# ── Unit exclusive skills (33) — unit_only, not learnable otherwise ──
 - id: unit_eclipse_blade
   name: 【Unit】ดาบคราส
   slot: combat
@@ -382,18 +428,22 @@
   elements: [shadow, holy]
   combo_ok: false
   unit_only: true
+  unit_power_tier: strong
   tier: 5
 
 - id: unit_aegis_wall
   name: 【Unit】กำแพงแอจิส
   slot: defense
-  cost_mana: 12
+  guard_class: universal
   strong_vs: [physical, fire, lightning, shadow]
   weak_vs: []
   damage_mult_strong: 0.05
   damage_mult_neutral: 0.25
   damage_mult_weak: 0.4
+  cost_mana: 12
+  combo_ok: false
   unit_only: true
+  unit_power_tier: strong
   tier: 5
 
 - id: unit_nova_burst
@@ -404,8 +454,356 @@
   elements: [arcane, fire, lightning]
   combo_ok: false
   unit_only: true
+  unit_power_tier: strong
   tier: 5
   aoe: true
+
+- id: unit_world_pierce
+  name: 【Unit】ทวนเจาะพิภพ
+  slot: combat
+  cost_mana: 22
+  power: 84
+  elements: [physical, arcane, shadow]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: broken
+  tier: 5
+  aoe: true
+
+- id: unit_eternal_sun
+  name: 【Unit】สุริยันอมตะ
+  slot: combat
+  cost_mana: 30
+  power: 80
+  elements: [holy, fire, arcane]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: broken
+  tier: 5
+  aoe: true
+
+- id: unit_void_crown
+  name: 【Unit】มงกุฎสูญญากาศ
+  slot: combat
+  cost_mana: 18
+  power: 86
+  elements: [shadow, arcane]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: broken
+  tier: 5
+  aoe: true
+
+- id: unit_iron_legion
+  name: 【Unit】คำสั่งกองทัพเหล็ก
+  slot: combat
+  cost_mana: 20
+  power: 71
+  elements: [physical, holy]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: broken
+  tier: 5
+  aoe: true
+
+- id: unit_blood_moon
+  name: 【Unit】จันทร์โลหิต
+  slot: combat
+  cost_mana: 24
+  power: 75
+  elements: [shadow, fire]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: broken
+  tier: 5
+  aoe: true
+
+- id: unit_storm_howl
+  name: 【Unit】หอนพายุ
+  slot: combat
+  cost_mana: 20
+  power: 58
+  elements: [wind, lightning]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+  aoe: true
+
+- id: unit_tide_call
+  name: 【Unit】กระแสเรียกน้ำ
+  slot: combat
+  cost_mana: 22
+  power: 52
+  elements: [water, nature]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+  aoe: true
+
+- id: unit_grave_ward
+  name: 【Unit】คำสาปสุสาน
+  slot: combat
+  cost_mana: 18
+  power: 50
+  elements: [shadow, holy]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+
+- id: unit_sky_fang
+  name: 【Unit】เขี้ยวฟ้า
+  slot: combat
+  cost_mana: 16
+  power: 56
+  elements: [wind, physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+
+- id: unit_forge_heart
+  name: 【Unit】หัวใจเตาหลอม
+  slot: combat
+  cost_mana: 19
+  power: 54
+  elements: [fire, physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+
+- id: unit_silver_gleam
+  name: 【Unit】แสงแววเงิน
+  slot: combat
+  cost_mana: 14
+  power: 48
+  heal: 25
+  elements: [holy, arcane]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+
+- id: unit_thorn_maze
+  name: 【Unit】เขาวงหนาม
+  slot: combat
+  cost_mana: 17
+  power: 46
+  elements: [nature, physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: strong
+  tier: 5
+  aoe: true
+
+- id: unit_ember_fox
+  name: 【Unit】หางจิ้งจอกถ่าน
+  slot: combat
+  cost_mana: 15
+  power: 38
+  elements: [fire, shadow]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_stone_pulse
+  name: 【Unit】ชีพจรหิน
+  slot: combat
+  cost_mana: 16
+  power: 36
+  elements: [physical, nature]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_dusk_arrow
+  name: 【Unit】ศรสนธยา
+  slot: combat
+  cost_mana: 14
+  power: 40
+  elements: [shadow, wind]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_lantern_monk
+  name: 【Unit】แสงโคมสงบ
+  slot: combat
+  cost_mana: 12
+  power: 28
+  heal: 35
+  elements: [holy]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_sand_wraith
+  name: 【Unit】พายุทรายผี
+  slot: combat
+  cost_mana: 18
+  power: 42
+  elements: [wind, physical, fire]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+  aoe: true
+
+- id: unit_frost_bite
+  name: 【Unit】กัดน้ำแข็ง
+  slot: combat
+  cost_mana: 16
+  power: 39
+  elements: [water, arcane]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_cinder_step
+  name: 【Unit】ก้าวเถ้าไฟ
+  slot: combat
+  cost_mana: 11
+  power: 34
+  elements: [fire, physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: mid
+  tier: 5
+
+- id: unit_dull_edge
+  name: 【Unit】คมทื่อ
+  slot: combat
+  cost_mana: 20
+  power: 18
+  elements: [physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: weak
+  tier: 5
+
+- id: unit_mist_cough
+  name: 【Unit】ไอหมอก
+  slot: combat
+  cost_mana: 18
+  power: 16
+  elements: [water, wind]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: weak
+  tier: 5
+
+- id: unit_rust_shield
+  name: 【Unit】โล่สนิม
+  slot: defense
+  guard_class: physical
+  strong_vs: [physical]
+  weak_vs: []
+  damage_mult_strong: 0.35
+  damage_mult_neutral: 0.55
+  damage_mult_weak: 0.75
+  cost_mana: 10
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: weak
+  tier: 5
+
+- id: unit_soft_heal
+  name: 【Unit】รักษาแผ่ว
+  slot: combat
+  cost_mana: 16
+  power: 8
+  heal: 12
+  elements: [holy]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: weak
+  tier: 5
+
+- id: unit_spark_wisp
+  name: 【Unit】ประกายจิ๋ว
+  slot: combat
+  cost_mana: 14
+  power: 15
+  elements: [lightning]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: weak
+  tier: 5
+
+- id: unit_paper_cut
+  name: 【Unit】บาดกระดาษ
+  slot: combat
+  cost_mana: 22
+  power: 6
+  elements: [physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
+
+- id: unit_great_yawn
+  name: 【Unit】หาวเวิ้งว้าง
+  slot: combat
+  cost_mana: 30
+  power: 4
+  elements: [arcane]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
+
+- id: unit_mud_splash
+  name: 【Unit】สาดโคลน
+  slot: combat
+  cost_mana: 18
+  power: 9
+  elements: [nature, water]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
+  aoe: true
+
+- id: unit_echo_empty
+  name: 【Unit】เสียงสะท้อนว่าง
+  slot: combat
+  cost_mana: 25
+  power: 5
+  elements: [arcane, shadow]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
+
+- id: unit_luckless_tick
+  name: 【Unit】ขีดโชคแห้ง
+  slot: combat
+  cost_mana: 20
+  power: 7
+  elements: [physical]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
+
+- id: unit_pocket_dust
+  name: 【Unit】ฝุ่นในกระเป๋า
+  slot: combat
+  cost_mana: 12
+  power: 3
+  elements: [wind]
+  combo_ok: false
+  unit_only: true
+  unit_power_tier: joke
+  tier: 5
 
 # bulk 1.13.9 — open skills + AoE
 - id: open_sweep

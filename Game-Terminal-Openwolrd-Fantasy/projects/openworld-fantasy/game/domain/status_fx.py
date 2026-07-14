@@ -203,14 +203,80 @@ def on_hit_chance_cap(reg: Optional[DataRegistry]) -> float:
     return float(_defaults(reg).get("on_hit_chance_cap", 0.35))
 
 
+def _status_element(defn: Mapping[str, Any], status_id: str) -> str:
+    el = str(defn.get("element") or "").lower()
+    if el:
+        return el
+    # soft map from id
+    return {
+        "burn": "fire",
+        "freeze": "ice",
+        "shock": "lightning",
+        "poison": "nature",
+        "stun": "physical",
+    }.get(str(status_id), "")
+
+
+def soft_resist_flavor(status_id: str, reg: Optional[DataRegistry] = None) -> str:
+    """Anti-spoiler line when entity shrugs a status (DD4)."""
+    sid = str(status_id or "")
+    nm = status_display_name(reg, sid)
+    catalog = {
+        "burn": "ร่างกายชินกับเปลว",
+        "freeze": "ความหนาวยังไม่เกาะ",
+        "shock": "กระแสไม่จับเส้น",
+        "poison": "พิษยังไม่ซึม",
+        "stun": "จิตยังตั้งได้",
+    }
+    if sid in catalog:
+        return f"「{catalog[sid]}」"
+    return f"「{nm} ยังไม่ติด」"
+
+
+def bump_status_familiarity(
+    entity: MutableMapping[str, Any],
+    status_id: str,
+    *,
+    amount: float = 0.04,
+    cap: float = 0.22,
+) -> None:
+    """
+    Hidden stack: after resist or after status expires, slightly harder next time.
+    Not permanent farm — soft cap low, decays slowly via combat end optional.
+    """
+    sid = str(status_id or "")
+    if not sid:
+        return
+    fam = dict(entity.get("status_familiarity") or {})
+    cur = float(fam.get(sid) or 0)
+    fam[sid] = min(cap, max(0.0, cur + float(amount)))
+    entity["status_familiarity"] = fam
+
+
+def decay_status_familiarity(entity: MutableMapping[str, Any], *, factor: float = 0.85) -> None:
+    """Call occasionally (e.g. rest / area change) so familiarity is not permanent."""
+    fam = dict(entity.get("status_familiarity") or {})
+    if not fam:
+        return
+    out = {}
+    for k, v in fam.items():
+        nv = float(v) * float(factor)
+        if nv >= 0.02:
+            out[str(k)] = round(nv, 4)
+    entity["status_familiarity"] = out
+
+
 def resist_chance(
     entity: Mapping[str, Any],
     status_id: str,
     reg: Optional[DataRegistry] = None,
+    *,
+    aoe: bool = False,
+    attack_elements: Optional[Sequence[Any]] = None,
 ) -> float:
     """
     Chance (0..resist_cap) that entity shrugs off the status after proc roll.
-    Sources: status def base_resist, entity status_resist map, gear tags soft.
+    DD4: base + gear + familiarity + elem soft + aoe resist bonus.
     """
     sid = str(status_id or "")
     defn = get_status_def(reg, sid)
@@ -223,8 +289,24 @@ def resist_chance(
         if cat:
             r += float(sr.get(cat, 0) or 0)
     r += float(entity.get("status_resist_all") or 0)
+    r += float(entity.get("gear_status_resist") or 0)
+    r += float(entity.get("climate_status_resist") or 0)
+
+    # soft investment: defense / intelligence (hidden)
+    try:
+        pdef = float(entity.get("power_def") or 0)
+        pint = float(entity.get("power_intel") or 0)
+        r += min(0.12, pdef / 220.0 + pint / 280.0)
+    except Exception:
+        pass
+
+    # familiarity stacks (hidden)
+    fam = entity.get("status_familiarity") or {}
+    if isinstance(fam, dict):
+        r += float(fam.get(sid, 0) or 0)
+
     # soft gear affinities (not spoiler formulas — small nudges)
-    tags = [str(t) for t in (entity.get("gear_tags") or [])]
+    tags = [str(t).lower() for t in (entity.get("gear_tags") or [])]
     cat = str(defn.get("category") or "")
     if "holy" in tags and cat in ("ailment", "control"):
         r += 0.08
@@ -234,6 +316,44 @@ def resist_chance(
         r += 0.06 if sid == "burn" else 0.05
     if "lightning" in tags and sid == "shock":
         r += 0.10
+    if "shadow" in tags and sid in ("poison", "stun"):
+        r += 0.05
+    if "arcane" in tags and cat == "control":
+        r += 0.04
+    if "shield" in tags and cat in ("control", "ailment"):
+        r += 0.03
+
+    # DD4: element vs status soft (attack elements / wet vs burn etc.)
+    st_el = _status_element(defn, sid)
+    atk_els = {str(e).lower() for e in (attack_elements or []) if e}
+    # target already wet/frozen resists burn slightly more
+    target_els = set()
+    for s in entity.get("statuses") or []:
+        if isinstance(s, dict):
+            se = str(s.get("element") or s.get("id") or "").lower()
+            if se:
+                target_els.add(se)
+            if str(s.get("id")) == "freeze":
+                target_els.add("ice")
+    if sid == "burn" and ("water" in atk_els or "ice" in target_els or "water" in tags):
+        r += 0.07  # เปียก/หนาว → ไฟติดยาก
+    if sid == "freeze" and ("fire" in tags or "fire" in target_els):
+        r += 0.06
+    if sid == "shock" and ("earth" in tags or "earth" in atk_els):
+        r += 0.05
+    # same element attack vs familiar gear slightly
+    if st_el and st_el in tags:
+        r += 0.05
+
+    # AoE soft resist bump
+    if aoe:
+        try:
+            from game.domain.aoe_balance import aoe_status_resist_bonus
+
+            r += float(aoe_status_resist_bonus(aoe=True))
+        except Exception:
+            r += 0.08
+
     # world / blessing soft
     if entity.get("blessing_turns") and int(entity.get("blessing_turns") or 0) > 0:
         r += 0.05
@@ -281,25 +401,50 @@ def apply_status(
     tick_hp: Optional[int] = None,
     source: str = "",
     ignore_resist: bool = False,
+    aoe: bool = False,
+    attack_elements: Optional[Sequence[Any]] = None,
+    n_targets: int = 1,
 ) -> Optional[str]:
     """
     Apply or refresh a status. Returns status id if applied, else None.
     chance is rolled when < 1.0 (after optional cap for on-hit callers).
     Then resist_chance may shrug it off (sets entity['_last_status_resist']).
+    DD4: aoe reduces chance + bumps resist; familiarity after shrug.
     """
     rng = rng or random.Random()
     sid = str(status_id or "").strip()
     if not sid:
         return None
     entity.pop("_last_status_resist", None)
+    entity.pop("_last_status_resist_flavor", None)
     entity.pop("_last_status_applied", None)
-    if chance < 1.0 and rng.random() > float(chance):
+
+    ch = float(chance)
+    if aoe or n_targets > 1:
+        try:
+            from game.domain.aoe_balance import aoe_status_chance_mult
+
+            ch *= aoe_status_chance_mult(
+                aoe=bool(aoe), n_targets=max(1, int(n_targets))
+            )
+        except Exception:
+            ch *= 0.55 if aoe else 0.7
+
+    if ch < 1.0 and rng.random() > ch:
         return None
 
     if not ignore_resist:
-        rc = resist_chance(entity, sid, reg)
+        rc = resist_chance(
+            entity,
+            sid,
+            reg,
+            aoe=bool(aoe),
+            attack_elements=attack_elements,
+        )
         if rc > 0 and rng.random() < rc:
             entity["_last_status_resist"] = sid
+            entity["_last_status_resist_flavor"] = soft_resist_flavor(sid, reg)
+            bump_status_familiarity(entity, sid, amount=0.035)
             return None
 
     defn = get_status_def(reg, sid)
@@ -395,20 +540,39 @@ def try_apply_attack_status(
     *,
     profile: Optional[Mapping[str, Any]] = None,
     source: str = "attack",
+    aoe: bool = False,
+    n_targets: int = 1,
 ) -> Optional[str]:
     """Roll and apply status from an attack onto target. None if fail/resist."""
     rng = rng or random.Random()
+    profile = profile or {}
     spec = resolve_outgoing_status(attacker, profile, reg)
     if not spec:
         return None
-    return apply_status(
+    els = list(profile.get("tags") or profile.get("elements") or attacker.get("elements") or [])
+    applied = apply_status(
         target,
         str(spec["id"]),
         reg,
         rng,
         chance=float(spec.get("chance") or 0),
         source=source,
+        aoe=aoe,
+        n_targets=n_targets,
+        attack_elements=els,
     )
+    return applied
+
+
+def format_last_resist_note(entity: Mapping[str, Any]) -> Optional[str]:
+    """Soft line if last apply was resisted (consume-friendly read)."""
+    sid = entity.get("_last_status_resist")
+    if not sid:
+        return None
+    fl = entity.get("_last_status_resist_flavor")
+    if fl:
+        return str(fl)
+    return soft_resist_flavor(str(sid), None)
 
 
 def clear_status(

@@ -1,7 +1,7 @@
 # วิสัยทัศน์: โลกเป็นเซิร์ฟ · เงาผู้เล่นจริง · อันดับท้าสู้
 
-**สถานะ:** Vision + **W0 บางส่วน** (rank soft + `rank_board.json` · 1.13.15) · W1–W4 ยังไม่ทำ  
-**เกมปัจจุบันอ้างอิง:** `1.13.15-alpha`  
+**สถานะ:** **W0–W3 lite ทำแล้ว** (`1.21.0-alpha`) · W4 online รอ  
+**เกมปัจจุบันอ้างอิง:** `1.21.0-alpha`  
 **เจ้าของแนวคิด:** ทีม openworld-fantasy  
 **เอกสารแผนรวม:** [`IMPROVEMENT_PLAN.md`](IMPROVEMENT_PLAN.md)  
 **เกี่ยวข้อง (สังคมขอแรงบนเซฟ):** [`HELP_SITUATION_VISION.md`](HELP_SITUATION_VISION.md) · เฟส H0–H5
@@ -87,9 +87,9 @@
 
 | เฟส | ชื่อ | ขอบเขต | ความรู้สึก “เซิร์ฟ” | เงื่อนไขเริ่มโดยประมาณ |
 |-----|------|--------|---------------------|-------------------------|
-| **W0** | Rank board soft | บอร์ดจาก saves · soft band · help title · `rank_board.json` · score ซ่อน | ต่ำ | **1.13.15** (ฐาน) |
-| **W1** | Player echo | เงาจากเซฟอื่นในโลก · สู้/คุยด้วย combat/social snapshot | กลาง (offline) | W0 นิ่ง |
-| **W2** | Rank challenge | ท้าอันดับ + ค่าหัว + top N + cooldown | กลาง–สูง | W1 + เศรษฐกิจเงินพอ |
+| **W0** | Rank board soft | บอร์ดจาก saves · soft band · help title · `rank_board.json` · score ซ่อน | ต่ำ | **1.13.15** (ฐาน) · polish ร่องรอยตัวเอง **1.42** |
+| **W1** | Player echo | เงาจากเซฟอื่นในโลก · สู้/คุยด้วย combat/social snapshot | กลาง (offline) | **done lite** · freshness/MI/relation **1.42** |
+| **W2** | Rank challenge | ท้าอันดับ + ค่าหัว + top N + cooldown | กลาง–สูง | **lite มีแล้ว** · จูนหลัง playtest |
 | **W3** | World host process | process โลกรันค้าง · client ต่อ local/remote | สูง | หลัง W2 + concurrent ออกแบบแล้ว |
 | **W4** | Online lite | auth เบา · anti-cheat เบา · (optional) live presence | สูงสุด | product พร้อม beta |
 

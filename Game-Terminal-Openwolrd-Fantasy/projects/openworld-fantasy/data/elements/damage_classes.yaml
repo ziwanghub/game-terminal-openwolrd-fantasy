@@ -1,0 +1,68 @@
+# DD0 — damage class catalog (hidden formulas; UI uses soft labels only)
+# damage_class = primary channel · elements[] = sub-aspect for matchups/status
+
+classes:
+  physical:
+    id: physical
+    soft_name: กายภาพ
+    soft_hit: แรงกระแทก
+    soft_guard_ok: เกราะรับแรงกระแทก
+    soft_guard_miss: เกราะไม่ช่วยชั้นนี้
+    def_stat: power_def
+  arcane:
+    id: arcane
+    soft_name: เวทมนต์
+    soft_hit: ม่านเวท
+    soft_guard_ok: ม่านกลืนเวท
+    soft_guard_miss: ม่านไม่รับกาย
+    def_stat: power_mdef
+  light:
+    id: light
+    soft_name: แสง
+    soft_hit: แสงแผด
+    soft_guard_ok: แสงถูกกลืนบางส่วน
+    soft_guard_miss: แสงทะลุเกราะ
+    def_stat: blend  # lerp def+mdef
+  dark:
+    id: dark
+    soft_name: มืด
+    soft_hit: เงากลืน
+    soft_guard_ok: เงาถูกกลืนบางส่วน
+    soft_guard_miss: เงาทะลุเกราะ
+    def_stat: blend
+
+# Map skill/profile elements → default damage_class when skill omits damage_class
+element_to_class:
+  physical: physical
+  slash: physical
+  pierce: physical
+  blunt: physical
+  nature: physical
+  arcane: arcane
+  magic: arcane
+  fire: arcane
+  water: arcane
+  wind: arcane
+  earth: arcane
+  ice: arcane
+  lightning: arcane
+  holy: light
+  light: light
+  shadow: dark
+  dark: dark
+
+# Soft mitigation curve (hidden): reduce = def / (def + k), clamp max
+mitigation:
+  k: 45.0
+  cap: 0.55
+  light_dark_def_weight: 0.45   # blend: def*w + mdef*(1-w)
+  light_dark_mdef_weight: 0.55
+
+# Outbound: which player power feeds skill damage (on top of bonus_atk)
+outbound:
+  physical: power_atk
+  arcane: power_mag
+  light: power_mag
+  dark: power_atk
+  # hybrid soft: also add fraction of secondary
+  secondary_frac: 0.15

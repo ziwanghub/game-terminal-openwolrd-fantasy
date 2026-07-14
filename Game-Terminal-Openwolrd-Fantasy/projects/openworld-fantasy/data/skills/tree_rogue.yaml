@@ -10,6 +10,11 @@
   tree: rogue
   tier: 2
   requires: [shadow_strike]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: poison
+    chance: 0.28
   learn:
     method: [self]
     require_level: 6
@@ -78,3 +83,20 @@
     require_level: 16
     cost_world: 100
     cost_hell: 1
+
+- id: rogue_bleed_trick
+  name: เล่ห์เลือด
+  slot: combat
+  cost_mana: 11
+  power: 18
+  elements: [shadow, physical]
+  combo_ok: true
+  tree: rogue
+  tier: 3
+  requires: [rogue_poison_edge]
+  learn:
+    method: [self]
+    require_level: 13
+    cost_world: 105
+    cost_hell: 1
+

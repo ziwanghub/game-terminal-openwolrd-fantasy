@@ -197,3 +197,450 @@
   output: traveler_ration
   output_rarity: common
   unlock_level: 1
+
+# ── K4: อาหาร / ยา tier สูง (camp) — ห้ามคราฟ unit / sealed chest ──
+- id: craft_hunter_ration
+  name: ห่อเสบียงนักล่า
+  station: camp
+  inputs:
+    city_bread: 1
+    herb_bundle: 2
+  money: 22
+  output: hunter_ration
+  output_rarity: common
+  unlock_level: 2
+
+- id: craft_mana_brew
+  name: ต้มยา Mana
+  station: camp
+  inputs:
+    potion_hp_small: 1
+    herb_bundle: 1
+  money: 28
+  output: potion_mana
+  output_rarity: common
+  unlock_level: 2
+
+- id: craft_focus_tea
+  name: ชงชาสมาธิ
+  station: camp
+  inputs:
+    herb_bundle: 2
+    city_bread: 1
+  money: 30
+  output: focus_tea
+  output_rarity: common
+  unlock_level: 3
+
+- id: craft_balm
+  name: ผสมขี้ผึ้งฟื้นฟู
+  station: camp
+  inputs:
+    potion_hp: 1
+    herb_bundle: 1
+  money: 40
+  output: balm_regen
+  output_rarity: common
+  unlock_level: 4
+
+- id: craft_trail_stew
+  name: ต้มสตูว์ทางไกล
+  station: camp
+  inputs:
+    traveler_ration: 1
+    herb_bundle: 2
+    city_bread: 1
+  money: 45
+  output: trail_stew
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_tonic_might
+  name: ต้มยาปลุกกำลัง
+  station: camp
+  inputs:
+    trail_stew: 1
+    herb_bundle: 1
+    upgrade_mat: 1
+  money: 55
+  output: tonic_might
+  output_rarity: uncommon
+  unlock_level: 6
+
+- id: craft_inn_feast
+  name: จัดสำรับโรงเตี๊ยม
+  station: camp
+  inputs:
+    trail_stew: 1
+    hunter_ration: 1
+    herb_bundle: 2
+  inputs_rarity:
+    trail_stew: common
+    hunter_ration: common
+  money: 90
+  output: inn_feast
+  output_rarity: rare
+  unlock_level: 9
+
+# G1 / mon-mat craft (1.25)
+- id: craft_scout_spear
+  name: เหลาหอกลาด
+  station: forge
+  inputs:
+    ent_bark: 1
+    upgrade_mat: 2
+  money: 35
+  output: scout_spear
+  output_rarity: common
+  unlock_level: 2
+
+- id: craft_woodsman_axe
+  name: ตีขวานตัดทาง
+  station: forge
+  inputs:
+    goblin_scrap: 2
+    upgrade_mat: 2
+  money: 50
+  output: woodsman_axe
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_hardened_boots
+  name: เย็บรองเท้าหนังแข็ง
+  station: forge
+  inputs:
+    wolf_fang: 1
+    herb_bundle: 1
+    upgrade_mat: 1
+  money: 40
+  output: hardened_boots
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_iron_greaves
+  name: ตีสนับขาเหล็ก
+  station: forge
+  inputs:
+    stone_chip: 2
+    troll_hide: 1
+    upgrade_mat: 2
+  money: 70
+  output: iron_greaves
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_antidote_stinger
+  name: ต้มยาแก้พิษจากเหล็กใน
+  station: camp
+  inputs:
+    scorpion_stinger: 1
+    herb_bundle: 1
+  money: 20
+  output: antidote
+  output_rarity: common
+  unlock_level: 3
+
+- id: craft_leather_greaves_hide
+  name: เย็บสนับขาจากหนังโทรล
+  station: forge
+  inputs:
+    troll_hide: 1
+    upgrade_mat: 1
+  money: 45
+  output: leather_greaves
+  output_rarity: common
+  unlock_level: 3
+
+- id: craft_chain_coif_stone
+  name: ตีหมวกโซ่จากเศษหิน
+  station: forge
+  inputs:
+    stone_chip: 3
+    upgrade_mat: 2
+  money: 55
+  output: chain_coif
+  output_rarity: uncommon
+  unlock_level: 4
+
+- id: craft_mist_tea
+  name: ชงชาจากน้ำค้างหมอก
+  station: camp
+  inputs:
+    mist_dew: 1
+    herb_bundle: 1
+  money: 25
+  output: focus_tea
+  output_rarity: common
+  unlock_level: 4
+
+# IC1 / MC1 (1.28)
+- id: craft_ridge_spear
+  name: เหลาหอกสันผา
+  station: forge
+  inputs:
+    mole_claw: 1
+    stone_chip: 2
+    upgrade_mat: 2
+  money: 55
+  output: ridge_spear
+  output_rarity: uncommon
+  unlock_level: 4
+
+- id: craft_climber_boots
+  name: เย็บรองเท้าปีนผา
+  station: forge
+  inputs:
+    eagle_feather: 2
+    wolf_fang: 1
+    upgrade_mat: 1
+  money: 48
+  output: climber_boots
+  output_rarity: uncommon
+  unlock_level: 4
+
+- id: craft_desert_scimitar
+  name: ลับดาบโค้งทราย
+  station: forge
+  inputs:
+    sand_scale: 1
+    jackal_fang: 1
+    upgrade_mat: 2
+  money: 60
+  output: desert_scimitar
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_dune_wraps
+  name: พันขาเนินทราย
+  station: camp
+  inputs:
+    sand_cloak_mat: 1
+    dust_core: 1
+  money: 35
+  output: dune_wraps
+  output_rarity: uncommon
+  unlock_level: 5
+
+# IC3-lite from IC2 mats
+- id: craft_bone_dagger
+  name: ลับมีดกระดูก
+  station: forge
+  inputs:
+    bone_dagger: 1
+    upgrade_mat: 2
+    forest_moss: 1
+  money: 40
+  output: bone_dagger
+  output_rarity: uncommon
+  unlock_level: 2
+
+- id: craft_vine_wrap
+  name: สานเกราะเถา
+  station: forge
+  inputs:
+    leather_armor: 1
+    marsh_slime: 2
+    herb_bundle: 1
+  money: 80
+  output: vine_wrap_body
+  output_rarity: uncommon
+  unlock_level: 4
+
+- id: craft_cave_helm
+  name: ตีหมวกขุดถ้ำ
+  station: forge
+  inputs:
+    cave_crystal_shard: 2
+    upgrade_mat: 1
+  money: 55
+  output: cave_miner_helm
+  output_rarity: common
+  unlock_level: 3
+
+- id: craft_kite_shield
+  name: ตีโล่ว่าวเหล็ก
+  station: forge
+  inputs:
+    bronze_buckler: 1
+    upgrade_mat: 3
+    rare_mat: 1
+  money: 130
+  output: iron_kite_shield
+  output_rarity: uncommon
+  unlock_level: 5
+
+# IC3 mon-line crafts
+- id: craft_balm_nature
+  name: ต้มยาหม่องธรรมชาติ
+  station: camp
+  inputs:
+    plant_heart: 1
+    herb_bundle: 2
+    forest_moss: 1
+  money: 25
+  output: balm_nature
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_oil_shadow
+  name: กลั่นน้ำมันเงา
+  station: mystic
+  inputs:
+    undead_ash: 2
+    wraith_dust: 1
+  money: 40
+  output: oil_shadow
+  output_rarity: uncommon
+  unlock_level: 6
+
+- id: craft_chitin_vest
+  name: ประกอบเกราะไคติน
+  station: forge
+  inputs:
+    chitin_plate_mat: 3
+    leather_armor: 1
+    upgrade_mat: 1
+  money: 90
+  output: chitin_vest
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_bone_circlet
+  name: ขึ้นรูปมงกระดูก
+  station: mystic
+  inputs:
+    undead_ash: 2
+    bone_dagger: 1
+  money: 70
+  output: bone_circlet
+  output_rarity: uncommon
+  unlock_level: 6
+
+- id: craft_quill_bow
+  name: ขึงธนูขนนก
+  station: camp
+  inputs:
+    bird_quill: 4
+    ash_longbow: 1
+    upgrade_mat: 1
+  money: 100
+  output: quill_bow
+  output_rarity: uncommon
+  unlock_level: 5
+
+- id: craft_fang_charm
+  name: ร้อยเครื่องรางเขี้ยว
+  station: camp
+  inputs:
+    wolf_fang: 2
+    bird_quill: 1
+    goblin_scrap: 1
+  money: 45
+  output: fang_charm
+  output_rarity: uncommon
+  unlock_level: 3
+
+- id: craft_ent_tonic
+  name: ต้มยาเปลือกเอนท์
+  station: camp
+  inputs:
+    ent_bark: 2
+    herb_bundle: 1
+  money: 20
+  output: potion_hp
+  output_rarity: common
+  unlock_level: 2
+
+- id: craft_slime_antidote
+  name: กลั่นยาจากแกนสไลม์
+  station: camp
+  inputs:
+    slime_core: 1
+    marsh_slime: 1
+  money: 15
+  output: antidote
+  output_rarity: common
+  unlock_level: 2
+
+- id: craft_mid_glaive
+  name: หลอมง้าวเหล็กกลางทาง
+  station: forge
+  inputs:
+    ridge_spear: 1
+    upgrade_mat: 4
+    rare_mat: 2
+  money: 200
+  output: mid_steel_glaive
+  output_rarity: rare
+  unlock_level: 10
+
+- id: craft_storm_boots
+  name: เย็บรองเท้าพายุกลาง
+  station: forge
+  inputs:
+    climber_boots: 1
+    bird_quill: 3
+    upgrade_mat: 2
+  money: 120
+  output: mid_storm_boots
+  output_rarity: rare
+  unlock_level: 8
+
+- id: craft_late_void_edge
+  name: หลอมคมสุญญะสายกลาง
+  station: mystic
+  inputs:
+    void_filament: 3
+    shadow_dagger: 1
+    rare_mat: 2
+  money: 280
+  output: late_void_edge
+  output_rarity: sacred
+  unlock_level: 14
+
+- id: craft_late_prism_veil
+  name: ทอม่านปริซึมสายกลาง
+  station: mystic
+  inputs:
+    prism_shard: 3
+    mage_robe: 1
+    rare_mat: 2
+  money: 260
+  output: late_prism_veil
+  output_rarity: sacred
+  unlock_level: 12
+
+- id: craft_repair_kit
+  name: ประกอบชุดซ่อมพื้นฐาน
+  station: camp
+  inputs:
+    iron_arrowhead: 2
+    upgrade_mat: 1
+  money: 10
+  output: repair_kit_basic
+  output_rarity: uncommon
+  unlock_level: 1
+
+- id: craft_incense_bulk
+  name: มัดธูปโฟกัส
+  station: camp
+  inputs:
+    herb_bundle: 2
+    forest_moss: 1
+  money: 8
+  output: incense_focus_bulk
+  output_rarity: uncommon
+  unlock_level: 1
+
+
+- id: craft_essence_whisper
+  name: กลั่นเศษกระซิบท่า
+  station: mystic
+  inputs:
+    rare_mat: 1
+    upgrade_mat: 2
+    herb_bundle: 1
+  money: 50
+  output: essence_skill_whisper
+  output_rarity: rare
+  unlock_level: 8

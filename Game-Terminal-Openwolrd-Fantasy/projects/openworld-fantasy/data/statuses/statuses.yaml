@@ -11,6 +11,9 @@ defaults:
   element_status_fallback: true
   element_status_chance: 0.12
   resist_cap: 0.85
+  # DD4: familiarity soft cap (engine uses code defaults if absent)
+  familiarity_cap: 0.22
+  aoe_status_soft: true
 
 statuses:
   - id: poison
@@ -21,6 +24,7 @@ statuses:
     duration: 3
     tick_hp: 4
     tick_phase: always
+    base_resist: 0.05
     soft_feel: คลื่นคลื่น เลือดอุ่นผิดปกติ
     cleansed_by: [antidote, blessed_charm, panacea]
     cleanse_tags: [poison, ailment]
@@ -35,6 +39,7 @@ statuses:
     tick_hp: 5
     tick_phase: always
     element: fire
+    base_resist: 0.04
     soft_feel: แสบร้อนเป็นระลอก
     cleansed_by: [antidote, blessed_charm, panacea]
     cleanse_tags: [burn, ailment, fire]
@@ -49,6 +54,7 @@ statuses:
     tick_hp: 0
     skip_action: true
     element: ice
+    base_resist: 0.06
     soft_feel: แข็งทื่อ เคลื่อนไหวช้า
     cleansed_by: [blessed_charm, panacea]
     cleanse_tags: [freeze, control, ice]
@@ -63,6 +69,7 @@ statuses:
     duration: 1
     tick_hp: 0
     skip_action: true
+    base_resist: 0.08
     soft_feel: หูอื้อ จังหวะหลุด
     cleansed_by: [blessed_charm, antidote, panacea]
     cleanse_tags: [stun, control]
@@ -78,10 +85,41 @@ statuses:
     skip_action: false
     skip_action_chance: 0.30
     element: lightning
+    base_resist: 0.05
     soft_feel: กล้ามเนื้อกระตุก ฝีเท้าหลุด
     cleansed_by: [antidote, blessed_charm, panacea]
     cleanse_tags: [shock, ailment, lightning]
     narrative_tick: status_tick_shock
+
+  - id: slow
+    name: ช้า
+    kind: debuff
+    category: control
+    targets: [player, monster]
+    duration: 2
+    tick_hp: 0
+    skip_action: false
+    # soft ATB drag handled lightly if engine reads atk_flat negative later
+    atk_flat: -2
+    base_resist: 0.06
+    soft_feel: ขาหนัก จังหวะหลุด
+    cleansed_by: [blessed_charm, panacea, antidote]
+    cleanse_tags: [slow, control]
+    narrative_tick: status_tick_slow
+
+  - id: weak
+    name: อ่อนแรง
+    kind: debuff
+    category: weaken
+    targets: [player, monster]
+    duration: 2
+    tick_hp: 0
+    atk_flat: -4
+    base_resist: 0.07
+    soft_feel: แรงมือแผ่ว ลมหายใจสั้น
+    cleansed_by: [blessed_charm, panacea]
+    cleanse_tags: [weak, weaken]
+    narrative_tick: status_tick_weak
 
   # --- Buffs (positive; not removed by panacea/cleanse debuffs) ---
   - id: regen

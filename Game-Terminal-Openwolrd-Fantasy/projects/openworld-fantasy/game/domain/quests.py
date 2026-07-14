@@ -243,6 +243,20 @@ def complete_quest(
     for iid in q.get("reward_items") or []:
         name = add_item(player, str(iid), reg)
         lines.append(f"  ได้ {name}")
+    # L3: sealed chest + hidden flags
+    try:
+        from game.domain.chest_loot import apply_reward_block
+
+        lines.extend(
+            apply_reward_block(
+                player,
+                reg,
+                q,
+                seed_salt=f"quest|{qid}",
+            )
+        )
+    except Exception:
+        pass
     return lines
 
 

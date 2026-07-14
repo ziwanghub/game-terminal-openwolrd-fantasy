@@ -418,30 +418,70 @@ def npc_roll_modifier(
 
 
 def format_personality_panel(player: Mapping[str, Any], reg: Optional[DataRegistry] = None) -> List[str]:
+    """Sectioned personality overview (soft — no raw axis numbers)."""
     labels = player.get("personality_labels") or []
     pts = int(player.get("personality_points") or 0)
     inv = player.get("personality_invest") or {}
-    lines = ["── นิสัย ──"]
-    lines.append(f" แต้มนิสัยที่ใช้ลงทุนได้: {pts}")
+    lines: List[str] = [
+        " นิสัย",
+        "---",
+        f" แต้มลงทุนได้  {pts}",
+    ]
     if labels:
-        lines.append(" ภาพที่สังเกตได้: " + " · ".join(str(x) for x in labels))
+        lines.append(f" ภาพที่สังเกต  {' · '.join(str(x) for x in labels)}")
     else:
-        lines.append(" ภาพที่สังเกตได้: ยังอ่านไม่ออก")
+        lines.append(" ภาพที่สังเกต  ยังอ่านไม่ออก")
+
     # show investment counts only (not raw -100..100)
-    if any(int(inv.get(a, 0)) > 0 for a in AXES):
-        bits = []
-        meta = {}
-        if reg:
-            meta = {x["id"]: x for x in (_cfg(reg).get("axes") or []) if x.get("id")}
-        for a in AXES:
-            n = int(inv.get(a, 0))
-            if n > 0:
-                lab = (meta.get(a) or {}).get("high_label") or a
-                bits.append(f"{lab}×{n}")
-        if bits:
-            lines.append(" ลงทุนแล้ว: " + ", ".join(bits))
-    lines.append(" วิธีได้แต้ม: ต้องค้นเอง / ห้องสมุดอาจใบ้ไม่ครบ")
-    lines.append(" (ตัวเลขแกนจริง · เงื่อนไขได้แต้ม · สูตรเข้ากัน — ซ่อนทั้งหมด)")
+    invested: List[str] = []
+    meta = {}
+    if reg:
+        meta = {x["id"]: x for x in (_cfg(reg).get("axes") or []) if x.get("id")}
+    for a in AXES:
+        n = int(inv.get(a, 0))
+        if n > 0:
+            lab = (meta.get(a) or {}).get("high_label") or a
+            invested.append((lab, n))
+    if invested:
+        lines.append("---")
+        lines.append(" ลงทุนแล้ว")
+        for lab, n in invested:
+            filled = min(8, n)
+            bar = "█" * filled + "░" * (8 - filled)
+            lines.append(f"  {lab:<8}  [{bar}]  ×{n}")
+
+    lines.append("---")
+    lines.append(" หมายเหตุ soft")
+    lines.append("  · วิธีได้แต้ม: ค้นเอง / ห้องสมุดใบ้ไม่ครบ")
+    lines.append("  · ตัวเลขแกน · เงื่อนไข · สูตร — ซ่อนทั้งหมด")
+    return lines
+
+
+def format_personality_menu_lines(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+) -> List[str]:
+    """Numbered invest choices for personality axes."""
+    axes = personality_allocate_menu_axes(reg)
+    inv = player.get("personality_invest") or {}
+    lines: List[str] = [
+        " ลงทุนทางใด",
+        "---",
+        " ดันไปขั้ว「สูง」ของแกน (soft)",
+        "---",
+    ]
+    for i, (aid, lab) in enumerate(axes, 1):
+        inv_n = int(inv.get(aid, 0))
+        tag = f"  ×{inv_n}" if inv_n else ""
+        lines.append(f"  {i}  {lab}{tag}")
+    lines.extend(
+        [
+            "---",
+            "  0  กลับ",
+            "---",
+            f" พิมพ์ 1–{len(axes)} แล้วใส่จำนวนแต้ม",
+        ]
+    )
     return lines
 
 

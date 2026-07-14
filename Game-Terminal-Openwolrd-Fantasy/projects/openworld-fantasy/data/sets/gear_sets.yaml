@@ -1,5 +1,6 @@
 # Set bonuses: active when player has enough matching set_id pieces
-# pieces count from equipped weapon/armor set_id fields
+# EL5: pieces count across all equip slots (main_hand/body/head/…)
+# partial pieces (< required) grant soft fractional bonuses only
 - id: iron_legion
   name: กองทัพเหล็ก
   pieces_required: 2
@@ -35,3 +36,67 @@
     max_hp: 30
   grant_tags: [nature]
   flavor: "พลังราชันย์เถื่อนยังหลงเหลือในชุดเกียร์"
+
+- id: stone_bulwark
+  name: ป้อมหินไททัน
+  pieces_required: 2
+  bonuses:
+    max_hp: 35
+    atk: 3
+  flavor: "หินยังจำแรงกระแทก — ร่างกายอึดขึ้น"
+
+- id: umbra_court
+  name: ราชสำนักอัมบรา
+  pieces_required: 2
+  bonuses:
+    atk: 5
+    pressure: 6
+  grant_tags: [shadow]
+  flavor: "เงาราชินียังเกาะเกียร์"
+
+- id: sun_scourge
+  name: ภัยพิบัติสุริยะ
+  pieces_required: 2
+  bonuses:
+    atk: 10
+    max_hp: 15
+  grant_tags: [fire]
+  flavor: "แสงแผดเผา — คมไฟตื่น"
+
+- id: mist_hydra
+  name: เกล็ดไฮดราหมอก
+  pieces_required: 2
+  bonuses:
+    max_hp: 28
+    max_mana: 12
+  grant_tags: [water]
+  flavor: "หัวที่ถูกตัดยังงอกในเกียร์"
+
+- id: prism_court
+  name: ราชสำนักปริซึม
+  pieces_required: 2
+  bonuses:
+    max_mana: 30
+    atk: 4
+  grant_tags: [arcane, lightning]
+  flavor: "แสงหักเห — มานาสว่าง"
+
+- id: void_herald
+  name: ตราผู้ประกาศสุญญะ
+  pieces_required: 2
+  bonuses:
+    atk: 8
+    max_mana: 18
+  grant_tags: [shadow, arcane]
+  flavor: "เสียงประกาศจากรอยแยก"
+
+- id: ruin_oracle
+  name: ตำราพยากรณ์ซาก
+  pieces_required: 2
+  bonuses:
+    max_mana: 22
+    max_hp: 12
+  grant_tags: [arcane, holy]
+  grant_skills: [magic_missile]
+  flavor: "คำทำนายแผ่วในหู"
+

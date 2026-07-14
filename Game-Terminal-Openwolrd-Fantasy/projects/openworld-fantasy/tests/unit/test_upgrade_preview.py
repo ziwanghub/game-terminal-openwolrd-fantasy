@@ -18,10 +18,10 @@ def test_can_upgrade_when_below_cap():
     p = create_player(reg, "up1", "warrior", "เมษ")
     add_item(p, "iron_sword", reg)
     equip_item(p, "iron_sword", reg)
-    assert can_upgrade_equipped(p, "weapon") is True
-    p["upgrade_levels"] = {"weapon": 10, "armor": 0, "accessory": 0}
-    assert can_upgrade_equipped(p, "weapon") is False
-    assert can_upgrade_equipped(p, "armor") is False  # empty slot
+    assert can_upgrade_equipped(p, "main_hand") is True
+    p["upgrade_levels"] = {"main_hand": 10, "body": 0, "acc_1": 0}
+    assert can_upgrade_equipped(p, "main_hand") is False
+    assert can_upgrade_equipped(p, "body") is False  # empty slot
 
 
 def test_preview_lists_materials_and_money():
@@ -31,7 +31,7 @@ def test_preview_lists_materials_and_money():
     equip_item(p, "iron_sword", reg)
     add_item(p, "upgrade_mat", reg)
     p["money_world"] = 500
-    lines = format_upgrade_preview(p, "weapon", reg)
+    lines = format_upgrade_preview(p, "main_hand", reg)
     text = "\n".join(lines)
     assert "พิธีอัปเกรด" in text
     assert "เงินโลก" in text
@@ -45,7 +45,7 @@ def test_manage_hides_upgrade_at_cap():
     p = create_player(reg, "cap", "warrior", "เมษ")
     add_item(p, "iron_sword", reg)
     equip_item(p, "iron_sword", reg)
-    p["upgrade_levels"] = {"weapon": 10, "armor": 0, "accessory": 0}
+    p["upgrade_levels"] = {"main_hand": 10, "body": 0, "acc_1": 0}
     io = ScriptedIO(["sw001", "2", "0"])
     run_bag_hub(p, reg, io)
     out = io.joined()
@@ -67,7 +67,7 @@ def test_upgrade_flow_shows_preview_then_cancel():
     io = ScriptedIO(["sw001", "3", "n", "0"])
     run_bag_hub(p, reg, io)
     assert int(p["money_world"]) == money0
-    assert (p.get("upgrade_levels") or {}).get("weapon", 0) == 0
+    assert (p.get("upgrade_levels") or {}).get("main_hand", 0) == 0
     out = io.joined()
     assert "พิธีอัปเกรด" in out
     assert "ยืนยัน" in out

@@ -1,8 +1,11 @@
 id: dark_forest
 name: ป่ามืด
+climate: [temperate, dark, wet]
 world_tier: 1
 unlock_level: 1
 connections: [cave_shadow, mountain_rock, mist_marsh]
+# K3 craft stations at this area
+stations: [camp]
 mastery_start: 15
 ambient:
   hp_regen: 3
@@ -11,11 +14,21 @@ monster_pools:
   - id: goblin_hunter
     weight: 40
   - id: forest_wolf
-    weight: 35
+    weight: 40
   - id: wood_ent
-    weight: 15
+    weight: 17
   - id: forest_wraith
     weight: 10
+  - id: moss_sprite
+    weight: 13
+  - id: forest_boar
+    weight: 14
+  - id: forest_mantrap
+    weight: 11
+  - id: forest_hornet
+    weight: 10
+  - id: elite_forest_alpha_wolf
+    weight: 4
 
 boss_id: boss_forest_king
 boss_unlock_level: 5

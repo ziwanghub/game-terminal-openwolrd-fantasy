@@ -1,19 +1,33 @@
 id: mountain_rock
 name: ภูเขาหิน
+climate: [cold, windy]
 world_tier: 2
 unlock_level: 4
 connections: [dark_forest, desert_heat, crystal_peak]
+stations: [camp, forge]
 mastery_start: 12
 ambient:
   hp_regen: 2
   mana_regen: 2
 monster_pools:
   - id: rock_golem
-    weight: 35
+    weight: 32
   - id: mountain_troll
-    weight: 35
+    weight: 26
+  - id: stone_mole
+    weight: 20
+  - id: cliff_eagle
+    weight: 16
+  - id: ridge_reaver
+    weight: 4
   - id: stone_drake
-    weight: 30
+    weight: 4
+  - id: ridge_goat
+    weight: 16
+  - id: mountain_carrion_crow
+    weight: 12
+  - id: elite_ridge_warlord
+    weight: 4
 
 boss_id: boss_stone_titan
 boss_unlock_level: 10

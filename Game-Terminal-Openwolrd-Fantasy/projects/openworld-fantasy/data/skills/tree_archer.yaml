@@ -81,6 +81,7 @@
 - id: archer_evade_veil
   name: ม่านหลบ
   slot: defense
+  guard_class: physical
   cost_mana: 5
   strong_vs: [physical, wind]
   weak_vs: [fire, arcane]
@@ -94,3 +95,19 @@
     method: [self]
     require_level: 7
     cost_world: 55
+
+- id: archer_focus_breath
+  name: ลมหายใจเล็ง
+  slot: support
+  cost_mana: 7
+  heal: 6
+  elements: [wind]
+  combo_ok: false
+  tree: archer
+  tier: 3
+  requires: [archer_trap_shot]
+  learn:
+    method: [self]
+    require_level: 13
+    cost_world: 90
+

@@ -100,6 +100,8 @@ def _signal_detail_and_assist(
     io.write_line(f"\n── สัญญาณของ {sig.get('owner_name')} ──")
     io.write_line(f" {sig.get('label')} · {sig.get('severity_label')}")
     io.write_line(f" ตอบแทน: {sig.get('offer_line')}")
+    if sig.get("presence_label"):
+        io.write_line(f" ร่องรอย: 〔{sig.get('presence_label')}〕")
     if sig.get("note"):
         io.write_line(f" 「{sig.get('note')}」")
     if not sig.get("claimable"):
@@ -116,6 +118,18 @@ def _signal_detail_and_assist(
     except Exception as exc:
         io.write_line(f"โหลดเซฟเจ้าของไม่ได้: {exc}")
         return
+    # H5 lite: soft presence note (not realtime multiplayer)
+    try:
+        from game.domain.situation import presence_soft_for_player
+
+        pres = presence_soft_for_player(owner)
+        if pres.get("id") == "fresh":
+            io.write_line(" …ร่องรอยสด — เงาเจ้าของตอบสนองชัดขึ้นเล็กน้อย (async soft)")
+            helper["_assist_fresh_presence"] = True
+        elif pres.get("id") == "warm":
+            io.write_line(" …เพิ่งผ่าน — เงายังอุ่น")
+    except Exception:
+        pass
     # re-check after load
     ok, notes = claim_help_for_helper(owner, helper)
     for n in notes:
@@ -127,8 +141,13 @@ def _signal_detail_and_assist(
     won = _run_assist_combat(helper, owner, reg, io, rng)
     if won:
         result_notes = apply_assist_victory(owner, helper, reg)
+        if helper.pop("_assist_fresh_presence", None):
+            # soft rep nudge for helping a "fresh" signal
+            helper["help_rep"] = int(helper.get("help_rep") or 0) + 1
+            result_notes = list(result_notes) + ["「ช่วยตอนร่องรอยสด — ชื่อเสียงซ่อนขยับ」"]
     else:
         result_notes = apply_assist_failure(owner, helper)
+        helper.pop("_assist_fresh_presence", None)
     for n in result_notes:
         io.write_line(n)
     save_player(owner, world_id=str(owner.get("world_id") or "default"))

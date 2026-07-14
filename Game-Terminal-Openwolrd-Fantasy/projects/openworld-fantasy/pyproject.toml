@@ -15,6 +15,7 @@ color = ["rich>=13.0"]
 
 [project.scripts]
 openworld-fantasy = "game.__main__:main"
+owf-host = "game.host:main"
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -86,6 +86,7 @@
 - id: warrior_bastion
   name: ป้อมเกราะ
   slot: defense
+  guard_class: physical
   cost_mana: 12
   strong_vs: [physical, fire, wind]
   weak_vs: [arcane, shadow]
@@ -100,3 +101,23 @@
     require_level: 24
     cost_world: 180
     cost_hell: 1
+
+- id: warrior_brace
+  name: ตั้งท่า
+  slot: buff
+  buff_status: ward
+  buff_category: def
+  cost_mana: 8
+  heal: 8
+  elements: [physical]
+  combo_ok: false
+  tree: warrior
+  tier: 3
+  requires: [warrior_taunt]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 13
+    cost_world: 95
+

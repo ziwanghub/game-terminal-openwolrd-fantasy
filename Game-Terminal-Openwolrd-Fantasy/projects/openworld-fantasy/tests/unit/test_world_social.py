@@ -47,7 +47,7 @@ def test_affinity_and_combatant():
     # same seed components except approach — threaten should be lower
     assert aff_threat < aff_polite
     foe = other_as_combatant(b)
-    assert foe["name"] == "Bob"
+    assert "Bob" in foe["name"]  # W1: soft prefix เงา·
     assert foe["atk"] >= 1
     assert foe.get("is_player_echo")
 
@@ -60,3 +60,17 @@ def test_latest_save_and_menu():
     meta = latest_save_meta("default")
     # no crash
     assert meta is None or "name" in meta
+
+
+def test_world_picker_ui_readable():
+    from game.services.world_service import format_world_picker_lines
+
+    reg = DataRegistry.load(DATA_DIR)
+    lines = format_world_picker_lines(reg)
+    text = "\n".join(lines)
+    assert "เลือกโลก" in text
+    assert "1." in text
+    assert "ความยาก" in text
+    assert "พิมพ์ 1" in text
+    assert len(list_world_menu_rows(reg)) >= 2
+    assert "○" in text or "ปกติ" in text

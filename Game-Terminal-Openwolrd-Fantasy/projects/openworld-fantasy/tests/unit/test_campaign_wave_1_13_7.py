@@ -78,6 +78,7 @@ def test_pack_roster_lines():
     assert any("เลือกเป้า" in x or "พร้อมกัน" in x for x in lines)
 
 
-def test_tutorial_seven_pages_mode_first():
-    assert len(TUTORIAL_PAGES) == 7
+def test_tutorial_eight_pages_mode_first():
+    # 1.38+: onboarding 8 pages (was 7)
+    assert len(TUTORIAL_PAGES) >= 8
     assert "โหมด" in "\n".join(TUTORIAL_PAGES[0])

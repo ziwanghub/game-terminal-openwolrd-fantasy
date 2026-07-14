@@ -127,17 +127,30 @@ def _enter_dungeon_flow(
         io.write_line("ทางเข้าจางหาย...")
         return
     soft = soft_difficulty_text(player, reg, d)
-    io.write_line(f"\n══ ปากดันเจียน: {d.get('name')} ══")
-    io.write_line(f" สัญญาณ: {soft}")
-    io.write_line(" ความยากตัวเลข: ซ่อน (ต้องสังเกต/หาข้อมูลเอง)")
-    io.write_line(f" ปาร์ตี้ปัจจุบัน: {len(player.get('party') or [])}/3")
+    from game.ui_terminal.layout import render_box
+
+    lines = [
+        f" ปากดันเจียน · {d.get('name')}",
+        "---",
+        f" สัญญาณ   {soft}",
+        " ความยาก  ซ่อน (สังเกต / หาข้อมูลเอง)",
+        f" ปาร์ตี้   {len(player.get('party') or [])}/3",
+        "---",
+    ]
     for line in format_party_panel(player, reg):
         if "ปาร์ตี้" in line or "·" in line:
-            io.write_line(line)
-    io.write_line(" 1. เข้าไปเคลียร์ (ทางออกอาจล็อก)")
-    io.write_line(" 2. จัดปาร์ตี้ก่อน (Y)")
-    io.write_line(" 0. ถอย")
-    ch = io.read_line("เลือก: ").strip()
+            lines.append(f" {line.strip()}")
+    lines.extend(
+        [
+            "---",
+            "  1  เข้าไปเคลียร์ (ทางออกอาจล็อก)",
+            "  2  จัดปาร์ตี้ก่อน",
+            "  0  ถอย",
+        ]
+    )
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    ch = io.read_line("\n  เลือก (1/2/0): ").strip()
     if ch == "2":
         _party_menu(player, reg, io)
         conf = io.read_line("เข้าดันเจียนเลย? (1=ใช่): ").strip()
@@ -164,11 +177,15 @@ def _dungeon_field_turn(
     run = get_run(player)
     if not run:
         return True
-    for line in format_dungeon_panel(player, reg):
-        io.write_line(line)
-    for line in dungeon_menu_actions(player):
-        io.write_line(line)
-    ch = io.read_line("\nในดันเจียน เลือก: ").strip()
+    from game.ui_terminal.layout import render_box
+
+    io.write_line()
+    io.write_line(render_box(format_dungeon_panel(player, reg), double=False))
+    acts = dungeon_menu_actions(player)
+    if acts:
+        io.write_line()
+        io.write_line(render_box(acts, double=False))
+    ch = io.read_line("\n  ในดัน เลือก (1–6 · Y · 0): ").strip()
     acted = False
     if ch == "1":
         io.write_line("สำรวจชั้นนี้...")

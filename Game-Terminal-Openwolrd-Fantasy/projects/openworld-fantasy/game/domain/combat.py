@@ -91,18 +91,71 @@ def pick_monster(
     # optional: monster applies status on hit (catalog id + chance)
     if base.get("apply_status"):
         mon["apply_status"] = base.get("apply_status")
+    # D1–D2: carry per-monster drop table + bound card (must survive into combat loot)
+    _copy_mon_loot_fields(mon, base)
+    if base.get("boss"):
+        mon["boss"] = True
+    if base.get("elite"):
+        mon["elite"] = True
+        # S1: elites hit slightly harder / tankier before rarity roll
+        mon["hp"] = int(round(int(mon["hp"]) * 1.22))
+        mon["max_hp"] = mon["hp"]
+        mon["atk"] = int(round(int(mon["atk"]) * 1.12))
+        mon["xp_mult"] = float(mon.get("xp_mult") or 1.0) * 1.25
+    if base.get("tags"):
+        mon["tags"] = list(base.get("tags") or [])
+    # MI1–MI2: intel flags (tier / can_flee / never_flee)
+    try:
+        from game.domain.monster_ai import attach_monster_intel_fields
+
+        attach_monster_intel_fields(mon, base)
+    except Exception:
+        pass
     # roll enemy rarity and scale
     try:
         from game.domain.rarity import apply_rarity_to_enemy, roll_enemy_rarity
 
         area_tier = int(area.get("world_tier") or area.get("tier") or 1)
-        rid = base.get("rarity") or roll_enemy_rarity(
-            reg, rng, boss=False, area_tier=area_tier
-        )
+        if base.get("elite") and not base.get("rarity"):
+            rid = "uncommon" if rng.random() < 0.55 else "rare"
+        else:
+            rid = base.get("rarity") or roll_enemy_rarity(
+                reg, rng, boss=False, area_tier=area_tier
+            )
         mon = apply_rarity_to_enemy(mon, reg, str(rid))
+        # rarity helper re-dicts; re-assert loot fields
+        _copy_mon_loot_fields(mon, base)
+        if base.get("elite"):
+            mon["elite"] = True
+            # soft elite label if rarity display didn't mark special
+            bn = str(mon.get("base_name") or mon.get("name") or "")
+            shown = str(mon.get("name") or "")
+            if "◆" not in shown and "★" not in shown and "เถื่อน" not in shown:
+                mon["name"] = f"◆ {bn}" if bn else shown
+        try:
+            from game.domain.monster_ai import attach_monster_intel_fields
+
+            attach_monster_intel_fields(mon, base)
+        except Exception:
+            pass
     except Exception:
-        mon["rarity"] = "common"
+        mon["rarity"] = "uncommon" if base.get("elite") else "common"
+        if base.get("elite"):
+            mon["elite"] = True
+            mon["name"] = f"◆ {mon.get('base_name') or mon.get('name')}"
     return mon
+
+
+def _copy_mon_loot_fields(mon: MutableMapping[str, Any], base: Mapping[str, Any]) -> None:
+    """Attach YAML drop table / card bind from catalog onto runtime mon."""
+    if base.get("drops") is not None:
+        mon["drops"] = list(base.get("drops") or [])
+    if base.get("card_id"):
+        mon["card_id"] = str(base.get("card_id"))
+    if base.get("card_rate"):
+        mon["card_rate"] = base.get("card_rate")
+    if base.get("rarity") and not mon.get("catalog_rarity"):
+        mon["catalog_rarity"] = base.get("rarity")
 
 
 def apply_world_enemy_mods(mon: Dict[str, Any], player: Mapping[str, Any]) -> Dict[str, Any]:
@@ -133,15 +186,22 @@ def _mastery_mult(player: Mapping[str, Any], area_id: str) -> float:
 
 def skill_options(player: Mapping[str, Any], reg: DataRegistry) -> List[Tuple[str, Dict[str, Any]]]:
     from game.domain.skill_charges import is_skill_usable
+    from game.domain.skill_rank import scale_skill_for_player
+    from game.domain.skill_slots import normalize_slot
 
     out = []
     for sid in player.get("skills") or []:
         sk = reg.skills.get(sid)
-        if not sk or sk.get("slot") == "defense":
+        if not sk:
+            continue
+        slot = normalize_slot(sk)
+        # defense is chosen in guard phase, not attack menu
+        if slot == "defense":
             continue
         if not is_skill_usable(player, sid):
             continue
-        out.append((sid, sk))
+        scaled = scale_skill_for_player(player, sk, reg, skill_id=sid)
+        out.append((sid, scaled))
     return out
 
 
@@ -155,8 +215,26 @@ def player_attack_damage(
     power_override: Optional[int] = None,
     elements_override: Optional[Sequence[str]] = None,
 ) -> Tuple[int, str]:
+    # SK-R2: ensure skill is rank-scaled when id known
+    if skill and not skill.get("_skill_rank") and skill.get("id"):
+        try:
+            from game.domain.skill_rank import scale_skill_for_player
+
+            skill = scale_skill_for_player(
+                player, skill, reg, skill_id=str(skill.get("id"))
+            )
+        except Exception:
+            pass
     if skill and skill.get("heal") and power_override is None:
         return 0, "heal"
+    # buff/debuff-only may have low/zero power
+    try:
+        from game.domain.skill_slots import normalize_slot
+
+        if skill and normalize_slot(skill) == "buff" and power_override is None:
+            return 0, "buff"
+    except Exception:
+        pass
     base = int(power_override if power_override is not None else (skill or {}).get("power", 8))
     base += int(player.get("bonus_atk", 0))
     try:
@@ -165,10 +243,21 @@ def player_attack_damage(
         base += int(active_status_mods(player, reg).get("atk_flat") or 0)
     except Exception:
         pass
-    # magic skills scale with hidden magic power (not shown)
-    sk_elems = list(elements_override if elements_override is not None else (skill or {}).get("elements") or ["physical"])
-    if any(e in sk_elems for e in ("arcane", "fire", "water", "holy", "lightning", "shadow")):
-        base += int(float(player.get("power_mag", 0)) * 0.35)
+    # DD0–DD1: damage_class scales with class-linked powers (hidden)
+    sk_elems = list(
+        elements_override
+        if elements_override is not None
+        else (skill or {}).get("elements")
+        or ["physical"]
+    )
+    try:
+        from game.domain.damage_class import outbound_power_bonus, resolve_damage_class
+
+        dclass = resolve_damage_class(skill, elements=sk_elems, reg=reg)
+        base += int(outbound_power_bonus(player, dclass, reg))
+    except Exception:
+        if any(e in sk_elems for e in ("arcane", "fire", "water", "holy", "lightning", "shadow")):
+            base += int(float(player.get("power_mag", 0)) * 0.35)
     base += rng.randint(0, 5)
     elems = list(sk_elems)
     for t in player.get("gear_tags") or []:
@@ -183,6 +272,21 @@ def player_attack_damage(
         mult += 0.12
     # speed slight damage variance edge
     mult += min(0.12, float(player.get("power_spd", 5)) / 200.0)
+    # N2: hunger soft ATK mult (hidden)
+    try:
+        from game.domain.needs import combat_needs_mults
+
+        mult *= float(combat_needs_mults(player).get("atk_mult") or 1.0)
+    except Exception:
+        pass
+    # food buff status atk
+    try:
+        from game.domain.status_fx import active_status_mods
+
+        am = active_status_mods(player, reg)
+        mult *= float(am.get("atk_mult") or 1.0)
+    except Exception:
+        pass
     dmg = max(1, int(base * mult))
     # crit from attack investment + latent (never show formula)
     crit_chance = float(player.get("crit_chance", 5))
@@ -196,6 +300,18 @@ def player_attack_damage(
         flavor += " (ได้ผลดี!)"
     elif em <= 0.85:
         flavor += " (ต้านทาน...)"
+    # S1: soft class label once in a while via elements (no numbers)
+    try:
+        from game.domain.damage_class import resolve_damage_class, soft_class_label
+
+        dc = resolve_damage_class(skill, elements=elems, reg=reg)
+        # only append short class cue when not already flavored heavily
+        if dc and flavor.count("(") < 2 and rng.random() < 0.35:
+            sn = soft_class_label(dc, reg)
+            if sn:
+                flavor += f" ·{sn}"
+    except Exception:
+        pass
     return dmg, flavor
 
 
@@ -214,6 +330,14 @@ def apply_incoming_damage(
     dodge = float(player.get("dodge_chance") or 3.0)
     luck = float(player.get("luck_score") or 0.0)
     dodge = min(40.0, max(0.0, dodge * (1.0 + luck * 0.25)))
+    try:
+        from game.domain.needs import combat_needs_mults
+
+        nm = combat_needs_mults(player)
+        dodge *= float(nm.get("dodge_mult") or 1.0)
+        dmg = max(0, int(round(dmg * float(nm.get("incoming_mult") or 1.0))))
+    except Exception:
+        pass
     roll = rng.random() * 100
     if roll < dodge * 0.35:
         return 0, " (หลบพ้น!)"
@@ -256,15 +380,29 @@ def apply_on_hit_cards(
     return notes
 
 
-def pick_monster_attack(monster: Mapping[str, Any], rng: random.Random) -> Dict[str, Any]:
-    profiles = list(monster.get("attack_profiles") or [])
-    if not profiles:
-        return {
-            "tags": list(monster.get("elements") or ["physical"]),
-            "telegraph": "ศัตรูโจมตี!",
-            "power": int(monster.get("atk", 8)),
-        }
-    return dict(rng.choice(profiles))
+def pick_monster_attack(
+    monster: Mapping[str, Any],
+    rng: random.Random,
+    *,
+    player: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Choose an attack profile.
+    MI1: elite/boss/intel_tier use context-aware weights when `player` is given.
+    """
+    try:
+        from game.domain.monster_ai import pick_smart_monster_attack
+
+        return pick_smart_monster_attack(monster, rng, player=player)
+    except Exception:
+        profiles = list(monster.get("attack_profiles") or [])
+        if not profiles:
+            return {
+                "tags": list(monster.get("elements") or ["physical"]),
+                "telegraph": "ศัตรูโจมตี!",
+                "power": int(monster.get("atk", 8)),
+            }
+        return dict(rng.choice(profiles))
 
 
 def monster_raw_damage(monster: Mapping[str, Any], profile: Mapping[str, Any], rng: random.Random) -> int:
@@ -279,13 +417,25 @@ def apply_status_to_monster(
     chance: float,
     rng: random.Random,
     reg: Optional[DataRegistry] = None,
+    *,
+    aoe: bool = False,
+    n_targets: int = 1,
+    attack_elements: Optional[Sequence[str]] = None,
 ) -> Optional[str]:
     from game.domain.status_fx import apply_status
 
     if not status_id:
         return None
     return apply_status(
-        monster, str(status_id), reg, rng, chance=float(chance), source="combo"
+        monster,
+        str(status_id),
+        reg,
+        rng,
+        chance=float(chance),
+        source="combo",
+        aoe=aoe,
+        n_targets=n_targets,
+        attack_elements=attack_elements,
     )
 
 
@@ -312,6 +462,33 @@ def resolve_victory(
     rng: random.Random,
 ) -> List[str]:
     lines: List[str] = ["ชนะการต่อสู้!"]
+    # CM: soft focus after victory (hidden)
+    try:
+        from game.domain.combo_mind import on_victory_focus
+
+        fmsg = on_victory_focus(player, reg)
+        if fmsg and rng.random() < 0.35:
+            lines.append(fmsg)
+    except Exception:
+        pass
+    # EQ-G: train stance affinity
+    try:
+        from game.domain.loadout_context import on_combat_victory_stance, recompute_loadout_context
+
+        recompute_loadout_context(player, reg, area_id=area_id)
+        for note in on_combat_victory_stance(player, reg):
+            lines.append(note)
+    except Exception:
+        pass
+    # N5: boss win at low morale
+    try:
+        if monster.get("boss"):
+            from game.domain.needs import note_n5_morale_boss
+
+            for note in note_n5_morale_boss(player):
+                lines.append(note)
+    except Exception:
+        pass
     xp = kill_xp_reward(
         int(player.get("level", 1)),
         int(monster.get("level", 1)),
@@ -383,27 +560,40 @@ def resolve_victory(
     know["reactions"] = reactions
     player["knowledge"] = know
 
-    # Victory bonus loot — always via add_item (ids must stay parallel to inventory)
-    if rng.random() < 0.4:
-        loot_id = rng.choice(
-            [
-                "potion_hp",
-                "potion_mana",
-                "iron_sword",
-                "leather_armor",
-                "upgrade_mat",
-            ]
-        )
-        try:
-            from game.domain.equipment import add_item
+    # Item loot is chosen after combat (A / เลข,comma / 0) — no auto-grant here.
+    # Track kills for mon-drop + chest anti_farm soft
+    try:
+        from game.domain.chest_loot import note_kill_for_farm
 
-            shown = add_item(player, loot_id, reg)
-            if shown and "ไม่พบ" not in shown:
-                lines.append(f"พบ {shown}")
-            else:
-                lines.append(f"พบเศษของ... แต่เก็บไม่สำเร็จ")
-        except Exception:
-            lines.append("พบเงาของบางอย่าง — แต่หายไปในฝุ่น")
+        note_kill_for_farm(player, str(monster.get("id") or ""))
+    except Exception:
+        pass
+    # L2: sealed chest drop (boss likely · normal mon rare)
+    try:
+        from game.domain.chest_loot import (
+            infer_combat_source,
+            try_drop_and_grant_chest,
+        )
+
+        src = infer_combat_source(monster)
+        first = False
+        mid = str(monster.get("id") or "")
+        if monster.get("boss") and mid:
+            cleared = list(player.get("bosses_defeated") or [])
+            # first clear if not yet in list before this fight's append below
+            first = mid not in cleared
+        chest_lines = try_drop_and_grant_chest(
+            player,
+            reg,
+            rng,
+            source=src,
+            mon=dict(monster),
+            first_clear=first,
+            auto_open=False,
+        )
+        lines.extend(chest_lines)
+    except Exception:
+        pass
 
     ac = dict(player.get("action_counts") or {})
     ac["attack"] = int(ac.get("attack", 0)) + 1
@@ -444,7 +634,7 @@ def combo_damage_package(
     from game.domain.unit_system import apply_unit_skill_scaling, gain_unit_mastery_xp
 
     max_n = max_combo_for_player(player, reg)
-    combo = resolve_combo(skill_ids, reg, max_n=max_n)
+    combo = resolve_combo(skill_ids, reg, max_n=max_n, player=player)
     if not combo.get("ok"):
         return combo
 
@@ -456,6 +646,7 @@ def combo_damage_package(
             skills[0],
             int(combo.get("power") or skills[0].get("power") or 0),
             int(combo.get("total_mana") or skills[0].get("cost_mana") or 0),
+            reg=reg,
         )
         combo["power"] = p
         combo["total_mana"] = mcost
@@ -488,7 +679,16 @@ def combo_damage_package(
     combo["flavor_tag"] = flavor
     # mastery xp when using unit skill
     if any(s.get("unit_only") for s in skills):
-        combo["mastery_notes"] = gain_unit_mastery_xp(player, 2, "unit_skill")  # type: ignore
+        notes = list(gain_unit_mastery_xp(player, 2, "unit_skill") or [])
+        try:
+            from game.domain.soft_feel import soft_unit_combat_feel
+
+            for s in skills:
+                if s.get("unit_only"):
+                    notes.extend(soft_unit_combat_feel(player, s, int(dmg), reg=reg))
+        except Exception:
+            pass
+        combo["mastery_notes"] = notes  # type: ignore
     elif int(combo.get("length") or 1) >= 3:
         combo["mastery_notes"] = gain_unit_mastery_xp(player, 1, "long_combo")  # type: ignore
     return combo

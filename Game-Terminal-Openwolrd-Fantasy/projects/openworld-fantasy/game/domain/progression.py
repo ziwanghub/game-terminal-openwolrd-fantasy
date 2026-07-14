@@ -14,7 +14,10 @@ from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple
 from game.data_load.registry import DataRegistry
 
 # Allocated in P menu (visible). luck is NEVER shown / never allocated here.
-ALLOCATE_KEYS = ("atk", "defense", "magic", "speed", "intelligence")
+# CM3: intelligence removed from free P — grows soft / hidden (see combo_mind).
+ALLOCATE_KEYS = ("atk", "defense", "magic", "speed")
+# Still stored on stats_alloc for legacy / unit affinity / power recompute
+ALLOC_STORAGE_KEYS = ("atk", "defense", "magic", "speed", "intelligence")
 # Full keys for latent tables (crit kept for legacy gear affinity)
 STAT_KEYS = ("atk", "defense", "magic", "speed", "intelligence", "crit")
 STAT_LABELS = {
@@ -31,16 +34,29 @@ def ensure_progression(player: MutableMapping[str, Any], reg: DataRegistry) -> N
     player.setdefault("stat_points", 0)
     player.setdefault(
         "stats_alloc",
-        {k: 0 for k in ALLOCATE_KEYS},
+        {k: 0 for k in ALLOC_STORAGE_KEYS},
     )
-    # migrate: ensure intelligence key exists
+    # migrate: ensure storage keys exist
     sa = dict(player.get("stats_alloc") or {})
-    for k in ALLOCATE_KEYS:
+    for k in ALLOC_STORAGE_KEYS:
         sa.setdefault(k, 0)
     player["stats_alloc"] = sa
+    # CM3: one-time soft migrate — past P-int invest still counts as mind growth
+    flags = dict(player.get("flags") or {})
+    if not flags.get("cm3_int_migrated"):
+        old_int = int(sa.get("intelligence") or 0)
+        if old_int > 0:
+            player["learn_points"] = int(player.get("learn_points") or 0) + max(
+                0, old_int // 2
+            )
+            player["mind_growth"] = float(player.get("mind_growth") or 0) + old_int * 0.35
+        flags["cm3_int_migrated"] = True
+        player["flags"] = flags
+    player.setdefault("mind_growth", float(player.get("mind_growth") or 0))
     player.setdefault("power_atk", float(player.get("base_atk", 5)))
     player.setdefault("power_def", 5.0)
     player.setdefault("power_mag", 5.0)
+    player.setdefault("power_mdef", float(player.get("power_mag") or 5.0))
     player.setdefault("power_spd", 5.0)
     player.setdefault("power_intel", 3.0)
     player.setdefault("power_crit", 3.0)
@@ -48,6 +64,11 @@ def ensure_progression(player: MutableMapping[str, Any], reg: DataRegistry) -> N
     player.setdefault("alloc_def_bonus", 0)
     player.setdefault("alloc_mag_bonus", 0)
     player.setdefault("alloc_spd_bonus", 0)
+    player.setdefault("gear_def_bias", 0.0)
+    player.setdefault("gear_mdef_bias", 0.0)
+    player.setdefault("gear_atk_bias", 0.0)
+    player.setdefault("gear_mag_bias", 0.0)
+    player.setdefault("gear_atb_bias", 0.0)
     player.setdefault("crit_chance", 5.0)
     player.setdefault("dodge_chance", 3.0)  # soft evade %
     player.setdefault("luck_score", 0.0)  # hidden — never display raw
@@ -137,7 +158,7 @@ def recompute_luck_score(player: MutableMapping[str, Any], reg: DataRegistry) ->
 def recompute_powers(player: MutableMapping[str, Any], reg: DataRegistry) -> None:
     """Turn allocated points + latent into combat powers. Not shown raw."""
     # setdefaults only — do not call ensure_progression (avoids recursion)
-    player.setdefault("stats_alloc", {k: 0 for k in ALLOCATE_KEYS})
+    player.setdefault("stats_alloc", {k: 0 for k in ALLOC_STORAGE_KEYS})
     alloc = player.get("stats_alloc") or {}
     # base from occupation starting affinity
     occ = _occ(player, reg)
@@ -150,21 +171,33 @@ def recompute_powers(player: MutableMapping[str, Any], reg: DataRegistry) -> Non
         "intelligence": 3.0,
         "crit": 2.5,
     }
-    for st in ALLOCATE_KEYS:
+    # P menu stats + legacy intelligence storage (not in ALLOCATE_KEYS)
+    for st in ALLOC_STORAGE_KEYS:
         pts = int(alloc.get(st, 0))
         mult = _latent_mult(player, reg, st)
         # diminishing returns on raw points
         gain = (pts * 1.15) * mult + (max(0, pts) ** 0.85) * 0.35 * mult
         powers[st] = powers[st] + gain
+    # CM3: soft mind growth (learn/read) feeds intellect power lightly
+    mg = float(player.get("mind_growth") or 0)
+    if mg > 0:
+        powers["intelligence"] = powers["intelligence"] + min(12.0, mg * 0.55)
     # legacy crit points still count toward crit power if present
     crit_pts = int(alloc.get("crit", 0))
     if crit_pts:
         powers["crit"] += crit_pts * 1.1 * _latent_mult(player, reg, "crit")
 
     player["power_atk"] = powers["atk"]
-    player["power_def"] = powers["defense"]
+    player["power_def"] = powers["defense"] + float(player.get("gear_def_bias") or 0.0)
     player["power_mag"] = powers["magic"]
-    player["power_spd"] = powers["speed"]
+    # DD1: magic defense — primarily from magic invest + small defense blend + gear mdef bias
+    mag_pts = int(alloc.get("magic", 0))
+    def_pts_pre = int(alloc.get("defense", 0))
+    mdef_base = powers["magic"] * 0.85 + powers["defense"] * 0.25 + mag_pts * 0.4
+    mdef_base += def_pts_pre * 0.15
+    mdef_base += float(player.get("gear_mdef_bias") or 0.0)
+    player["power_mdef"] = max(1.0, mdef_base)
+    player["power_spd"] = powers["speed"] + float(player.get("gear_atb_bias") or 0.0) * 0.35
     player["power_intel"] = powers["intelligence"]
     # Attack investment secretly feeds crit (player asked: โจมตี → คริแฝง)
     atk_pts = int(alloc.get("atk", 0))
@@ -235,10 +268,19 @@ def on_level_up_points(player: MutableMapping[str, Any], reg: DataRegistry, leve
         pass
     # soft notify class path may open (no spoilers)
     try:
-        from game.domain.class_paths import list_available_class_paths
+        from game.domain.class_paths import soft_offer_hint
 
-        if list_available_class_paths(player, reg):
-            notes.append("…ทางแยกอาชีพบางอย่างเปิดขึ้น (กด C เมื่อพร้อม — ไม่บอกเงื่อนไข)")
+        hint = soft_offer_hint(player, reg)
+        if hint:
+            notes.append(hint)
+            # sticky soft flag — field UI can nudge without spoiling how
+            player.setdefault("flags", {})["class_offer_pending"] = True
+    except Exception:
+        pass
+    try:
+        from game.domain.soft_feel import soft_level_up_bundle
+
+        notes.extend(soft_level_up_bundle(player, reg))
     except Exception:
         pass
     recompute_powers(player, reg)
@@ -286,6 +328,12 @@ def allocate_stat(
     ensure_progression(player, reg)
     if stat == "luck":
         return "ค่านี้… แจกตรงๆ ไม่ได้"
+    if stat == "intelligence":
+        # CM3: no free P dump into intellect — soft refusal
+        return (
+            "ความฉลาด… แจกตรงๆ ไม่ได้ "
+            "· โตจากการเรียน/อ่าน/คิดในสนาม (รู้สึกเป็นแบนด์ ไม่ใช่แต้ม P)"
+        )
     if stat not in ALLOCATE_KEYS and stat != "crit":
         return "สถานะไม่ถูกต้อง"
     if stat == "crit":
@@ -300,15 +348,6 @@ def allocate_stat(
     player["stats_alloc"] = alloc
     player["stat_points"] = have - points
     recompute_powers(player, reg)
-    # investing intelligence expands mental capacity (soft fill)
-    if stat == "intelligence":
-        try:
-            from game.domain.intelligence import ensure_intelligence, restore_intelligence
-
-            ensure_intelligence(player, reg)
-            restore_intelligence(player, points, reason="learn")
-        except Exception:
-            pass
     # re-run gear so bonus_atk includes new power
     try:
         from game.domain.equipment import recompute_stats
@@ -317,7 +356,20 @@ def allocate_stat(
     except Exception:
         pass
     # player only sees invested points, not latent
-    return f"เพิ่ม{STAT_LABELS[stat]} +{points} (ลงทุนรวม {alloc[stat]}) · เหลือแต้ม {player['stat_points']}"
+    msg = (
+        f"เพิ่ม{STAT_LABELS[stat]} +{points} "
+        f"(ลงทุนรวม {alloc[stat]}) · เหลือแต้ม {player['stat_points']}"
+    )
+    # soft path band if secret occupation active (stat+style HSR)
+    if player.get("unit_class_id"):
+        try:
+            from game.domain.soft_feel import soft_unit_affinity_feel
+
+            for line in soft_unit_affinity_feel(player, reg, force=False):
+                msg += f"\n  {line}"
+        except Exception:
+            pass
+    return msg
 
 
 def _sync_rank_title(player: MutableMapping[str, Any], reg: DataRegistry) -> None:
@@ -459,6 +511,15 @@ def library_visit(player: MutableMapping[str, Any], reg: DataRegistry) -> List[s
                 notes.append(f"   {line.strip()}")
     player["library_entries_read"] = list(read)
     player["library_last_visit"] = now
+    # CM4/5: soft mind growth from reading
+    try:
+        from game.domain.combo_mind import note_mind_growth
+
+        mnote = note_mind_growth(player, 0.55, reason="library")
+        if mnote:
+            notes.append(mnote)
+    except Exception:
+        pass
     # personality fragment tips (partial / rumor / rare complete) — separate pool
     try:
         from game.domain.personality import (
@@ -488,25 +549,81 @@ def grant_library_key(player: MutableMapping[str, Any]) -> str:
 
 
 def format_alloc_panel(player: Mapping[str, Any]) -> List[str]:
-    # luck never listed; crit legacy not shown in menu
+    """
+    Stat invest overview — sectioned for terminal scanability.
+    luck never listed; crit legacy not shown in menu.
+    Allocation is free — class only soft-biases latent growth.
+    """
     alloc = player.get("stats_alloc") or {}
-    lines = [
-        f"แต้มคงเหลือ: {player.get('stat_points', 0)}",
-        f"อาชีพ: {player.get('occupation')} · {player.get('occ_rank_title') or '-'}",
+    pts = int(player.get("stat_points") or 0)
+    occ = player.get("occupation") or "-"
+    rank = player.get("occ_rank_title") or "-"
+
+    lines: List[str] = [
+        " แจกแต้มสถานะ",
+        "---",
+        f" แต้มคงเหลือ  {pts}",
+        f" อาชีพ        {occ} · {rank}",
     ]
     if player.get("unit_class_name"):
-        lines.append(f"Unit: {player.get('unit_class_name')}")
-    for k in ALLOCATE_KEYS:
-        lines.append(f"  {STAT_LABELS[k]}: ลงทุน {int(alloc.get(k, 0))}")
-    lines.append(" (พลังแฝงจากการลงทุน... มองไม่เห็นตัวเลขจริง)")
-    lines.append(" (โชค — มีผลบางครั้ง แต่ไม่โชว์และแจกตรงไม่ได้)")
+        lines.append(f" อาชีพลับ    {player.get('unit_class_name')}")
+
+    lines.append("---")
+    lines.append(" การลงทุน (มองเห็น · ลงได้อิสระ)")
+    for i, k in enumerate(ALLOCATE_KEYS, 1):
+        n = int(alloc.get(k, 0))
+        # soft bar: filled by invest count (display cap 8)
+        filled = min(8, n)
+        dots = "█" * filled + "░" * (8 - filled)
+        lines.append(f"  {i}. {STAT_LABELS[k]:<8}  [{dots}]  ×{n}")
+
+    lines.append("---")
+    lines.append(" หมายเหตุ soft")
+    lines.append("  · ลงโจมตี/กัน/เวท/เร็วได้อิสระ — ไม่บังคับตามสาย")
+    lines.append("  · ความฉลาด แจกตรงไม่ได้ — โชว์เป็นแบนด์ (โตจากเรียน/อ่าน/คิด)")
+    lines.append("  · อาชีพลับ/Unit: สกิลแรงตามแนวแต้มที่เข้าทาง — ลงผิดอาจแผ่ว")
+    lines.append("  · โชคมีผลบางครั้ง — แจกตรงไม่ได้")
+
+    try:
+        from game.domain.combo_mind import soft_intellect_label, soft_focus_label
+
+        lines.append("---")
+        lines.append(" ความคิด (soft · ไม่ใช่แต้ม P)")
+        lines.append(
+            f"  ฉลาด〔{soft_intellect_label(player)}〕· "
+            f"จิต〔{soft_focus_label(player)}〕"
+        )
+        lines.append("  · มีผลคอมโบ/มานาโซ่ (สูตรซ่อน)")
+    except Exception:
+        pass
     try:
         from game.domain.intelligence import format_intel_status_line, ensure_intelligence
 
         ensure_intelligence(player)  # type: ignore
-        lines.append(format_intel_status_line(player))
-        lines.append("  · แลกสติเร่ง ATB ในไฟต์ (6) · ทางเลือกพิเศษต้องมีสติพอ")
-        lines.append("  · สติลดแล้วฟื้นด้วยพัก / เวลา / ชาสมาธิ ฯลฯ")
+        lines.append("---")
+        lines.append(" สติ (ทรัพยากรใช้เร่งจังหวะ)")
+        lines.append(f"  {format_intel_status_line(player).strip()}")
+        lines.append("  · ไฟต์กด 6 = เร่งจังหวะ (ใช้สติ)")
+        lines.append("  · ฟื้น: พัก · เวลา · ชาสมาธิ")
     except Exception:
         pass
+    return lines
+
+
+def format_alloc_menu_lines(player: Mapping[str, Any]) -> List[str]:
+    """Numbered invest choices only (used under the overview box)."""
+    alloc = player.get("stats_alloc") or {}
+    nkeys = len(ALLOCATE_KEYS)
+    lines: List[str] = [
+        " ลงทุนที่",
+        "---",
+    ]
+    for i, k in enumerate(ALLOCATE_KEYS, 1):
+        n = int(alloc.get(k, 0))
+        lines.append(f"  {i}  {STAT_LABELS[k]:<8}  (ลงทุนแล้ว ×{n})")
+    lines.append("---")
+    lines.append("  0  กลับ")
+    lines.append("---")
+    lines.append(f" พิมพ์ 1–{nkeys} แล้วใส่จำนวนแต้ม")
+    lines.append(" (ความฉลาดไม่อยู่ในเมนูนี้)")
     return lines

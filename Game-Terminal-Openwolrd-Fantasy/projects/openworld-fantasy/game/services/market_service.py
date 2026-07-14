@@ -40,26 +40,42 @@ def run_market(
     for note in claim_pending_payouts(player, world_id):
         io.write_line(note)
 
+    from game.domain.market import get_tax_fund
+    from game.ui_terminal.layout import render_box
+
     while True:
         io.write_line()
-        for line in format_market_listings(
+        listings = format_market_listings(
             reg, world_id, exclude_seller_id=str(player.get("id") or "")
-        ):
-            io.write_line(line)
-        from game.domain.market import get_tax_fund
-
-        io.write_line(
-            f" เงินคุณ: โลก {player.get('money_world', 0)} · "
-            f"รายการในตลาด {len(load_market(world_id).get('listings') or [])} · "
-            f"กองทุนภาษี(ค่าจ้างภารกิจ) {get_tax_fund(world_id)}"
         )
-        io.write_line("---")
-        io.write_line(" 1. ดู/ซื้อจากตลาด")
-        io.write_line(" 2. ฝากขายของจากคลัง")
-        io.write_line(" 3. ถอนของที่ตัวเองฝากขาย")
-        io.write_line(" 4. รายงานการขายล่าสุด (ตลาด)")
-        io.write_line(" 0. กลับ")
-        ch = io.read_line("ตลาด: ").strip()
+        n_list = len(load_market(world_id).get("listings") or [])
+        fund = get_tax_fund(world_id)
+        hub = [
+            " ตลาดกลาง",
+            "---",
+            f" เงินคุณ     โลก {player.get('money_world', 0)}",
+            f" รายการตลาด  {n_list}",
+            f" กองทุนภาษี  {fund}  (งบกระดานภารกิจ)",
+            "---",
+            " บอร์ด (ย่อ)",
+        ]
+        # first few listing lines only for overview
+        for ln in listings[:8]:
+            hub.append(f" {ln}" if not str(ln).startswith(" ") else ln)
+        if len(listings) > 8:
+            hub.append(f"  …และอีก {len(listings) - 8} บรรทัด (เมนู 1 ดูเต็ม)")
+        hub.extend(
+            [
+                "---",
+                "  1  ดู / ซื้อจากตลาด",
+                "  2  ฝากขายจากคลัง",
+                "  3  ถอนของที่ฝากเอง",
+                "  4  รายงานขายล่าสุด",
+                "  0  กลับ",
+            ]
+        )
+        io.write_line(render_box(hub, double=False))
+        ch = io.read_line("\n  ตลาด (1–4 · 0): ").strip()
         if ch in ("0", ""):
             try:
                 save_player(player, world_id=world_id)
@@ -75,7 +91,7 @@ def run_market(
         elif ch == "4":
             _sales_log(io, world_id)
         else:
-            io.write_line("เลือก 0–4")
+            io.write_line("  เลือก 0–4")
         recompute_stats(player, reg)
 
 
@@ -130,15 +146,21 @@ def _list_flow(player: Dict[str, Any], reg: DataRegistry, io: IO, world_id: str)
     if not ids:
         io.write_line("คลังว่าง — ไม่มีของฝากขาย")
         return
-    io.write_line("── ของในคลัง (ฝากขายได้) ──")
+    from game.ui_terminal.layout import render_box
+
+    lines = [" ฝากขาย · ของในคลัง", "---"]
     for i, iid in enumerate(ids):
         it = reg.items.get(iid) or {}
         rid = rarity_of_inventory_index(player, i)
         name = display_item_name(str(it.get("name") or iid), rid, reg)
         code = item_code(iid, reg)
         sug = suggest_list_price(reg, world_id, iid, rid)
-        io.write_line(f"  {i + 1}. {code} {name}  · แนะนำราคา ~{sug}")
-    raw = io.read_line("เลือกหมายเลขฝากขาย (0=กลับ): ").strip()
+        lines.append(f"  {i + 1}. {code}  {name}")
+        lines.append(f"      แนะนำราคา ~{sug}")
+    lines.extend(["---", "  0  กลับ"])
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    raw = io.read_line("\n  เลือกหมายเลขฝากขาย (0=กลับ): ").strip()
     if raw in ("0", ""):
         return
     try:
@@ -199,16 +221,23 @@ def _cancel_flow(player: Dict[str, Any], reg: DataRegistry, io: IO, world_id: st
 
 
 def _sales_log(io: IO, world_id: str) -> None:
+    from game.ui_terminal.layout import render_box
+
     market = load_market(world_id)
     log = list(market.get("sales_log") or [])[-12:]
-    io.write_line("── รายงานขายล่าสุด (ตลาด) ──")
+    lines = [" รายงานขายล่าสุด", "---"]
     if not log:
-        io.write_line("  (ยังไม่มีการซื้อขาย)")
-        return
-    for s in reversed(log):
-        io.write_line(
-            f"  · {s.get('sold_at')}  {s.get('buyer_name')} ซื้อ {s.get('item_name')} "
-            f"จาก {s.get('seller_name')} ราคา {s.get('price')} "
-            f"(ผู้ขายได้ {s.get('seller_gain')})"
-        )
-    io.read_line("Enter...")
+        lines.append("  (ยังไม่มีการซื้อขาย)")
+    else:
+        for s in reversed(log):
+            lines.append(f"  · {s.get('sold_at')}")
+            lines.append(
+                f"    {s.get('buyer_name')} ซื้อ {s.get('item_name')} "
+                f"จาก {s.get('seller_name')}"
+            )
+            lines.append(
+                f"    ราคา {s.get('price')} · ผู้ขายได้ {s.get('seller_gain')}"
+            )
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    io.read_line("\n  Enter...")

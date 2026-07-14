@@ -12,6 +12,8 @@ DEFAULT_PREFS: Dict[str, Any] = {
     "combat_numbers": True,
     "soft_labels": True,
     "warn_travel_ambush": True,
+    "live_tama": True,  # T3: soft drip + enter anim on PERSONAL
+    "tama_enter_anim": True,
 }
 
 # (key, label, choices cycle)
@@ -22,6 +24,8 @@ PREF_OPTIONS: List[Tuple[str, str, Sequence[Any]]] = [
     ("combat_numbers", "ตัวเลขในไฟต์", (True, False)),
     ("soft_labels", "ป้าย soft (ไม่สปอยล์)", (True, False)),
     ("warn_travel_ambush", "เตือนเสี่ยงซุ่มตอนเดินทาง", (True, False)),
+    ("live_tama", "Tama เวลาไหลบนจอ (T3)", (True, False)),
+    ("tama_enter_anim", "แอนิเมชันเข้าตัวละคร (T3)", (True, False)),
     ("clear_screen", "ล้างจอก่อนสถานะ (ทดลอง)", (False, True)),
 ]
 

@@ -5,7 +5,6 @@
   kind: consumable
   heal_hp: 30
   price_world: 25
-
 - id: potion_hp
   rarity: common
   name: ยา HP
@@ -13,7 +12,6 @@
   kind: consumable
   heal_hp: 55
   price_world: 45
-
 - id: potion_mana
   rarity: common
   name: ยา Mana
@@ -21,7 +19,6 @@
   kind: consumable
   heal_mana: 35
   price_world: 40
-
 - id: focus_tea
   code: pt_tea
   rarity: common
@@ -30,7 +27,6 @@
   kind: consumable
   restore_intel: 3
   price_world: 40
-
 - id: mind_elixir
   code: pt_mind
   rarity: uncommon
@@ -40,7 +36,6 @@
   restore_intel: 2
   boost_intel_max: 2
   price_world: 95
-
 - id: lucid_incense
   code: pt_lucid
   rarity: rare
@@ -50,7 +45,6 @@
   fill_intel: true
   price_world: 160
   price_heaven: 1
-
 - id: antidote
   rarity: common
   name: ยาแก้พิษ
@@ -58,7 +52,6 @@
   kind: consumable
   clear_status: poison
   price_world: 35
-
 - id: panacea
   rarity: uncommon
   name: ยาถอนสถานะ
@@ -68,7 +61,6 @@
   clear_status: all
   price_world: 120
   price_heaven: 2
-
 - id: balm_regen
   rarity: common
   name: ขี้ผึ้งฟื้นฟู
@@ -76,7 +68,6 @@
   kind: consumable
   apply_status: regen
   price_world: 55
-
 - id: tonic_might
   rarity: uncommon
   name: ยาปลุกกำลัง
@@ -84,7 +75,6 @@
   kind: consumable
   apply_status: might
   price_world: 70
-
 - id: oil_ward
   rarity: uncommon
   name: น้ำมันเกราะ
@@ -92,7 +82,6 @@
   kind: consumable
   apply_status: ward
   price_world: 65
-
 - id: tea_focus
   rarity: common
   name: ชาสมาธิ
@@ -100,8 +89,6 @@
   kind: consumable
   apply_status: focus
   price_world: 45
-
-# --- Phase III content pack (light) ---
 - id: forest_charm
   rarity: uncommon
   name: เครื่องรางใบไม้
@@ -110,22 +97,25 @@
   apply_status: focus
   heal_hp: 15
   price_world: 40
-
 - id: hunter_ration
   rarity: common
   name: เสบียงนักล่า
   desc: กินแล้วอิ่มท้องในสนาม
   kind: consumable
-  heal_hp: 45
+  tags:
+  - food
+  food_tier: 2
+  hunger_relief: 45
+  fatigue_relief: 8
+  morale_boost: 5
+  heal_hp: 20
   price_world: 30
-
 - id: iron_arrowhead
   rarity: common
   name: หัวลูกศรเหล็ก
   desc: วัสดุเล็ก — ใช้คราฟ/อัปได้
   kind: material
   price_world: 12
-
 - id: spirit_incense
   rarity: rare
   name: ธูปวิญญาณ
@@ -134,7 +124,6 @@
   apply_status: ward
   price_heaven: 5
   heal_mana: 20
-
 - id: void_ash
   rarity: rare
   name: ขี้เถ้าสุญญะ
@@ -142,150 +131,186 @@
   kind: consumable
   apply_status: might
   price_hell: 4
-
 - id: iron_sword
   code: sw001
   rarity: common
   name: ดาบเหล็ก
-  desc: ดาบเหล็กพื้นฐาน ช่องการ์ด 1 ชุด legion
+  desc: ดาบเหล็กพื้นฐาน ช่องการ์ด 1 ชุด legion · มือเดียว (คู่ได้)
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: one_hand
+  material: metal
+  allow_off_hand: true
   atk: 6
   sockets: 1
   set_id: iron_legion
   price_world: 120
   art_id: iron_sword
-
 - id: steel_blade
   code: sw002
   rarity: uncommon
   name: ดาบเหล็กกล้า
-  desc: ดาบเหล็กกล้าคมขึ้น ช่องการ์ด 2
+  desc: ดาบเหล็กกล้าคมขึ้น ช่องการ์ด 2 · มือเดียว
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
   atk: 11
   sockets: 2
   set_id: iron_legion
   price_world: 280
   art_id: iron_sword
-
 - id: shadow_dagger
   code: sw003
   rarity: rare
   name: กริชเงา
-  desc: กริชเงา — แท็ก shadow
+  desc: กริชเงา — แท็ก shadow · มือเดียว (คู่ได้)
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
   atk: 9
   sockets: 1
-  tags: [shadow]
+  tags:
+  - shadow
   set_id: shadow_veil
   price_world: 220
-
 - id: apprentice_staff
   code: sw004
   rarity: uncommon
   name: ไม้เท้านักเรียน
-  desc: ไม้เท้านักเรียน เพิ่มมานา
+  desc: ไม้เท้านักเรียน เพิ่มมานา · สองมือ
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: two_hand
+  allow_off_hand: false
   atk: 4
   max_mana: 15
   sockets: 1
-  tags: [arcane]
+  tags:
+  - arcane
   set_id: arcane_scholar
   price_world: 160
-
 - id: leather_armor
   code: ar001
   rarity: common
   name: เกราะหนัง
-  desc: เกราะหนังเบา
+  desc: เกราะหนังเบา · ส่วนลำตัว
   kind: equipment
-  slot: armor
-  max_hp: 12
+  slot: body
+  material: leather
+  weight_class: light
   sockets: 1
   set_id: iron_legion
   price_world: 100
-
+  def: 5
+  mdef: 2
+  latent_hp_pct: 0.03
 - id: iron_plate
   code: ar002
   rarity: uncommon
   name: เกราะเหล็ก
-  desc: เกราะเหล็กหนา
+  desc: เกราะเหล็กหนา · ส่วนลำตัว
   kind: equipment
-  slot: armor
-  max_hp: 28
+  slot: body
+  material: metal
+  weight_class: heavy
   sockets: 1
   set_id: iron_legion
   price_world: 260
-
+  def: 14
+  mdef: 4
+  latent_hp_pct: 0.05
 - id: mage_robe
   code: ar003
   rarity: uncommon
   name: ชุดคลุมเวทย์
-  desc: ชุดคลุมเวทย์ เน้นมานา
+  desc: ชุดคลุมเวทย์ เน้นมานา · ส่วนลำตัว
   kind: equipment
-  slot: armor
-  max_hp: 8
+  slot: body
+  material: cloth
+  weight_class: light
   max_mana: 20
   sockets: 2
   set_id: arcane_scholar
+  tags:
+  - arcane
+  - cloth
   price_world: 240
-
+  bias:
+    guard_arcane: strong
+  def: 2
+  mdef: 6
+  latent_hp_pct: 0.03
 - id: upgrade_mat
   rarity: common
   name: วัสดุอัพเกรด
   desc: วัสดุหลักในพิธีอัปเกียร์ — ทุกครั้งที่อัปจะใช้ (ดูจำนวนในแผงอัปก่อนยืนยัน)
   kind: material
   price_world: 50
-
 - id: rare_mat
   rarity: uncommon
   name: วัสดุหายาก
   desc: วัสดุหายาก ใช้ตอนอัปขั้นสูง (+3 ขึ้นไป) — เก็บไว้สำคัญ
   kind: material
   price_world: 120
-
+- id: scroll_guard_break
+  rarity: common
+  name: ม้วนกันพัง
+  desc: กันอุปกรณ์พังเมื่อพิธีอัปล้มร้ายแรงสุด — Rank ของม้วนต้อง ≥ Rank ชิ้น (ม้วนสูงใช้กับชิ้นต่ำได้)
+  kind: material
+  price_world: 200
+- id: scroll_guard_level
+  rarity: common
+  name: ม้วนกันลดระดับ
+  desc: กันระดับ + ลดเมื่อพิธีอัปล้มร้ายแรง — Rank ของม้วนต้อง ≥ Rank ชิ้น (ม้วนสูงใช้กับชิ้นต่ำได้)
+  kind: material
+  price_world: 120
 - id: shadow_cloak
   code: ar004
   rarity: rare
   name: ผ้าคลุมเงา
-  desc: ผ้าคลุมเงา แท็ก shadow
+  desc: ผ้าคลุมเงา แท็ก shadow · ลำตัว
   kind: equipment
-  slot: armor
-  max_hp: 16
+  slot: body
   sockets: 1
-  tags: [shadow]
+  tags:
+  - shadow
   set_id: shadow_veil
   price_world: 240
-
+  def: 6
+  mdef: 5
+  latent_hp_pct: 0.03
 - id: thorn_blade
   code: sw005
   rarity: sacred
   name: ดาบหนามราชันย์
-  desc: ดาบหนาม เซ็ต thorn
+  desc: ดาบหนาม เซ็ต thorn · มือเดียว
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
   atk: 14
   sockets: 2
-  tags: [nature]
+  tags:
+  - nature
   set_id: thorn_king
   price_world: 400
-
 - id: thorn_mail
   code: ar005
   rarity: sacred
   name: เกราะหนาม
-  desc: เกราะหนาม เซ็ต thorn
+  desc: เกราะหนาม เซ็ต thorn · ลำตัว
   kind: equipment
-  slot: armor
-  max_hp: 35
+  slot: body
   sockets: 1
-  tags: [nature]
+  tags:
+  - nature
   set_id: thorn_king
   price_world: 380
-
+  def: 14
+  mdef: 7
+  latent_hp_pct: 0.05
 - id: blessed_charm
   rarity: sacred
   name: เครื่องรางสวรรค์
@@ -294,73 +319,70 @@
   heal_hp: 80
   heal_mana: 40
   price_heaven: 5
-
 - id: hell_contract
   rarity: rare
   name: สัญญานรก (บัฟ ATK ชั่วคราวในเซฟ)
   desc: สัญญานรก เพิ่ม ATK ชั่วคราว มีราคา
   kind: consumable
   price_hell: 4
-
 - id: copper_ring
   code: ac001
   rarity: common
   name: แหวนทองแดง
   kind: equipment
-  slot: accessory
+  slot: acc_1
   atk: 2
   max_mana: 5
   sockets: 0
   price_world: 90
   desc: เครื่องประดับเรียบง่าย เสริมพลังเล็กน้อย
-
 - id: silver_amulet
   code: ac002
   rarity: uncommon
   name: สร้อยเงิน
   kind: equipment
-  slot: accessory
+  slot: acc_1
   max_hp: 10
   max_mana: 8
   sockets: 1
   price_world: 180
   desc: สร้อยเพิ่มทนทานและมานา
-
 - id: shadow_band
   code: ac003
   rarity: rare
   name: วงแหวนเงา
   kind: equipment
-  slot: accessory
+  slot: acc_1
   atk: 4
-  tags: [shadow]
+  tags:
+  - shadow
   set_id: shadow_veil
   sockets: 0
   price_world: 260
   desc: เข้าชุดเงา — แท็ก shadow
-
 - id: arcane_circlet
   code: ac004
   rarity: rare
   name: มงกุฎอาร์เคน
   kind: equipment
-  slot: accessory
+  slot: head
   atk: 1
   max_mana: 18
-  tags: [arcane]
+  tags:
+  - arcane
   set_id: arcane_scholar
   sockets: 1
   price_world: 300
-  desc: เครื่องประดับนักเวทย์
-
+  desc: มงกุฎนักเวทย์ · ศีรษะ (เดิมเครื่องประดับ)
+  def: 2
+  mdef: 5
+  latent_hp_pct: 0.025
 - id: dungeon_thread
   name: ด้ายกลับทาง
   kind: material
   rarity: rare
   price_world: 200
   desc: เส้นด้ายเก่า รู้สึกดึงกลับเมื่ออยู่ในที่มืด — ไม่มีคำอธิบายวิธีใช้ชัด
-  # secretly: dungeon escape token
-
 - id: void_key_shard
   name: เศษกุญแจสุญญะ
   kind: material
@@ -368,103 +390,1354 @@
   price_world: 450
   price_hell: 2
   desc: เศษโลหะที่กลืนแสง — ได้มาอย่างไรคุณยังไม่แน่ใจ
-
-# ── 1.13.4 content pack ──
 - id: traveler_ration
   code: pt_tr
   rarity: common
   name: เสบียงนักเดินทาง
   desc: อาหารแห้งเมือง — พออิ่มท้องชั่วคราว
   kind: consumable
-  heal_hp: 25
+  tags:
+  - food
+  food_tier: 2
+  hunger_relief: 50
+  fatigue_relief: 10
+  morale_boost: 6
+  heal_hp: 15
   heal_mana: 10
   price_world: 30
-
 - id: city_map_scrap
   name: เศษแผนที่เมือง
   kind: material
   rarity: common
   price_world: 15
   desc: กระดาษยับ — เส้นทางนอกกำแพงเลือน
-
 - id: crystal_dust
   name: ผงผลึก
   kind: material
   rarity: uncommon
   price_world: 55
   desc: ฝุ่นระยิบ — ใช้คราฟหรือขายตลาดหายาก
-
 - id: sand_cloak_mat
   name: ผืนผ้าทราย
   kind: material
   rarity: uncommon
   price_world: 48
   desc: ผ้าทอหยาบจากทะเลทราย — ยังไม่รู้สูตรคราฟเต็ม
-
 - id: round_token
   code: ac_round
   rarity: rare
   name: เหรียญรอบแรก
   kind: equipment
-  slot: accessory
+  slot: acc_1
   atk: 2
   max_hp: 12
   sockets: 0
   price_world: 200
   desc: เครื่องหมายว่าคุณเคยปิดรอบหนึ่งของโลกแล้ว — ผลแฝงเล็กน้อย
-
 - id: herb_bundle
   rarity: common
   name: มัดสมุนไพร
   kind: material
   price_world: 18
   desc: กลิ่นเขียวสด — ขายหรือรอสูตรยา
-
 - id: bronze_charm
   code: ac_brz
   rarity: uncommon
   name: เครื่องรางทองแดง
   kind: equipment
-  slot: accessory
+  slot: acc_1
   max_hp: 8
   sockets: 0
   price_world: 90
   desc: รางเล็กจากตลาดเมือง — รู้สึกอุ่นมือ
-
-# bulk 1.13.8
 - id: city_bread
   rarity: common
   name: ขนมปังเมือง
   kind: consumable
-  heal_hp: 18
+  tags:
+  - food
+  food_tier: 1
+  hunger_relief: 32
+  fatigue_relief: 3
+  morale_boost: 3
+  heal_hp: 12
   price_world: 12
   desc: อุ่นเล็กน้อย — อิ่มท้องชั่วคราว
-
+- id: trail_stew
+  rarity: uncommon
+  name: สตูว์ทางไกล
+  kind: consumable
+  tags:
+  - food
+  food_tier: 3
+  hunger_relief: 60
+  fatigue_relief: 18
+  morale_boost: 10
+  heal_hp: 30
+  price_world: 55
+  food_buff: might
+  desc: อุ่นท้อง — รู้สึกฮึดขึ้นชั่วคราว
+- id: inn_feast
+  rarity: rare
+  name: สำรับโรงเตี๊ยม
+  kind: consumable
+  tags:
+  - food
+  food_tier: 4
+  hunger_relief: 80
+  fatigue_relief: 25
+  morale_boost: 16
+  heal_hp: 45
+  heal_mana: 15
+  price_world: 120
+  food_buff: focus
+  desc: มื้อดี — ขวัญและสมาธิดีขึ้น
 - id: bandit_knife
   code: sw_bk
   rarity: common
   name: มีดปล้น
   kind: equipment
-  slot: weapon
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
   atk: 4
   sockets: 0
   price_world: 55
-  desc: คมพอใช้ — หาง่ายในเมือง
-
+  desc: คมพอใช้ — มือเดียว (คู่ได้)
 - id: dust_veil
   code: ar_dv
   rarity: uncommon
   name: ผ้าคลุมฝุ่น
   kind: equipment
-  slot: armor
-  max_hp: 15
+  slot: body
   sockets: 0
   price_world: 70
-  desc: กันลมทรายได้บ้าง
-
+  desc: กันลมทรายได้บ้าง · ลำตัว
+  def: 6
+  mdef: 3
+  latent_hp_pct: 0.03
 - id: void_thread
   rarity: rare
   name: ด้ายสุญญะ
   kind: material
   price_world: 120
   desc: เส้นใยที่กลืนแสง — วัตถุดิบสูง
+- id: sealed_chest_common
+  name: หีบ · ธรรมดา
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: common
+  price_world: 20
+  desc: กล่องไม้ปิดผนึก — เปิดแล้วได้อะไรไม่รู้
+- id: sealed_chest_uncommon
+  name: หีบ · สูง
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: uncommon
+  price_world: 45
+  desc: กล่องเหล็ก — หนักกว่าที่ตาเห็น
+- id: sealed_chest_rare
+  name: หีบ · หายาก
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: rare
+  price_world: 90
+  desc: กล่องเงิน — ลวดลายเลือน
+- id: sealed_chest_s
+  name: หีบ · S
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: s
+  price_world: 160
+  desc: กล่องทอง — แสงอุ่น
+- id: sealed_chest_ss
+  name: หีบ · SS
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: ss
+  price_world: 280
+  desc: กล่องผลึก — สั่นเบาๆ
+- id: sealed_chest_sss
+  name: หีบ · SSS
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: sss
+  price_world: 450
+  desc: กล่องสุญญะ — เงาลึก
+- id: sealed_chest_unit
+  name: หีบ · พันธะ
+  kind: consumable
+  tags:
+  - chest
+  chest_rank: unit
+  price_world: 500
+  desc: กล่องไม่มีป้าย — เหมือนจองไว้แล้ว
+- id: unit_blade_of_ash
+  code: sw_ash
+  rarity: rare
+  name: ดาบเถ้าพันธะ
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  atk: 12
+  sockets: 1
+  unique_scope: save
+  unit_bind: true
+  price_world: 0
+  desc: คมเถ้า — เหมือนมีเพียงหนึ่งในเส้นทางนี้
+- id: unit_veil_of_dusk
+  code: ar_dusk
+  rarity: rare
+  name: ผ้าคลุมสนธยา
+  kind: equipment
+  slot: body
+  defense: 10
+  sockets: 1
+  unique_scope: save
+  unit_bind: true
+  price_world: 0
+  desc: ผ้าคลุมสีสนธยา — เงาแนบตัวเหมือนจองเจ้าของ
+  def: 7
+  mdef: 4
+  latent_hp_pct: 0.03
+- id: unit_heart_of_ember
+  code: ac_ember
+  rarity: sacred
+  name: หัวใจเถ้าอุ่น
+  kind: equipment
+  slot: acc_1
+  atk: 4
+  magic: 6
+  sockets: 0
+  unique_scope: world
+  unit_bind: true
+  price_world: 0
+  desc: เถ้าอุ่นในฝ่ามือ — ทั่วโลกนี้อาจมีเพียงหนึ่ง
+- id: echo_shard
+  rarity: uncommon
+  name: เศษเงา
+  kind: material
+  price_world: 40
+  desc: เศษแทนของที่เคยมีผู้ครอบครองแล้ว
+- id: oak_greatsword
+  code: sw_2h1
+  rarity: uncommon
+  name: ดาบใหญ่ไม้โอ๊ก
+  desc: ดาบใหญ่สองมือ — มือรองว่าง · พลังสูง
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: wood
+  weight_class: heavy
+  allow_off_hand: false
+  atk: 14
+  sockets: 2
+  price_world: 200
+  bias:
+    power: high
+    atb: slow
+- id: wood_shield
+  code: sh001
+  rarity: common
+  name: โล่ไม้
+  desc: โล่ไม้เบา — ใส่มือรอง · รับกระแทก soft
+  kind: equipment
+  slot: off_hand
+  grip: shield
+  material: wood
+  atk: 0
+  sockets: 0
+  tags:
+  - shield
+  price_world: 80
+  bias:
+    guard_physical: strong
+    atb: slight_slow
+    status_resist: slight
+  def: 11
+  mdef: 2
+  latent_hp_pct: 0.02
+- id: iron_shield
+  code: sh002
+  rarity: uncommon
+  name: โล่เหล็ก
+  desc: โล่เหล็ก — มือรอง · ทนกว่าโล่ไม้
+  kind: equipment
+  slot: off_hand
+  grip: shield
+  material: metal
+  weight_class: heavy
+  atk: 0
+  sockets: 1
+  tags:
+  - shield
+  price_world: 180
+  def: 14
+  mdef: 2
+  latent_hp_pct: 0.02
+- id: iron_helm
+  code: ar_hd1
+  rarity: common
+  name: หมวกเหล็ก
+  desc: หมวกเหล็ก · ศีรษะ · ต้านสถานะ soft เล็ก
+  kind: equipment
+  slot: head
+  sockets: 0
+  price_world: 70
+  bias:
+    status_resist: slight
+    guard_physical: slight
+  def: 4
+  mdef: 2
+  latent_hp_pct: 0.025
+- id: leather_greaves
+  code: ar_lg1
+  rarity: common
+  name: สนับขาหนัง
+  desc: ส่วนล่าง · เดินคล่อง
+  kind: equipment
+  slot: legs
+  sockets: 0
+  price_world: 55
+  def: 2
+  mdef: 1
+  latent_hp_pct: 0.03
+- id: trail_boots
+  code: ar_ft1
+  rarity: common
+  name: รองเท้าทางไกล
+  desc: เท้า · ก้าวเบา soft
+  kind: equipment
+  slot: feet
+  sockets: 0
+  tags:
+  - light
+  price_world: 45
+  bias:
+    atb: slight_fast
+  def: 2
+  mdef: 1
+  latent_hp_pct: 0.02
+- id: focus_crystal
+  code: fo001
+  rarity: uncommon
+  name: ผลึกโฟกัส
+  desc: โฟกัสเวท · มือรอง (หรือมือหลักถ้าว่าง)
+  kind: equipment
+  slot: off_hand
+  grip: focus
+  material: crystal
+  weight_class: light
+  atk: 1
+  max_mana: 12
+  sockets: 0
+  tags:
+  - arcane
+  - focus
+  price_world: 140
+  def: 2
+  mdef: 6
+  latent_hp_pct: 0.03
+- id: wolf_fang
+  rarity: common
+  name: เขี้ยวหมาป่า
+  kind: material
+  tags:
+  - mat
+  - beast
+  price_world: 14
+  desc: เขี้ยวคม — ชิ้นส่วนจากหมาป่า
+- id: goblin_scrap
+  rarity: common
+  name: เศษเกราะก็อบลิน
+  kind: material
+  tags:
+  - mat
+  price_world: 12
+  desc: โลหะหยาบจากเกราะก็อบลิน
+- id: bat_wing
+  rarity: common
+  name: ปีกค้างคาว
+  kind: material
+  tags:
+  - mat
+  - beast
+  price_world: 11
+  desc: เยื่อบาง — ใช้ต้มยา/คราฟเบา
+- id: slime_core
+  rarity: uncommon
+  name: แก่นเมือกเงา
+  kind: material
+  tags:
+  - mat
+  - shadow
+  price_world: 28
+  desc: แกนนิ่มที่ยังสั่น
+- id: ent_bark
+  rarity: uncommon
+  name: เปลือกเอนท์
+  kind: material
+  tags:
+  - mat
+  - nature
+  - wood
+  price_world: 26
+  desc: เปลือกหนา — กลิ่นป่า
+- id: wraith_dust
+  rarity: rare
+  name: ผงวิญญาณ
+  kind: material
+  tags:
+  - mat
+  - shadow
+  price_world: 45
+  desc: ฝุ่นที่ลอยไม่อยู่กับพื้น
+- id: leather_cap
+  code: ar_hd0
+  rarity: common
+  name: หมวกหนัง
+  kind: equipment
+  slot: head
+  material: leather
+  weight_class: light
+  sockets: 0
+  price_world: 40
+  desc: ศีรษะ · เบา
+  def: 2
+  mdef: 1
+  latent_hp_pct: 0.025
+- id: chain_coif
+  code: ar_hd2
+  rarity: uncommon
+  name: หมวกโซ่
+  kind: equipment
+  slot: head
+  material: metal
+  weight_class: medium
+  sockets: 0
+  price_world: 95
+  bias:
+    guard_physical: slight
+  desc: ศีรษะ · โซ่ถัก
+  def: 4
+  mdef: 2
+  latent_hp_pct: 0.025
+- id: iron_greaves
+  code: ar_lg2
+  rarity: uncommon
+  name: สนับขาเหล็ก
+  kind: equipment
+  slot: legs
+  material: metal
+  weight_class: heavy
+  sockets: 0
+  price_world: 100
+  desc: ขา · หนักแน่น
+  def: 5
+  mdef: 2
+  latent_hp_pct: 0.03
+- id: ranger_leggings
+  code: ar_lg3
+  rarity: uncommon
+  name: กางเกงนักลาด
+  kind: equipment
+  slot: legs
+  material: leather
+  weight_class: light
+  sockets: 0
+  price_world: 85
+  bias:
+    atb: slight_fast
+  desc: ขา · คล่องตัว
+  def: 3
+  mdef: 2
+  latent_hp_pct: 0.03
+- id: hardened_boots
+  code: ar_ft2
+  rarity: uncommon
+  name: รองเท้าหนังแข็ง
+  kind: equipment
+  slot: feet
+  material: leather
+  weight_class: medium
+  sockets: 0
+  price_world: 75
+  desc: เท้า · ทนทางไกล
+  def: 2
+  mdef: 1
+  latent_hp_pct: 0.02
+- id: iron_sabatons
+  code: ar_ft3
+  rarity: uncommon
+  name: รองเท้าเกราะเหล็ก
+  kind: equipment
+  slot: feet
+  material: metal
+  weight_class: heavy
+  sockets: 0
+  price_world: 110
+  bias:
+    guard_physical: slight
+  desc: เท้า · เกราะเต็ม
+  def: 3
+  mdef: 1
+  latent_hp_pct: 0.02
+- id: scout_spear
+  code: sp001
+  rarity: common
+  name: หอกลาดตระเวน
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: wood
+  weight_class: medium
+  atk: 7
+  sockets: 1
+  price_world: 70
+  desc: หอกยาว · มือเดียว (คู่ได้)
+- id: woodsman_axe
+  code: ax001
+  rarity: uncommon
+  name: ขวานตัดทาง
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: metal
+  weight_class: medium
+  atk: 9
+  sockets: 1
+  price_world: 95
+  desc: ขวานคม · มือเดียว
+- id: ash_club
+  code: mc001
+  rarity: common
+  name: กระบองเถ้า
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: wood
+  weight_class: medium
+  atk: 5
+  sockets: 0
+  price_world: 48
+  desc: กระบองไม้ · เรียบง่าย
+- id: stone_chip
+  rarity: common
+  name: เศษหิน
+  kind: material
+  tags:
+  - mat
+  - earth
+  price_world: 10
+  desc: เศษหินจากโกเล็ม/เขา
+- id: troll_hide
+  rarity: uncommon
+  name: หนังโทรล
+  kind: material
+  tags:
+  - mat
+  - beast
+  price_world: 32
+  desc: หนังหนา — เย็บเกราะได้
+- id: scorpion_stinger
+  rarity: uncommon
+  name: เหล็กในแมงป่อง
+  kind: material
+  tags:
+  - mat
+  - poison
+  price_world: 30
+  desc: ปลายแหลมมีพิษ
+- id: leech_sac
+  rarity: common
+  name: ถุงปลิง
+  kind: material
+  tags:
+  - mat
+  - water
+  price_world: 16
+  desc: ถุงน้ำข้นจากปลิงหนอง
+- id: mist_dew
+  rarity: uncommon
+  name: น้ำค้างหมอก
+  kind: material
+  tags:
+  - mat
+  - water
+  - arcane
+  price_world: 28
+  desc: หยดที่ไม่ระเหยตามเวลา
+- id: rat_tail
+  rarity: common
+  name: หางหนูเมือง
+  kind: material
+  tags:
+  - mat
+  - beast
+  price_world: 8
+  desc: หางเล็ก — ขายหรือต้มยาเบา
+- id: thug_badge
+  rarity: common
+  name: เหรียญนักเลง
+  kind: material
+  tags:
+  - mat
+  price_world: 15
+  desc: เครื่องหมายซอย — ไม่มีค่าทางการ
+- id: eagle_feather
+  rarity: common
+  name: ขนนกผา
+  kind: material
+  tags:
+  - mat
+  - wind
+  - beast
+  price_world: 14
+  desc: ขนเบาจากนกผา
+- id: mole_claw
+  rarity: common
+  name: เล็บตุ่นหิน
+  kind: material
+  tags:
+  - mat
+  - earth
+  price_world: 12
+  desc: เล็บขุดหิน
+- id: sand_scale
+  rarity: uncommon
+  name: เกล็ดทราย
+  kind: material
+  tags:
+  - mat
+  - earth
+  price_world: 22
+  desc: เกล็ดแห้งจากงูทราย
+- id: dust_core
+  rarity: uncommon
+  name: แก่นฝุ่น
+  kind: material
+  tags:
+  - mat
+  - wind
+  - arcane
+  price_world: 26
+  desc: ฝุ่นที่จับเป็นก้อน
+- id: jackal_fang
+  rarity: common
+  name: เขี้ยวหมาจิ้งจอกทราย
+  kind: material
+  tags:
+  - mat
+  - beast
+  price_world: 16
+  desc: เขี้ยวคมจากโอเอซิส
+- id: padded_helm
+  code: ar_hd3
+  rarity: uncommon
+  name: หมวกบุนวม
+  kind: equipment
+  slot: head
+  material: leather
+  weight_class: light
+  sockets: 0
+  price_world: 80
+  desc: ศีรษะ · เบา รับแรงได้บ้าง
+  def: 3
+  mdef: 2
+  latent_hp_pct: 0.025
+- id: storm_hood
+  code: ar_hd4
+  rarity: rare
+  name: ฮู้ดพายุ
+  kind: equipment
+  slot: head
+  material: cloth
+  weight_class: light
+  max_mana: 10
+  sockets: 1
+  price_world: 160
+  bias:
+    atb: slight_fast
+  desc: ศีรษะ · ลมผ่าน
+  def: 2
+  mdef: 5
+  latent_hp_pct: 0.025
+- id: scale_greaves
+  code: ar_lg4
+  rarity: rare
+  name: สนับขากลัดเกล็ด
+  kind: equipment
+  slot: legs
+  material: metal
+  weight_class: medium
+  sockets: 0
+  price_world: 150
+  desc: ขา · เกล็ดซ้อน
+  def: 5
+  mdef: 3
+  latent_hp_pct: 0.03
+- id: dune_wraps
+  code: ar_lg5
+  rarity: uncommon
+  name: พันขาเนินทราย
+  kind: equipment
+  slot: legs
+  material: cloth
+  weight_class: light
+  sockets: 0
+  price_world: 90
+  bias:
+    atb: slight_fast
+  desc: ขา · กันทราย
+  def: 2
+  mdef: 7
+  latent_hp_pct: 0.03
+- id: climber_boots
+  code: ar_ft4
+  rarity: uncommon
+  name: รองเท้าปีนผา
+  kind: equipment
+  slot: feet
+  material: leather
+  weight_class: medium
+  sockets: 0
+  price_world: 85
+  desc: เท้า · เกาะหิน
+  def: 2
+  mdef: 1
+  latent_hp_pct: 0.02
+- id: dune_sandals
+  code: ar_ft5
+  rarity: common
+  name: รองเท้าแตะเนิน
+  kind: equipment
+  slot: feet
+  material: cloth
+  weight_class: light
+  sockets: 0
+  price_world: 40
+  desc: เท้า · ร้อนน้อยลง soft
+  def: 1
+  mdef: 2
+  latent_hp_pct: 0.02
+- id: ridge_spear
+  code: sp002
+  rarity: uncommon
+  name: หอกสันผา
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: metal
+  weight_class: medium
+  atk: 10
+  sockets: 1
+  price_world: 120
+  desc: หอกยาว · มือเดียว
+- id: desert_scimitar
+  code: sw_sc1
+  rarity: uncommon
+  name: ดาบโค้งทราย
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: metal
+  weight_class: light
+  atk: 9
+  sockets: 1
+  price_world: 115
+  desc: ดาบโค้ง · เบา
+- id: bronze_buckler
+  code: sh002
+  rarity: uncommon
+  name: โล่กลมทองแดง
+  kind: equipment
+  slot: off_hand
+  grip: shield
+  material: metal
+  weight_class: medium
+  atk: 0
+  sockets: 1
+  price_world: 100
+  desc: โล่กลาง · มือรอง
+  def: 11
+  mdef: 2
+  latent_hp_pct: 0.02
+
+- id: cave_crystal_shard
+  rarity: uncommon
+  name: เศษคริสตัลถ้ำ
+  kind: material
+  desc: วัสดุถ้ำ · คราฟ/ขาย
+  price_world: 35
+- id: marsh_slime
+  rarity: common
+  name: เมือกบึง
+  kind: material
+  desc: วัสดุบึง · เหนียว
+  price_world: 18
+- id: forest_moss
+  rarity: common
+  name: มอสป่า
+  kind: material
+  desc: วัสดุป่า · ยา/คราฟ
+  price_world: 15
+
+# IC1 pack B — soft loadout variety (2026-07-14 plan phase)
+- id: iron_kite_shield
+  code: sh003
+  rarity: uncommon
+  name: โล่ว่าวเหล็ก
+  kind: equipment
+  slot: off_hand
+  grip: shield
+  material: metal
+  weight_class: heavy
+  sockets: 1
+  price_world: 140
+  desc: โล่ใหญ่ · กันกายแน่น
+  def: 14
+  mdef: 3
+  latent_hp_pct: 0.035
+  bias:
+    guard_physical: strong
+- id: bone_dagger
+  code: dg002
+  rarity: common
+  name: มีดกระดูก
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: bone
+  weight_class: light
+  atk: 7
+  sockets: 1
+  price_world: 70
+  desc: มีดสั้น · คมแฝงคริ soft
+  latent_crit: 0.8
+  latent_atk_pct: 0.01
+- id: ash_longbow
+  code: bw001
+  rarity: uncommon
+  name: ธนูเถ้ายาว
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: wood
+  weight_class: medium
+  atk: 12
+  sockets: 1
+  price_world: 150
+  desc: ธนูสองมือ · ระยะ soft
+  tags: [wind]
+  latent_atk_pct: 0.018
+  latent_crit: 0.6
+- id: marsh_reed_staff
+  code: st003
+  rarity: uncommon
+  name: ไม้เท้ากกบึง
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: wood
+  weight_class: light
+  atk: 4
+  max_mana: 18
+  sockets: 1
+  price_world: 130
+  desc: staff สองมือ · มานา
+  tags: [nature, water]
+  latent_atk_pct: 0.008
+- id: cave_miner_helm
+  code: ar_hd5
+  rarity: common
+  name: หมวกขุดถ้ำ
+  kind: equipment
+  slot: head
+  material: metal
+  weight_class: medium
+  sockets: 0
+  price_world: 55
+  desc: ศีรษะ · ถ้ำ
+  def: 4
+  mdef: 1
+  latent_hp_pct: 0.02
+  bias:
+    status_resist: slight
+- id: vine_wrap_body
+  code: ar_bd6
+  rarity: uncommon
+  name: เกราะเถาวัลย์
+  kind: equipment
+  slot: body
+  material: plant
+  weight_class: light
+  sockets: 1
+  price_world: 110
+  desc: ลำตัวเบา · ธรรมชาติ
+  def: 6
+  mdef: 5
+  latent_hp_pct: 0.028
+  tags: [nature]
+
+# IC3 mon-line mats / craft outputs
+- id: chitin_plate_mat
+  rarity: uncommon
+  name: แผ่นไคติน
+  kind: material
+  desc: เกราะแมลง · คราฟเกียร์เบา
+  price_world: 28
+- id: undead_ash
+  rarity: uncommon
+  name: เถ้าอัศวินคืนชีพ
+  kind: material
+  desc: วัสดุ undead · คราฟเงา/กัน
+  price_world: 32
+- id: plant_heart
+  rarity: uncommon
+  name: หัวใจพืช
+  kind: material
+  desc: แกนพืช · ยา/เกราะธรรมชาติ
+  price_world: 30
+- id: bird_quill
+  rarity: common
+  name: ขนนกคม
+  kind: material
+  desc: ขนนก · ธนู/ลูกศร
+  price_world: 16
+- id: balm_nature
+  rarity: uncommon
+  name: ยาหม่องธรรมชาติ
+  kind: consumable
+  heal_hp: 28
+  clear_status: poison
+  desc: ยาจากพืช · ฟื้น+แก้พิษ soft
+  price_world: 45
+- id: oil_shadow
+  rarity: uncommon
+  name: น้ำมันเงา
+  kind: consumable
+  desc: ทาอาวุธ · บัฟแผ่วในไฟต์ (soft)
+  price_world: 50
+- id: chitin_vest
+  code: ar_bd7
+  rarity: uncommon
+  name: เกราะไคติน
+  kind: equipment
+  slot: body
+  material: chitin
+  weight_class: light
+  sockets: 1
+  price_world: 125
+  desc: ลำตัวแมลง · เบา
+  def: 7
+  mdef: 3
+  latent_hp_pct: 0.03
+  tags: [nature]
+- id: bone_circlet
+  code: ar_hd6
+  rarity: uncommon
+  name: มงกระดูกคืนชีพ
+  kind: equipment
+  slot: head
+  material: bone
+  weight_class: light
+  sockets: 0
+  price_world: 95
+  desc: ศีรษะ undead soft
+  def: 3
+  mdef: 6
+  latent_hp_pct: 0.025
+  bias:
+    status_resist: slight
+  tags: [shadow]
+- id: quill_bow
+  code: bw002
+  rarity: uncommon
+  name: ธนูขนนก
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: wood
+  weight_class: light
+  atk: 11
+  sockets: 1
+  price_world: 145
+  desc: ธนูเบา · ลม
+  tags: [wind]
+  latent_atk_pct: 0.015
+  latent_crit: 0.7
+- id: fang_charm
+  code: ac005
+  rarity: uncommon
+  name: เครื่องรางเขี้ยว
+  kind: equipment
+  slot: acc_1
+  material: bone
+  weight_class: light
+  sockets: 0
+  price_world: 90
+  atk: 2
+  desc: แอค · คมแผ่ว
+  latent_crit: 0.5
+
+# IC4 mid-late · boss exclusives
+- id: titan_plate
+  code: ar_bd8
+  rarity: sacred
+  name: เกราะไททันหิน
+  kind: equipment
+  slot: body
+  material: stone
+  weight_class: heavy
+  sockets: 2
+  price_world: 420
+  desc: เกราะบอสหิน · หนัก
+  def: 18
+  mdef: 6
+  latent_hp_pct: 0.05
+  latent_tough: 1.2
+  set_id: stone_bulwark
+  bias:
+    guard_physical: strong
+- id: titan_greaves
+  code: ar_lg6
+  rarity: rare
+  name: เกราะขาก้อนหิน
+  kind: equipment
+  slot: legs
+  material: stone
+  weight_class: heavy
+  sockets: 1
+  price_world: 220
+  desc: ขา · เซ็ตหิน
+  def: 10
+  mdef: 3
+  latent_hp_pct: 0.03
+  set_id: stone_bulwark
+- id: umbra_veil_helm
+  code: ar_hd7
+  rarity: sacred
+  name: หมวกม่านอัมบรา
+  kind: equipment
+  slot: head
+  material: shadow
+  weight_class: light
+  sockets: 1
+  price_world: 380
+  desc: ศีรษะราชินีเงา
+  def: 6
+  mdef: 12
+  latent_hp_pct: 0.03
+  set_id: umbra_court
+  tags: [shadow]
+  bias:
+    guard_arcane: strong
+- id: umbra_steps
+  code: ar_ft6
+  rarity: rare
+  name: รองเท้าเงาราชสำนัก
+  kind: equipment
+  slot: feet
+  material: cloth
+  weight_class: light
+  sockets: 0
+  price_world: 200
+  desc: เท้า · เซ็ตเงา
+  def: 3
+  mdef: 5
+  latent_hp_pct: 0.02
+  set_id: umbra_court
+  tags: [shadow]
+  bias:
+    atb: slight_fast
+- id: sunscourge_blade
+  code: sw_ss1
+  rarity: legendary
+  name: ดาบภัยพิบัติอาทิตย์
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: metal
+  weight_class: medium
+  atk: 22
+  sockets: 2
+  price_world: 650
+  desc: อาวุธบอสทราย · ไฟ
+  tags: [fire]
+  set_id: sun_scourge
+  latent_atk_pct: 0.03
+  latent_crit: 1.0
+- id: sunscourge_wrap
+  code: ar_bd9
+  rarity: sacred
+  name: ผ้าคลุมสุริยะ
+  kind: equipment
+  slot: body
+  material: cloth
+  weight_class: light
+  sockets: 1
+  price_world: 400
+  def: 8
+  mdef: 10
+  latent_hp_pct: 0.035
+  set_id: sun_scourge
+  tags: [fire]
+  desc: ลำตัว · เซ็ตสุริยะ
+- id: hydra_scale_mail
+  code: ar_bd10
+  rarity: sacred
+  name: เกราะเกล็ดไฮดรา
+  kind: equipment
+  slot: body
+  material: scale
+  weight_class: medium
+  sockets: 2
+  price_world: 480
+  def: 14
+  mdef: 9
+  latent_hp_pct: 0.04
+  set_id: mist_hydra
+  tags: [water, nature]
+  desc: เกราะบอสหมอก
+- id: hydra_fang
+  code: dg003
+  rarity: rare
+  name: เขี้ยวไฮดรา
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: bone
+  weight_class: light
+  atk: 16
+  sockets: 1
+  price_world: 320
+  set_id: mist_hydra
+  tags: [water]
+  desc: มีดเขี้ยว · เซ็ตไฮดรา
+  latent_crit: 0.9
+- id: prism_staff
+  code: st004
+  rarity: legendary
+  name: ไม้เท้าปริซึม
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: crystal
+  weight_class: medium
+  atk: 8
+  max_mana: 35
+  sockets: 2
+  price_world: 700
+  set_id: prism_court
+  tags: [arcane, lightning]
+  desc: staff บอสผลึก
+  latent_atk_pct: 0.02
+- id: prism_ring
+  code: ac006
+  rarity: sacred
+  name: แหวนปริซึม
+  kind: equipment
+  slot: acc_1
+  material: crystal
+  weight_class: light
+  sockets: 0
+  price_world: 350
+  max_mana: 12
+  set_id: prism_court
+  tags: [arcane]
+  desc: แอค · เซ็ตปริซึม
+- id: void_herald_cloak
+  code: ar_bd11
+  rarity: legendary
+  name: ผ้าคลุมผู้ประกาศสุญญะ
+  kind: equipment
+  slot: body
+  material: void
+  weight_class: light
+  sockets: 2
+  price_world: 720
+  def: 10
+  mdef: 14
+  latent_hp_pct: 0.045
+  set_id: void_herald
+  tags: [shadow, arcane]
+  desc: เกราะบอส void
+- id: void_sigil
+  code: ac007
+  rarity: sacred
+  name: ตราสุญญะ
+  kind: equipment
+  slot: acc_1
+  material: void
+  weight_class: light
+  sockets: 0
+  price_world: 400
+  atk: 4
+  max_mana: 10
+  set_id: void_herald
+  tags: [shadow]
+  desc: แอค · เซ็ต void
+- id: oracle_tome_focus
+  code: of001
+  rarity: sacred
+  name: โฟกัสตำราพยากรณ์
+  kind: equipment
+  slot: off_hand
+  grip: focus
+  material: paper
+  weight_class: light
+  sockets: 1
+  price_world: 360
+  atk: 2
+  max_mana: 20
+  mdef: 8
+  set_id: ruin_oracle
+  tags: [arcane, holy]
+  desc: โฟกัสมือรอง · บอสเมือง
+- id: oracle_sash
+  code: ar_lg7
+  rarity: rare
+  name: สายคาดพยากรณ์
+  kind: equipment
+  slot: legs
+  material: cloth
+  weight_class: light
+  sockets: 0
+  price_world: 210
+  def: 4
+  mdef: 7
+  latent_hp_pct: 0.025
+  set_id: ruin_oracle
+  tags: [arcane]
+  desc: ขา · เซ็ต oracle
+- id: mid_steel_glaive
+  code: sp003
+  rarity: rare
+  name: ง้าวเหล็กกลางทาง
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: metal
+  weight_class: medium
+  atk: 17
+  sockets: 1
+  price_world: 280
+  desc: mid 2H · หายากจาก elite
+  latent_atk_pct: 0.02
+- id: mid_storm_boots
+  code: ar_ft7
+  rarity: rare
+  name: รองเท้าพายุกลาง
+  kind: equipment
+  slot: feet
+  material: leather
+  weight_class: light
+  sockets: 0
+  price_world: 190
+  def: 4
+  mdef: 4
+  latent_hp_pct: 0.025
+  bias:
+    atb: fast
+  desc: เท้า mid · เร็ว
+
+- id: void_filament
+  rarity: rare
+  name: เส้นใยสุญญะ
+  kind: material
+  desc: mat late void · คราฟ/ขาย
+  price_world: 55
+- id: prism_shard
+  rarity: rare
+  name: เศษปริซึม
+  kind: material
+  desc: mat ยอดผลึก · คราฟเวท
+  price_world: 50
+- id: late_void_edge
+  code: sw_v1
+  rarity: sacred
+  name: คมสุญญะสายกลาง
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  allow_off_hand: true
+  material: void
+  weight_class: light
+  atk: 19
+  sockets: 2
+  price_world: 520
+  tags: [shadow, arcane]
+  desc: mid-late อาวุธ void (ไม่ใช่บอสเต็ม)
+  latent_atk_pct: 0.025
+  latent_crit: 0.85
+- id: late_prism_veil
+  code: ar_bd12
+  rarity: sacred
+  name: ม่านปริซึมสายกลาง
+  kind: equipment
+  slot: body
+  material: crystal
+  weight_class: light
+  sockets: 1
+  price_world: 480
+  def: 9
+  mdef: 12
+  max_mana: 10
+  latent_hp_pct: 0.035
+  tags: [arcane]
+  desc: mid-late เกราะผลึก
+
+# IC6 polish economy / soft sinks
+- id: travel_pass_city
+  rarity: common
+  name: บัตรทางเมือง
+  kind: material
+  desc: ของสะสม/ขาย · ไม่มีผลแรง (economy sink soft)
+  price_world: 25
+- id: repair_kit_basic
+  rarity: uncommon
+  name: ชุดซ่อมพื้นฐาน
+  kind: material
+  desc: ใช้คู่คราฟ/ขาย · ใบ้ซ่อมเกียร์ soft
+  price_world: 40
+- id: incense_focus_bulk
+  rarity: uncommon
+  name: ธูปโฟกัสมัด
+  kind: consumable
+  heal_mana: 15
+  desc: ฟื้น MP เล็ก · sink เงิน
+  price_world: 35
+
+
+# SK-R5 lite — skill rank soft essence (no guaranteed upgrade)
+- id: essence_skill_whisper
+  rarity: rare
+  name: เศษกระซิบท่า
+  kind: consumable
+  category: material
+  desc: ใช้กับสกิลที่รู้แล้ว — อาจเปลี่ยนโทนท่า (ไม่การันตี · ไม่โชว์%)
+  skill_rank_nudge: true
+  price_world: 90
+- id: essence_skill_echo
+  rarity: very_rare
+  name: แก่นสะท้อนท่า
+  kind: consumable
+  desc: กระซิบแรงขึ้น — โอกาสเปลี่ยนโทนสูงกว่าเศษธรรมดา (ยังไม่การันตี)
+  skill_rank_nudge: true
+  skill_rank_nudge_bonus: 0.18
+  price_world: 180

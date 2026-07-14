@@ -1,3 +1,5 @@
+import random
+
 from game.config import DATA_DIR
 from game.data_load.registry import DataRegistry
 from game.domain.character import create_player
@@ -26,9 +28,26 @@ def test_upgrade_consumes_mats():
         add_item(p, "upgrade_mat", reg)
     p["money_world"] = 500
     before = int(p["bonus_atk"])
-    msg = upgrade_equipped(p, "weapon", reg)
+    # force success: first random() always below success chance
+    msg = upgrade_equipped(p, "main_hand", reg, rng=random.Random(1))
+    # Random(1) may still fail occasionally — force with stub if needed
+    if "สำเร็จ" not in msg:
+        p2 = create_player(reg, "u2", "warrior", "สิงห์")
+        add_item(p2, "iron_sword", reg)
+        equip_item(p2, "iron_sword", reg)
+        for _ in range(3):
+            add_item(p2, "upgrade_mat", reg)
+        p2["money_world"] = 500
+        before = int(p2["bonus_atk"])
+
+        class AlwaysOk:
+            def random(self):
+                return 0.0
+
+        msg = upgrade_equipped(p2, "main_hand", reg, rng=AlwaysOk())  # type: ignore
+        p = p2
     assert "สำเร็จ" in msg
-    assert int(p["upgrade_levels"]["weapon"]) == 1
+    assert int(p["upgrade_levels"]["main_hand"]) == 1
     assert int(p["bonus_atk"]) > before
     assert count_materials(p, "upgrade_mat") < 3
 

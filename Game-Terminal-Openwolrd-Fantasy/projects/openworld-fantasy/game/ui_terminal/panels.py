@@ -33,9 +33,12 @@ def approach_outcome_line(kind: str, outcome: str) -> str:
     o = str(outcome or "")
     table = {
         ("monster", "flee"): "▸ ผล: มันหนี — คุณได้แค่เค้าโครงเลือนๆ",
-        ("monster", "rare_talk"): "▸ ผล: สื่อสารแปลกๆ ได้ — ชำนาญพื้นที่งอกเงย",
+        ("monster", "rare_talk"): "▸ ผล: สื่อสารแปลกๆ ได้ — อาจคุย/เจรจา soft",
         ("monster", "ambush"): "▸ ผล: ถูกซุ่ม — เข้าไฟต์เสียเปรียบ",
         ("monster", "fair_combat"): "▸ ผล: ปะทะตรงๆ — เริ่มต่อสู้",
+        ("monster", "truce"): "▸ ผล: ตกลงไม่สู้ — วงรบไม่เกิด",
+        ("monster", "tip"): "▸ ผล: ได้ใบ้/ความรู้พื้นที่",
+        ("monster", "tribute"): "▸ ผล: มันทิ้งของเล็กน้อยแล้วจาก",
         ("chest", "ambush"): "▸ ผล: หีบปลอม — มอนโผล่!",
         ("chest", "empty_trap"): "▸ ผล: กับดัก — ระวังสถานะผิดปกติ",
         ("chest", "rare_relic"): "▸ ผล: โชคดี — ของ/เงินคุณภาพดี",

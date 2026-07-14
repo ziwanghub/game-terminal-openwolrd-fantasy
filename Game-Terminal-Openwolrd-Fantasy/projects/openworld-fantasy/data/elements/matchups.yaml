@@ -1,23 +1,99 @@
-# Hidden from player UI until journal unlock (P6) — used lightly in P1 combat flavor
+# Element matchups (DD3) — used in combat via reg.element_mult
+# Soft UI only shows flavor (ได้ผลดี / ต้านทาน) — never show mult %
 matchups:
+  # classic opposites
   - attacker: water
     defender: fire
     mult: 1.4
   - attacker: fire
-    defender: nature
-    mult: 1.25
-  - attacker: fire
     defender: water
     mult: 0.75
+  - attacker: fire
+    defender: nature
+    mult: 1.25
+  - attacker: nature
+    defender: fire
+    mult: 0.8
+  - attacker: nature
+    defender: water
+    mult: 1.15
+  - attacker: water
+    defender: nature
+    mult: 0.9
+
+  # light / dark
   - attacker: shadow
     defender: holy
     mult: 0.8
   - attacker: holy
     defender: shadow
     mult: 1.35
+  - attacker: light
+    defender: dark
+    mult: 1.35
+  - attacker: dark
+    defender: light
+    mult: 0.8
+  - attacker: shadow
+    defender: light
+    mult: 0.85
+  - attacker: holy
+    defender: dark
+    mult: 1.3
+
+  # storm / earth
   - attacker: lightning
     defender: water
     mult: 1.3
+  - attacker: water
+    defender: lightning
+    mult: 0.85
   - attacker: earth
     defender: lightning
     mult: 0.85
+  - attacker: lightning
+    defender: earth
+    mult: 1.2
+  - attacker: earth
+    defender: wind
+    mult: 1.15
+  - attacker: wind
+    defender: earth
+    mult: 0.9
+
+  # ice
+  - attacker: ice
+    defender: water
+    mult: 1.1
+  - attacker: fire
+    defender: ice
+    mult: 1.3
+  - attacker: ice
+    defender: fire
+    mult: 0.7
+  - attacker: ice
+    defender: wind
+    mult: 1.15
+
+  # arcane soft vs physical armor feel (monsters tagged physical)
+  - attacker: arcane
+    defender: physical
+    mult: 1.08
+  - attacker: physical
+    defender: arcane
+    mult: 0.95
+  - attacker: physical
+    defender: shadow
+    mult: 0.92
+  - attacker: shadow
+    defender: physical
+    mult: 1.1
+  - attacker: holy
+    defender: physical
+    mult: 1.05
+  - attacker: fire
+    defender: shadow
+    mult: 1.12
+  - attacker: shadow
+    defender: fire
+    mult: 0.88

@@ -309,6 +309,24 @@ def situation_strip(
         bits.append("บัฟ:" + ",".join(str(x) for x in (player.get("blessings") or [])[:2]))
     if player.get("party_call_active"):
         bits.append("ปาร์ตี้ถูกเรียก")
+    # MI polish: soft mind read (no %)
+    try:
+        from game.domain.monster_ai import resolve_monster_intel_tier, talk_eligible
+
+        tier = resolve_monster_intel_tier(mon)
+        mhp = int(mon.get("hp") or 0)
+        mmax = max(1, int(mon.get("max_hp") or 1))
+        mr = mhp / mmax
+        if tier >= 3:
+            bits.append("มันคิดเป็น")
+        elif tier >= 2:
+            bits.append("ท่าทางฉลาด")
+        if tier >= 2 and mr <= 0.28 and not mon.get("boss"):
+            bits.append("อาจถอย")
+        if talk_eligible(mon) and not mon.get("_parley_used") and mr > 0.15:
+            bits.append("คุยได้อยู่")
+    except Exception:
+        pass
     return " · ".join(bits)
 
 

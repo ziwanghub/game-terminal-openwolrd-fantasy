@@ -35,7 +35,11 @@ def test_craft_potion():
     p["money_world"] = 100
     recipes = list_recipes(reg, p)
     assert any(r.get("id") == "craft_potion_bundle" for r in recipes)
-    msg = craft(p, reg, "craft_potion_bundle")
+    class _Ok:
+        def random(self):
+            return 0.0
+
+    msg = craft(p, reg, "craft_potion_bundle", rng=_Ok())  # type: ignore[arg-type]
     assert "สำเร็จ" in msg
 
 

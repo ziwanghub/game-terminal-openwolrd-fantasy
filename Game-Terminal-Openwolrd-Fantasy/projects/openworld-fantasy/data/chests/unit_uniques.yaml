@@ -1,0 +1,25 @@
+# L4 unit unique catalog — one grant path via unit chest / rare SSS roll
+# unique_scope: save | world
+#  - save  = one per character save (unique_owned)
+#  - world = one per world_id (unique_claims.json) — rarer
+
+uniques:
+  - id: unit_blade_of_ash
+    name: ดาบเถ้าพันธะ
+    unique_scope: save
+    slot: main_hand
+    weight: 40
+
+  - id: unit_veil_of_dusk
+    name: ผ้าคลุมสนธยา
+    unique_scope: save
+    slot: body
+    weight: 35
+
+  - id: unit_heart_of_ember
+    name: หัวใจเถ้าอุ่น
+    unique_scope: world
+    slot: acc_1
+    weight: 25
+
+echo_fallback: echo_shard

@@ -56,7 +56,25 @@ def spawn_boss(reg: DataRegistry, area_id: str, rng: random.Random) -> Optional[
         "drain_pct": 0.0,
         "extra_hits": 1,
         "phase_hp_frac": [1.0 - i / phases for i in range(1, phases)],
+        "never_flee": True,
+        "intel_tier": int(base.get("intel_tier") or 3),
     }
+    # D1–D2: boss drop tables + bound cards must reach victory loot
+    if base.get("drops") is not None:
+        mon["drops"] = list(base.get("drops") or [])
+    if base.get("card_id"):
+        mon["card_id"] = str(base.get("card_id"))
+    if base.get("card_rate"):
+        mon["card_rate"] = base.get("card_rate")
+    try:
+        from game.domain.monster_ai import attach_monster_intel_fields
+
+        attach_monster_intel_fields(mon, base)
+        mon["never_flee"] = True
+        mon["boss"] = True
+    except Exception:
+        mon["intel_tier"] = 3
+        mon["never_flee"] = True
     try:
         from game.domain.rarity import apply_rarity_to_enemy, roll_enemy_rarity
 
@@ -67,6 +85,21 @@ def spawn_boss(reg: DataRegistry, area_id: str, rng: random.Random) -> Optional[
         )
         mon = apply_rarity_to_enemy(mon, reg, str(rid))
         mon["boss"] = True  # preserve after copy
+        mon["never_flee"] = True
+        if base.get("drops") is not None:
+            mon["drops"] = list(base.get("drops") or [])
+        if base.get("card_id"):
+            mon["card_id"] = str(base.get("card_id"))
+        if base.get("card_rate"):
+            mon["card_rate"] = base.get("card_rate")
+        try:
+            from game.domain.monster_ai import attach_monster_intel_fields
+
+            attach_monster_intel_fields(mon, base)
+            mon["never_flee"] = True
+            mon["boss"] = True
+        except Exception:
+            mon["intel_tier"] = int(mon.get("intel_tier") or 3)
     except Exception:
         mon["rarity"] = "rare"
     return mon

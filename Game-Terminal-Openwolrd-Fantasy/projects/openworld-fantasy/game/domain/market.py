@@ -28,7 +28,8 @@ def load_market(world_id: str) -> Dict[str, Any]:
     path = market_path(world_id)
     if not path.is_file():
         return _empty_market()
-    try:
+
+    def _read() -> Dict[str, Any]:
         data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError("bad market")
@@ -40,8 +41,17 @@ def load_market(world_id: str) -> Dict[str, Any]:
         data.setdefault("tax_log", [])
         data.setdefault("version", 1)
         return data
+
+    try:
+        from game.domain.file_lock import world_file_lock
+
+        with world_file_lock(world_id, "market", timeout=4.0):
+            return _read()
     except Exception:
-        return _empty_market()
+        try:
+            return _read()
+        except Exception:
+            return _empty_market()
 
 
 def _empty_market() -> Dict[str, Any]:
@@ -58,8 +68,17 @@ def _empty_market() -> Dict[str, Any]:
 
 def save_market(world_id: str, data: Mapping[str, Any]) -> Path:
     path = market_path(world_id)
+    payload = json.dumps(dict(data), ensure_ascii=False, indent=2)
+    try:
+        from game.domain.file_lock import world_file_lock
+
+        with world_file_lock(world_id, "market", timeout=6.0):
+            path.write_text(payload, encoding="utf-8")
+        return path
+    except Exception:
+        pass
     path.write_text(
-        json.dumps(dict(data), ensure_ascii=False, indent=2),
+        payload,
         encoding="utf-8",
     )
     return path
@@ -508,11 +527,8 @@ def format_market_listings(
     from game.domain.rarity import display_item_name, format_rarity_tag
 
     market = load_market(world_id)
-    lines = ["── ตลาดกลาง ──"]
+    lines: List[str] = []
     listings = list(market.get("listings") or [])
-    if exclude_seller_id:
-        # still show all; mark own
-        pass
     if not listings:
         lines.append("  (ยังไม่มีใครฝากขาย)")
         return lines
@@ -523,7 +539,9 @@ def format_market_listings(
         code = item_code(iid, reg)
         own = " [ของคุณ]" if exclude_seller_id and str(L.get("seller_id")) == str(exclude_seller_id) else ""
         lines.append(
-            f"  {i}. {L.get('listing_id')}  {code} {name} {format_rarity_tag(reg, rid)}  "
-            f"ราคา {L.get('price')}  · โดย {L.get('seller_name')}{own}"
+            f"  {i}. {code}  {name} {format_rarity_tag(reg, rid)}{own}"
+        )
+        lines.append(
+            f"      {L.get('listing_id')} · ราคา {L.get('price')} · โดย {L.get('seller_name')}"
         )
     return lines

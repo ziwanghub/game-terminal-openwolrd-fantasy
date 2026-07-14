@@ -84,6 +84,7 @@
 - id: mage_mana_shield
   name: โล่มานา
   slot: defense
+  guard_class: arcane
   cost_mana: 10
   strong_vs: [arcane, fire, lightning]
   weak_vs: [physical]
@@ -98,3 +99,21 @@
     require_level: 12
     cost_world: 100
     cost_heaven: 1
+
+- id: mage_still_mind
+  name: จิตสงบ
+  slot: support
+  cost_mana: 4
+  heal: 8
+  elements: [arcane, water]
+  combo_ok: false
+  tree: mage
+  tier: 3
+  requires: [mage_ember]
+  learn:
+    method: [self]
+    require_level: 13
+    cost_world: 100
+    cost_heaven: 1
+  desc: หายใจเข้าม่านเวท — ฟื้นแผ่ว (support)
+

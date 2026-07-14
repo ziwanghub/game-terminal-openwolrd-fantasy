@@ -527,6 +527,7 @@ def list_open_help_signals(
             continue
         claimable = str(h.get("status")) != HELP_STATUS_CLAIMED
         policy = str(h.get("policy") or POLICY_PUBLIC)
+        presence = presence_soft_for_player(p)
         rows.append(
             {
                 "owner_id": pid,
@@ -546,10 +547,48 @@ def list_open_help_signals(
                 "policy_label": "เพื่อน" if policy == POLICY_FRIENDS else "สาธารณะ",
                 "claimable": claimable and help_is_claimable(p),
                 "updated_at": sit.get("updated_at") or p.get("updated_at"),
+                "presence": presence.get("id"),
+                "presence_label": presence.get("label"),
             }
         )
     rows.sort(key=lambda r: str(r.get("updated_at") or ""), reverse=True)
     return rows
+
+
+def presence_soft_for_player(player: Mapping[str, Any]) -> Dict[str, str]:
+    """
+    H5 lite: soft presence from saved_at / echo freshness — not true realtime.
+    fresh ≤ 20 min · warm ≤ 2h · else stale.
+    """
+    import time
+
+    now = time.time()
+    ts = None
+    for key in ("saved_at_unix", "saved_at", "updated_at"):
+        raw = player.get(key)
+        if raw is None:
+            continue
+        if isinstance(raw, (int, float)):
+            ts = float(raw)
+            break
+        try:
+            # ISO soft parse
+            s = str(raw).replace("T", " ").strip()
+            # YYYY-MM-DD HH:MM:SS
+            import datetime
+
+            ts = datetime.datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S").timestamp()
+            break
+        except Exception:
+            continue
+    if ts is None:
+        return {"id": "unknown", "label": ""}
+    age_min = max(0.0, (now - ts) / 60.0)
+    if age_min <= 20:
+        return {"id": "fresh", "label": "ร่องรอยสด"}
+    if age_min <= 120:
+        return {"id": "warm", "label": "เพิ่งผ่าน"}
+    return {"id": "stale", "label": "เงาเก่า"}
 
 
 def format_board_lines(signals: List[Mapping[str, Any]]) -> List[str]:
@@ -560,13 +599,17 @@ def format_board_lines(signals: List[Mapping[str, Any]]) -> List[str]:
     for i, s in enumerate(signals, 1):
         st = "รอผู้ช่วย" if s.get("claimable") else "มีคนยื่นมือแล้ว"
         pol = s.get("policy_label") or "สาธารณะ"
+        pres = s.get("presence_label") or ""
+        pres_bit = f" · 〔{pres}〕" if pres else ""
         lines.append(
             f" {i}. {s.get('owner_name')} · {s.get('label')} · "
-            f"{s.get('severity_label')} · {pol} · {st}"
+            f"{s.get('severity_label')} · {pol} · {st}{pres_bit}"
         )
         lines.append(f"    ตอบแทน: {s.get('offer_line')}")
         if s.get("note"):
             lines.append(f"    「{s.get('note')}」")
+        if s.get("presence") == "fresh":
+            lines.append("    …เหมือนเจ้าของยังใกล้ (async soft · ไม่ใช่ online จริง)")
     return lines
 
 

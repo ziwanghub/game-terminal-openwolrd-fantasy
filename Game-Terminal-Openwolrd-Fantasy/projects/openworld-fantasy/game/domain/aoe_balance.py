@@ -85,3 +85,26 @@ def apply_soft_splash_kill_flag(mon: MutableMapping[str, Any]) -> None:
 
 def is_soft_splash_kill(mon: Mapping[str, Any]) -> bool:
     return bool(mon.get("_killed_by_splash"))
+
+
+def aoe_status_chance_mult(
+    *,
+    aoe: bool = False,
+    n_targets: int = 1,
+) -> float:
+    """
+    DD4: status proc chance soft-nerf on AoE / multi hits.
+    Single target → 1.0; AoE skill → ~0.55; cleave splash → ~0.62 * pack dim.
+    """
+    if not aoe and n_targets <= 1:
+        return 1.0
+    n = max(1, int(n_targets))
+    base = 0.55 if aoe else 0.62
+    # more targets → slightly lower per-foe status spam
+    dim = 1.0 / (1.0 + 0.12 * max(0, n - 1))
+    return max(0.28, min(0.75, base * dim))
+
+
+def aoe_status_resist_bonus(*, aoe: bool = False) -> float:
+    """Extra resist chance when status comes from AoE (soft shrug)."""
+    return 0.08 if aoe else 0.0

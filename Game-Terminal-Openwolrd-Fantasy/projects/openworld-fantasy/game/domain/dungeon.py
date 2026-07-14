@@ -754,33 +754,36 @@ def exit_dungeon(
 def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str]:
     run = get_run(player)
     if not run:
-        return ["── ดันเจียน ──", " (ไม่อยู่ในดันเจียน)"]
+        return [" ดันเจียน", "---", " (ไม่อยู่ในดันเจียน)"]
     d = dungeon_by_id(reg, str(run.get("dungeon_id"))) or {}
     soft = soft_difficulty_text(player, reg, d) if d else "???"
     layout = run.get("floor_layout") or {}
+    exit_open = not run.get("locked") or run.get("boss_defeated")
     lines = [
-        f"── ดันเจียน: {run.get('name')} ──",
-        f" ชั้น {run.get('floor')}/{run.get('floors')}",
-        f" ภูมิชั้น: {layout.get('label', '?')} — {layout.get('desc', '')}",
-        f" สัญญาณอันตราย: {soft}",
-        f" ทางออก: {'เปิด' if not run.get('locked') or run.get('boss_defeated') else 'ล็อก'}",
-        f" บอส: {'ล้มแล้ว' if run.get('boss_defeated') else 'ยังอยู่ลึกภายใน'}",
-        f" สู้ชั้นนี้: {run.get('fights_this_floor', 0)} ครั้ง",
+        f" ดันเจียน · {run.get('name')}",
+        "---",
+        f" ชั้น      {run.get('floor')}/{run.get('floors')}",
+        f" ภูมิชั้น   {layout.get('label', '?')} — {layout.get('desc', '')}",
+        f" สัญญาณ   {soft}",
+        "---",
+        f" ทางออก   {'เปิด' if exit_open else 'ล็อก'}",
+        f" บอส      {'ล้มแล้ว' if run.get('boss_defeated') else 'ยังอยู่ลึกภายใน'}",
+        f" สู้ชั้นนี้  {run.get('fights_this_floor', 0)} ครั้ง",
+        "---",
     ]
-    # time pressure soft only
     left = int(run.get("turns_left") or 0)
     tmax = max(1, int(run.get("turns_max") or 1))
     ratio = left / tmax
     if ratio > 0.5:
-        lines.append(" แรงกดเวลา: ยังไหว")
+        lines.append(" แรงกดเวลา  ยังไหว")
     elif ratio > 0.25:
-        lines.append(" แรงกดเวลา: เริ่มแน่น")
+        lines.append(" แรงกดเวลา  เริ่มแน่น")
     elif left > 0:
-        lines.append(" แรงกดเวลา: วิกฤต — รีบตัดสินใจ")
+        lines.append(" แรงกดเวลา  วิกฤต — รีบตัดสินใจ")
     else:
-        lines.append(" แรงกดเวลา: ยุบ!")
+        lines.append(" แรงกดเวลา  ยุบ!")
     if run.get("escape_ready"):
-        lines.append(" …มีของบางอย่างในกระเป๋าตอนเข้า — อาจดึงกลับได้")
+        lines.append(" …มีของตอนเข้า — อาจดึงกลับได้")
     else:
         lines.append(" ไม่มีหลักประกันทางออก (นอกจากเคลียร์)")
     try:
@@ -789,7 +792,6 @@ def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[s
             sync_situation_from_dungeon,
         )
 
-        # refresh severity soft while viewing
         if isinstance(player, dict):
             sync_situation_from_dungeon(player, preserve_help=True)  # type: ignore[arg-type]
         for hl in format_help_status_lines(player):
@@ -797,7 +799,8 @@ def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[s
                 lines.append(" " + hl.lstrip())
     except Exception:
         pass
-    lines.append(" (ความยาก · เวลา · สูตร — ซ่อนทั้งหมด)")
+    lines.append("---")
+    lines.append(" (ความยาก · เวลา · สูตร — ซ่อน)")
     return lines
 
 
@@ -809,19 +812,21 @@ def dungeon_menu_actions(player: Mapping[str, Any]) -> List[str]:
         from game.domain.situation import help_is_open
 
         help_line = (
-            "6. สัญญาณขอแรง (เปิดอยู่ — ปิด/ดูสถานะ)"
+            "  6  สัญญาณขอแรง  (เปิดอยู่)"
             if help_is_open(player)
-            else "6. สัญญาณขอแรง (ยินยอมให้ช่วย · ระบบสังคม)"
+            else "  6  สัญญาณขอแรง  (ยินยอมช่วย)"
         )
     except Exception:
-        help_line = "6. สัญญาณขอแรง"
-    acts = [
-        "1. สำรวจชั้นนี้ (เหตุการณ์สุ่ม / ศัตรู / ของ / กับดัก)",
-        "2. ลงลึกกว่านี้ (ภูมิชั้นใหม่)",
-        "3. ท้าทายบอสดันเจียน (ชั้นในสุด)",
-        "4. พยายามออก / ใช้ของหนี",
-        "5. ดูสถานะดันเจียน",
+        help_line = "  6  สัญญาณขอแรง"
+    return [
+        " ทำอะไรในดัน",
+        "---",
+        "  1  สำรวจชั้นนี้",
+        "  2  ลงลึกกว่านี้",
+        "  3  ท้าทายบอส",
+        "  4  พยายามออก / ของหนี",
+        "  5  ดูสถานะดัน",
         help_line,
-        "Y. ปาร์ตี้  0. ออก(ถ้าทางเปิด)",
+        "---",
+        "  Y  ปาร์ตี้     0  ออก (ถ้าทางเปิด)",
     ]
-    return acts

@@ -21,6 +21,46 @@ power_mult: [1.0, 1.10, 1.22, 1.38, 1.58, 1.85]
 # optional pressure gain per combo length beyond 3
 pressure_per_long_combo: 1
 
+# CM1–CM2: สมาธิ/ฉลาด/เวท แฝง → ขั้นคอมโบ + ภาษีมานา (สูตรซ่อน)
+combo_mind:
+  hard_cap: 6
+  focus_base: 5.0
+  focus_ceil: 40.0
+  # [threshold, bonus_steps]
+  focus_steps:
+    - [0, 0]
+    - [8, 1]
+    - [20, 2]
+  intellect_steps:
+    - [0, 0]
+    - [6, 1]
+    - [15, 2]
+  # [threshold, mana_mult_factor]  (>=1 tax, mag relief uses <=1)
+  intellect_mana_tax:
+    - [0, 1.0]
+    - [6, 1.06]
+    - [15, 1.14]
+    - [25, 1.22]
+  focus_mana_tax:
+    - [0, 1.0]
+    - [12, 1.04]
+    - [24, 1.08]
+  mag_mana_relief:
+    - [0, 1.0]
+    - [8, 0.96]
+    - [16, 0.90]
+    - [28, 0.82]
+  relief_floor: 0.75
+  mult_ceil: 2.8
+  # CM5 balance
+  mind_growth_soft_cap: 18.0
+  focus_ceil_by_level:
+    - [9, 14.0]
+    - [19, 22.0]
+    - [34, 30.0]
+    - [49, 36.0]
+    - [999, 40.0]
+
 fusions:
   - sequence: [water, wind]
     result_elements: [ice]

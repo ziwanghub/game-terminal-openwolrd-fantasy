@@ -1,0 +1,50 @@
+# Base drop chances by source — multiplied by noise (never shown in UI)
+# values are soft starting points; runtime clamps + anti_farm + hash noise
+
+sources:
+  normal_monster:
+    base_chance: 0.012
+    rank_weights:
+      common: 70
+      uncommon: 25
+      rare: 5
+      s: 0
+      ss: 0
+      sss: 0
+  elite_monster:
+    base_chance: 0.06
+    rank_weights:
+      common: 40
+      uncommon: 35
+      rare: 20
+      s: 5
+  area_boss:
+    base_chance: 0.42
+    first_clear_bonus: 0.18
+    rank_weights:
+      common: 8
+      uncommon: 22
+      rare: 35
+      s: 25
+      ss: 8
+      sss: 2
+  dungeon_boss:
+    base_chance: 0.55
+    first_clear_bonus: 0.2
+    rank_weights:
+      common: 5
+      uncommon: 15
+      rare: 30
+      s: 30
+      ss: 15
+      sss: 5
+  unit_chance_on_sss_open: 0.04   # rare replace open with unit unique path
+
+anti_farm:
+  window_kills: 8
+  same_id_penalty: 0.55
+  min_mult: 0.15
+
+noise:
+  min: 0.72
+  max: 1.28

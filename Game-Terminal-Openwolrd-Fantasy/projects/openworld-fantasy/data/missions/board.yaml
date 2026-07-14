@@ -162,6 +162,7 @@ missions:
     reward_money: 450
     reward_xp: 450
     wage_cost: 155
+    reward_chest: rare
     desc: เอาชนะบอส 1 ตัว
 
   - id: board_legend_s
@@ -174,6 +175,7 @@ missions:
     reward_xp: 700
     reward_items: [lucid_incense, rare_mat]
     wage_cost: 250
+    reward_chest: s
     desc: ชนะ 40 ไฟต์
 
   - id: board_ss_raid
@@ -186,6 +188,7 @@ missions:
     reward_xp: 1000
     reward_items: [rare_mat, rare_mat]
     wage_cost: 400
+    reward_chest: ss
     desc: ชนะ 60 ไฟต์
 
   - id: board_sss_end
@@ -198,7 +201,23 @@ missions:
     reward_xp: 2000
     reward_items: [lucid_incense, mind_elixir, rare_mat]
     wage_cost: 750
+    reward_chest: sss
+    set_flags:
+      chest_favor: 1
     desc: เอาชนะบอส 3 ครั้ง
+
+  # L3: งาน soft รางวัลหีบ (ไม่โชว์ % ใน desc)
+  - id: board_sealed_c
+    name: พัสดุปิดผนึก
+    rank: C
+    difficulty: 4
+    type: explore
+    target: 4
+    reward_money: 90
+    reward_xp: 100
+    wage_cost: 32
+    reward_chest: common
+    desc: บางอย่างรออยู่ตามทาง — สำรวจ 4 ครั้ง
 
   # พิเศษ — ไม่บอกเงื่อนไขรับ (special: true)
   # ── สายเรื่องเมือง (chain · requires_done ซ่อนจาก UI) ──
@@ -374,4 +393,8 @@ missions:
     reward_money: 800
     reward_xp: 800
     wage_cost: 280
+    reward_chest: unit
+    reward_chest_chance: 0.4
+    set_flags:
+      chest_table_void: 1
     desc: มีเพียงบางคนที่ถูกเรียก — คุณไม่รู้ว่าทำไม

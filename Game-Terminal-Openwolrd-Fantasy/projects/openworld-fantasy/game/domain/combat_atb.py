@@ -85,6 +85,13 @@ def action_fill_rate(
             base += surge
         # freeze / slow statuses
         base *= _status_speed_mult(entity)
+        # N2: fatigue slows ATB fill (SPD softens via needs)
+        try:
+            from game.domain.needs import atb_fatigue_mult
+
+            base *= float(atb_fatigue_mult(entity))
+        except Exception:
+            pass
         return max(3.5, min(24.0, base))
 
     # monster

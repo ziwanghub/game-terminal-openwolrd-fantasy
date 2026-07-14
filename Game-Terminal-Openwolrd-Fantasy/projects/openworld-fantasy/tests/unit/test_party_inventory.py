@@ -84,25 +84,25 @@ def test_loot_pick_and_bag():
 def test_upgrade_opaque_success_or_fail():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "up", "warrior", "เมษ")
-    p["equip_ids"] = {"weapon": "iron_sword", "armor": None}
+    p["equip_ids"] = {"main_hand": "iron_sword", "body": None}
     p["money_world"] = 5000
     for _ in range(20):
         try_add_item(p, "upgrade_mat", reg)
     # force high success with low level
-    assert upgrade_success_chance("weapon", 0) > 0.8
-    msg = upgrade_equipped_opaque(p, "weapon", reg, rng=random.Random(0))
+    assert upgrade_success_chance("main_hand", 0) > 0.8
+    msg = upgrade_equipped_opaque(p, "main_hand", reg, rng=random.Random(0))
     assert "สำเร็จ" in msg or "ล้มเหลว" in msg or "ไม่พอ" in msg
 
 
 def test_equip_panel_lines():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "eq", "warrior", "เมษ")
-    p["equip_ids"] = {"weapon": "iron_sword", "armor": "leather_armor"}
+    p["equip_ids"] = {"main_hand": "iron_sword", "body": "leather_armor"}
     from game.domain.equipment import recompute_stats
 
     recompute_stats(p, reg)
     lines = format_equip_panel(p, reg)
-    assert any("อาวุธ" in x for x in lines)
+    assert any("มือหลัก" in x or "อาวุธ" in x for x in lines)
     assert any("เสริมพลัง" in x or "ATK" in x for x in lines)
 
 

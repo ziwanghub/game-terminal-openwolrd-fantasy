@@ -5,7 +5,7 @@
 
 | ฟิลด์ | ค่า |
 |-------|-----|
-| **เวอร์ชันเกม** | 1.13.15-alpha (`t0-needs-w0-rank`) |
+| **เวอร์ชันเกม** | 1.13.16-alpha (`needs-n1-n4`) |
 | **สถานะเอกสาร** | Living hub — อัปเดตเมื่อเพิ่มระบบหลัก |
 | **เจ้าของ** | ทีม openworld-fantasy |
 | **อัปเดตล่าสุด** | 2026-07-14 (onboarding + U prefs) |
@@ -134,7 +134,7 @@ projects/openworld-fantasy/
 | ตลาด | `market.py`, `market_service.py` | MARKET | กระเป๋า **M** |
 | แดชบอร์ดประเมินระบบ | `admin/dashboard.py` · `data/meta/system_dashboard.yaml` | IMPROVEMENT_PLAN | `python3 -m game.admin.dashboard` · admin **8** |
 | สถานการณ์ขอแรง (H0–H4) | `situation.py` · `help_service.py` · ดัน **6** · **G** | HELP_SITUATION_VISION | consent · escrow · friends · rep · log |
-| Needs Tama (T0) | `domain/needs.py` | UX_TAMA_VISION | พัก/สำรวจ/ไฟต์/กิน · soft PERSONAL |
+| Needs T0+N1–N4 | `domain/needs.py` · combat/atb/consumables | NEEDS_COMBAT_FOOD_VISION | แถบ− · combat · อาหาร |
 | Rank soft (W0) | `world_social.py` · เมนู **3** | WORLD_SERVER_VISION | soft band · rank_board.json |
 | ภาษี→ภารกิจ | `mission_board.py`, `mission_service.py` | MISSION_BOARD | กระเป๋า **J** |
 | เควสโลก | `quests.py` | (ใน quests.yaml) | **9** |
@@ -163,6 +163,7 @@ projects/openworld-fantasy/
 | เอกสาร | บทบาท |
 |--------|--------|
 | `IMPROVEMENT_PLAN.md` | **คิวงานที่ยังไม่ทำ** + สถานะเฟส (ไม่เก็บ changelog ยาว) |
+| `ROADMAP.md` | **แผนพัฒนาหลัก** Wave A–F · ลำดับหีบ/Tama/โลก/online |
 | `PHASES.md` | **log เวอร์ชันสั้น** (1–3 บรรทัด/เวอร์ชัน) |
 | `TESTING.md` | วิธีเทส / harness |
 
@@ -183,7 +184,12 @@ projects/openworld-fantasy/
 | `PERSONALITY.md` | นิสัย |
 | `WORLD_SOCIAL.md` | โลก social (ของปัจจุบัน) |
 | `WORLD_SERVER_VISION.md` | **วิสัยทัศน์** โลก-เซิร์ฟ · echo · อันดับท้าสู้ (W0–W4 · ยังไม่ทำ) |
-| `UX_TAMA_VISION.md` | **วิสัยทัศน์** UX แนวทามาก๊อต · needs · เวลา hybrid (T0–T3 · ยังไม่ทำ) |
+| `UX_TAMA_VISION.md` | **วิสัยทัศน์** UX แนวทามาก๊อต · needs · เวลา hybrid (T0 ทำแล้ว · T1–T3) |
+| `NEEDS_COMBAT_FOOD_VISION.md` | **วิสัยทัศน์** needs→combat/ATB · อาหาร tier · unit soft (N1–N4 ทำแล้ว · N5) |
+| `CHEST_LOOT_VISION.md` | **วิสัยทัศน์** หีบ SSS–ธรรมดา · unit unique · ดรอป soft (L0–L5) |
+| `ITEM_CONTENT_PLAN.md` | **แผนเฟส** อัปเดตไอเทม/การ์ดทั้งก้อน (IC0–IC6 · แบ่งเฟส) |
+| `MONSTER_CONTENT_PLAN.md` | **แผนเฟส** เพิ่มมอนสเตอร์ (MC0–MC6 · ไม่ dump RO) |
+| `MONSTER_DROPS.md` | ดรอปต่อมอน soft · card_id |
 | `HELP_SITUATION_VISION.md` | **วิสัยทัศน์** ขอแรง · situation บนเซฟ · ร่วมทีมช่วย · escrow (H0–H5 · ยังไม่ทำ) |
 | `NARRATIVE.md` | flavor ไฟต์/สนาม |
 | `WORKSPACE.md` | ลิงก์ monorepo สั้น (ไม่ซ้ำ Z-MOS) |
@@ -197,8 +203,13 @@ projects/openworld-fantasy/
 | พฤติกรรมละเอียดที่รันได้ | **โค้ด domain + pytest** |
 | ตัวเลขคอนเทนต์ | **`data/**/*.yaml`** (ห้าม copy ตารางยาวลง md) |
 | คิวงานค้าง | **`IMPROVEMENT_PLAN.md`** |
+| แผนพัฒนาหลัก (Wave) | **`ROADMAP.md`** |
+| แผนเฟสอัปเดตไอเทม (IC0–IC6) | **`ITEM_CONTENT_PLAN.md`** — อัปครบแต่แบ่งเฟส |
+| แผนเฟสเพิ่มมอน (MC0–MC6) | **`MONSTER_CONTENT_PLAN.md`** — เติมครบแต่แบ่งเฟส · ไม่ dump RO |
 | วิสัยทัศน์โลก-เซิร์ฟ (W0–W4) | **`WORLD_SERVER_VISION.md`** |
 | วิสัยทัศน์ UX-Tama (T0–T3) | **`UX_TAMA_VISION.md`** |
+| วิสัยทัศน์ needs combat/อาหาร (N1–N5) | **`NEEDS_COMBAT_FOOD_VISION.md`** |
+| วิสัยทัศน์หีบรางวัล (L0–L5) | **`CHEST_LOOT_VISION.md`** |
 | วิสัยทัศน์ขอแรง/ช่วย situation (H0–H5) | **`HELP_SITUATION_VISION.md`** |
 | คะแนนประเมินระบบ (แดชบอร์ด) | **`data/meta/system_dashboard.yaml`** (+ รัน `game.admin.dashboard`) |
 | ประวัติเวอร์ชัน | **`PHASES.md`** (สั้น) |
@@ -342,6 +353,7 @@ projects/openworld-fantasy/
 | 2026-07-14 | **H1–H3** กระดาน G · escrow · assist 1.13.13 |
 | 2026-07-14 | **H4** friends policy · help_rep · world_signals · เควส 1.13.14 |
 | 2026-07-14 | **T0** needs · **W0** rank soft 1.13.15 |
+| 2026-07-14 | **N1–N4** needs combat/อาหาร 1.13.16 |
 
 ---
 

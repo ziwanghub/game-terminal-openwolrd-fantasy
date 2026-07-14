@@ -3,7 +3,7 @@ name: โลกฝันร้าย — เหวไม่มีก้น
 difficulty: 3
 difficulty_label: ฝันร้าย
 starting_area: desert_heat
-description: ยากสุด · โลกอิสระสมบูรณ์ เซฟและสถิติไม่วิ่งข้ามโลก
+description: ยากสุด — เงิน/เริ่มต้นน้อย
 independent: true
 modifiers:
   enemy_hp_mult: 1.7

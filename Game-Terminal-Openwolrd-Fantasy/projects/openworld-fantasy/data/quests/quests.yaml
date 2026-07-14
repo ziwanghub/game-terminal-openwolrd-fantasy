@@ -384,6 +384,30 @@
   unlock_level: 3
   depends_on: [forge_initiate]
 
+# K4 — soft cook chain (ไม่บังคับสูตรเฉพาะ · นับ craft สำเร็จ)
+- id: camp_cook
+  name: ไฟค่ายและหม้อ
+  description: คราฟสำเร็จ 3 ครั้ง — กลิ่นอาหารค่ายเริ่มคุ้น
+  type: craft
+  target: 3
+  reward_xp: 130
+  reward_money: 55
+  reward_items: [city_bread, herb_bundle, hunter_ration]
+  unlock_level: 4
+  depends_on: [forge_bread]
+
+- id: camp_feast_master
+  name: มือครัวทางไกล
+  description: คราฟสำเร็จ 5 ครั้ง — รู้สึกจัดสำรับได้
+  type: craft
+  target: 5
+  reward_xp: 220
+  reward_money: 90
+  reward_items: [trail_stew, herb_bundle]
+  reward_chest: uncommon
+  unlock_level: 6
+  depends_on: [camp_cook]
+
 - id: market_first_sale
   name: แม่ค้ามือใหม่
   description: สำรวจเมืองโบราณ 2 ครั้ง (หาทางตลาด)
@@ -394,3 +418,58 @@
   reward_money: 30
   reward_items: [city_bread, herb_bundle]
   unlock_level: 1
+
+# ── L3 สายหีบ (soft — ไม่โชว์ % / ตาราง) ──
+- id: sealed_whisper
+  name: เสียงจากกล่อง
+  description: ชนะมอน 5 ตัว — บางอย่างจะตามเงาคุณมา
+  type: kill
+  target: 5
+  reward_xp: 90
+  reward_money: 45
+  reward_items: [city_bread]
+  reward_chest: uncommon
+  unlock_level: 2
+  depends_on: [first_blood]
+
+- id: sealed_path
+  name: ทางปิดผนึก
+  description: เคลียร์ดันเจียน 1 ครั้ง
+  type: dungeon_clear
+  target: 1
+  reward_xp: 180
+  reward_money: 90
+  reward_items: [upgrade_mat]
+  reward_chest: rare
+  set_flags:
+    chest_favor: 1
+  unlock_level: 3
+  depends_on: [dungeon_first_clear, sealed_whisper]
+
+- id: sealed_void_echo
+  name: เงาสุญญะ
+  description: เอาชนะบอสพื้นที่ใดก็ได้ 1 ครั้ง (หลังได้ยินเสียงกล่อง)
+  type: kill_boss
+  target: 1
+  reward_xp: 320
+  reward_money: 160
+  reward_items: [rare_mat]
+  reward_chest: s
+  set_flags:
+    chest_table_void: 1
+    chest_favor: 2
+  unlock_level: 5
+  depends_on: [sealed_whisper, forest_champion]
+
+- id: bond_box_trial
+  name: กล่องไม่มีป้าย
+  description: เคลียร์ภารกิจกระดาน 5 งาน
+  type: board_complete
+  target: 5
+  reward_xp: 220
+  reward_money: 100
+  reward_items: [focus_tea]
+  reward_chest: unit
+  reward_chest_chance: 0.55
+  unlock_level: 4
+  depends_on: [board_regular, sealed_whisper]

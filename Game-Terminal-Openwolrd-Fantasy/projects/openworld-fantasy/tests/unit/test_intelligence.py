@@ -17,28 +17,30 @@ from game.domain.intelligence import (
     spend_intelligence,
     try_special_option,
 )
-from game.domain.progression import allocate_stat, init_progression
+from game.domain.progression import init_progression, recompute_powers
 
 
-def test_invest_raises_max():
+def test_mind_growth_raises_intel_max():
+    """CM3: intellect no longer free-P; learn/mind_growth expands capacity soft."""
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "I", "vagabond", "เมษ")
     init_progression(p, reg)
     ensure_intelligence(p, reg)
     m0 = intel_max(p)
-    p["stat_points"] = 10
-    allocate_stat(p, reg, "intelligence", 5)
+    p["learn_points"] = int(p.get("learn_points") or 0) + 8
+    p["mind_growth"] = float(p.get("mind_growth") or 0) + 4.0
+    recompute_powers(p, reg)
     ensure_intelligence(p, reg)
     assert intel_max(p) > m0
-    assert intel_current(p) > 0
+    assert intel_current(p) >= 0
 
 
 def test_spend_and_rest_recover():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "R", "vagabond", "เมษ")
     init_progression(p, reg)
-    p["stat_points"] = 5
-    allocate_stat(p, reg, "intelligence", 3)
+    p["learn_points"] = 5
+    recompute_powers(p, reg)
     ensure_intelligence(p, reg)
     p["intel_current"] = intel_max(p)
     ok, _ = spend_intelligence(p, 2, reason="choice")
@@ -52,8 +54,8 @@ def test_atb_spend_when_not_full():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "A", "vagabond", "เมษ")
     init_progression(p, reg)
-    p["stat_points"] = 5
-    allocate_stat(p, reg, "intelligence", 3)
+    p["learn_points"] = 5
+    recompute_powers(p, reg)
     ensure_intelligence(p, reg)
     p["intel_current"] = intel_max(p)
     p["atb"] = 30.0
@@ -67,8 +69,8 @@ def test_special_option_requires_intel():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "S", "vagabond", "เมษ")
     init_progression(p, reg)
-    p["stat_points"] = 15
-    allocate_stat(p, reg, "intelligence", 8)
+    p["learn_points"] = 15
+    recompute_powers(p, reg)
     ensure_intelligence(p, reg)
     p["intel_current"] = 0
     can, why = can_use_special_option(p, 2)

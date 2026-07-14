@@ -52,7 +52,7 @@ def test_instance_ref_has_owner():
     add_item(p, "iron_sword", reg, rarity="common")
     equip_item(p, "iron_sword", reg)
     ensure_item_instances(p, reg)
-    inst = (p.get("equip_instances") or {}).get("weapon")
+    inst = (p.get("equip_instances") or {}).get("main_hand")
     assert inst
     ref = format_instance_ref(inst)
     assert ref.startswith("sw001_")

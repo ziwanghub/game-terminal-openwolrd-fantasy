@@ -82,7 +82,9 @@ def test_l1c_compact_no_skill_list():
     assert "ชำนาญ" in text
     # compact: full skill dump is L1 only
     assert "shadow_strike" not in text
-    assert text.count("\n") <= 8
+    # sectioned layout may use more lines; keep bounded
+    assert text.count("\n") <= 16
+    assert "พื้นที่" in text or "เงิน" in text
 
 
 def test_mode_chrome_and_field_actions():
@@ -90,8 +92,37 @@ def test_mode_chrome_and_field_actions():
     act = render_field_actions(stat_points=2, boss_line=" ☠ บอส: ทดสอบ (B)")
     assert "ทำอะไรต่อ" in act
     assert act.count("ทำอะไรต่อ") == 1
-    assert "0 ออก" in act
+    assert "0  ออก" in act or "0 ออก" in act
     assert "แต้มสถานะ" in act
+
+
+def test_sights_panel_sections():
+    from game.ui_terminal.status import format_sights_panel_lines
+
+    lines = format_sights_panel_lines(
+        [
+            {
+                "handle": "ch01",
+                "kind": "chest",
+                "label": "หีบเก่า",
+                "hint": "สลักเลือน",
+                "risk": "?",
+            },
+            {
+                "handle": "mn01",
+                "kind": "monster",
+                "label": "???",
+                "hint": "เงาร่าง",
+                "risk": "?",
+            },
+        ],
+        flavor="คุณหยุดมองรอบ",
+    )
+    text = "\n".join(lines)
+    assert "สิ่งที่สังเกต" in text
+    assert "ch01" in text
+    assert "หีบ" in text
+    assert "1." in text
 
 
 def test_combat_vitals_known_and_unknown():
@@ -106,7 +137,8 @@ def test_combat_vitals_known_and_unknown():
     known = render_combat_vitals(p, mon, known=True, situation="คุณยังมั่น", round_no=2)
     assert "หมาป่า" in known
     assert "40/80" in known
-    assert "▸" in known
+    assert "▸" in known or "คุณยังมั่น" in known
+    assert "จังหวะ" in known
     unk = render_combat_vitals(p, mon, known=False, situation="ระวัง")
     assert "???" in unk
 

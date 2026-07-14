@@ -1,8 +1,11 @@
 id: ancient_city
 name: เมืองโบราณ
+climate: [temperate, holy_ground]
 world_tier: 3
 unlock_level: 7
 connections: [cave_shadow, desert_heat, void_rift]
+# K3: full craft hub — forge + mystic + camp
+stations: [forge, mystic, camp]
 mastery_start: 10
 ambient:
   hp_regen: 2
@@ -11,13 +14,19 @@ monster_pools:
   - id: city_rat
     weight: 45
   - id: alley_thug
-    weight: 30
+    weight: 34
   - id: ruins_specter
     weight: 15
   - id: cursed_knight
     weight: 7
   - id: ancient_guardian
     weight: 3
+  - id: city_pickpocket
+    weight: 13
+  - id: city_bone_walker
+    weight: 12
+  - id: elite_city_hex_captain
+    weight: 4
 
 boss_id: boss_ruin_oracle
 boss_unlock_level: 12

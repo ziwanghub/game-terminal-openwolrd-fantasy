@@ -41,36 +41,79 @@ def run_personal_hub(
     Player management. Shop/market: EXPLORE → 6 (SHOP hub). Bag = inventory only.
     """
     area_name = area_name or str(player.get("location") or "")
+    from game.ui_terminal.status import format_personal_hub_lines
+
+    # T3: stamp panel session + optional enter animation
+    try:
+        from game.domain.needs import (
+            apply_tama_panel_live_tick,
+            close_tama_panel_session,
+            stamp_tama_panel_open,
+            tama_enter_animation_frames,
+        )
+        from game.domain.ui_prefs import ensure_ui_prefs
+
+        stamp_tama_panel_open(player)
+        prefs = ensure_ui_prefs(player)
+        if prefs.get("tama_enter_anim", True) and not player.get("_tama_enter_anim_done"):
+            for frame in tama_enter_animation_frames(player):
+                io.write_line()
+                io.write_line(render_box([" Tama", "---", *frame], double=False))
+            player["_tama_enter_anim_done"] = True
+    except Exception:
+        pass
+
     while True:
+        # T3: soft live drip while hub open (wall clock between inputs)
+        try:
+            from game.domain.needs import apply_tama_panel_live_tick
+
+            live_notes = apply_tama_panel_live_tick(player)
+        except Exception:
+            live_notes = []
+
         io.write_line()
         io.write_line(render_mode_chrome("ตัวละคร", area_name))
-        io.write_line(render_status_l1c(player, area_name))
-        try:
-            from game.domain.needs import (
-                ensure_needs,
-                format_needs_bar_line,
-                format_needs_soft_lines,
-                needs_pressure_hint,
+        # One unified frame: vitals + tama + points (no repeat)
+        mission = active_mission_line(player)
+        io.write_line(
+            render_box(
+                format_personal_hub_lines(
+                    player,
+                    area_name,
+                    mission_line=mission or "",
+                ),
+                double=False,
             )
-
-            ensure_needs(player)
-            io.write_line(format_needs_bar_line(player))
-            hint = needs_pressure_hint(player)
-            if hint:
-                io.write_line(hint)
-        except Exception:
-            pass
+        )
+        # T1: flush pending load notes once (below frame)
+        pending = player.pop("_pending_load_notes", None)
+        if pending:
+            io.write_line()
+            for line in pending:
+                io.write_line(line)
+        if live_notes:
+            for line in live_notes:
+                io.write_line(line)
+        # Menu only — points/mission already in hub frame above
+        io.write_line()
         io.write_line(
             render_mode_actions(
                 MODE_PERSONAL,
-                stat_points=int(player.get("stat_points") or 0),
-                personality_points=int(player.get("personality_points") or 0),
-                mission_line=active_mission_line(player),
-                money_world=int(player.get("money_world") or 0),
+                stat_points=0,
+                personality_points=0,
+                mission_line="",
+                money_world=None,
             )
         )
-        ch = io.read_line("\n〔ตัวละคร〕 เลือก: ").strip()
+        ch = io.read_line("\n  เลือก (1–8 · R · E · 0 กลับ): ").strip()
         if ch in ("0", "", "q", "Q"):
+            try:
+                from game.domain.needs import close_tama_panel_session
+
+                close_tama_panel_session(player)
+            except Exception:
+                pass
             break
         if ch == "1" or ch in ("s", "S"):
             _show_full_status(player, reg, io, area_name)
@@ -95,6 +138,19 @@ def run_personal_hub(
             _skills_party_lib_submenu(player, reg, io)
         elif ch == "8":
             _settings_save_submenu(player, io)
+        # T2 care
+        elif ch in ("r", "R"):
+            from game.domain.needs import personal_rest_care
+
+            for line in personal_rest_care(player):
+                io.write_line(line)
+            io.read_line("Enter...")
+        elif ch in ("e", "E"):
+            from game.domain.needs import personal_eat_first_food
+
+            for line in personal_eat_first_food(player, reg):
+                io.write_line(line)
+            io.read_line("Enter...")
         # hotkey aliases inside PERSONAL
         elif ch in ("p", "P"):
             _stat_allocate_menu(player, reg, io)
@@ -119,7 +175,7 @@ def run_personal_hub(
 
             run_mission_board(player, reg, io)
         else:
-            io.write_line("เลือก 0–8 หรือ hotkey (P/N/S/…)")
+            io.write_line("เลือก 0–8 · R พัก · E กิน · hotkey (P/N/S/…)")
 
 
 def _show_full_status(
@@ -142,11 +198,10 @@ def _show_full_status(
     for line in format_stats_lines(player):
         io.write_line(line)
     try:
-        from game.domain.needs import format_needs_soft_lines
+        from game.domain.needs import format_tama_panel
 
         io.write_line()
-        for line in format_needs_soft_lines(player):
-            io.write_line(line)
+        io.write_line(render_box(format_tama_panel(player), double=False))
     except Exception:
         pass
     io.read_line("Enter...")

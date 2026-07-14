@@ -15,13 +15,28 @@ def combo_config(reg: DataRegistry) -> Dict[str, Any]:
         "fusions": list(raw.get("fusions") or []),
         "combo_length_by_level": list(raw.get("combo_length_by_level") or []),
         "pressure_per_long_combo": int(raw.get("pressure_per_long_combo") or 1),
+        "combo_mind": dict(raw.get("combo_mind") or {}),
     }
 
 
 def max_combo_for_player(player: Mapping[str, Any], reg: DataRegistry) -> int:
-    """How many skills can be chained — scales with level (+ unit mastery soft)."""
+    """
+    How many skills can be chained.
+    Base: level table · + focus_latent · + mind intellect · + unit mastery.
+    (CM1 — formulas hidden from UI)
+    """
     cfg = combo_config(reg)
     hard = int(cfg["max_combo_length"])
+    # CM hard cap may be in combo_mind
+    try:
+        from game.domain.combo_mind import ensure_focus_latent
+
+        ensure_focus_latent(player, reg)  # type: ignore[arg-type]
+        cm = cfg.get("combo_mind") or {}
+        if cm.get("hard_cap") is not None:
+            hard = min(hard, int(cm["hard_cap"]))
+    except Exception:
+        pass
     lv = int(player.get("level", 1))
     rows = list(cfg.get("combo_length_by_level") or [])
     allowed = 3
@@ -44,6 +59,14 @@ def max_combo_for_player(player: Mapping[str, Any], reg: DataRegistry) -> int:
             allowed = 5
         else:
             allowed = 6
+    # CM1: focus + intellect soft steps
+    try:
+        from game.domain.combo_mind import combo_step_bonuses
+
+        fs, ms = combo_step_bonuses(player, reg)
+        allowed += fs + ms
+    except Exception:
+        pass
     # unit mastery bonus: mastery>=3 → +1 combo length
     mastery = int(player.get("unit_mastery") or 0)
     if player.get("unit_class_id") and mastery >= 3:
@@ -69,24 +92,39 @@ def resolve_combo(
     reg: DataRegistry,
     *,
     max_n: Optional[int] = None,
+    player: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Build combo package: total mana, effective elements, power sum, flavor, status.
+    Optional player enables SK-R2 rank scaling on skills in the chain.
     """
     cfg = combo_config(reg)
     cap = int(max_n if max_n is not None else cfg["max_combo_length"])
     ids = list(skill_ids)[:cap]
     skills: List[Dict[str, Any]] = []
+    from game.domain.skill_rank import scale_skill_for_player
+    from game.domain.skill_slots import is_combo_eligible, normalize_slot
+
     for sid in ids:
         sk = reg.skills.get(sid)
         if not sk:
             continue
-        if sk.get("slot") == "defense":
+        slot = normalize_slot(sk)
+        if slot == "defense":
             continue
+        # SK-R1: buff never chains; support heal solo only
+        if not is_combo_eligible(sk) and len(ids) > 1:
+            if skills:
+                break
+            # allow single non-combo skill alone
         if sk.get("combo_ok") is False and len(ids) > 1:
             if skills:
                 break
-        skills.append({**sk, "id": sid})
+        if player is not None:
+            scaled = scale_skill_for_player(player, sk, reg, skill_id=sid)
+            skills.append({**scaled, "id": sid})
+        else:
+            skills.append({**sk, "id": sid})
 
     if not skills:
         return {"ok": False, "reason": "no_skills"}
@@ -101,6 +139,16 @@ def resolve_combo(
         power_table = list(power_table) + [float(power_table[-1]) * 1.12]
     mana_mult = float(mana_table[n - 1])
     power_mult = float(power_table[n - 1])
+    mind_mult = 1.0
+    # CM2: intellect/focus tax × mag relief on top of length mult
+    if player is not None:
+        try:
+            from game.domain.combo_mind import combo_mana_mind_multiplier
+
+            mind_mult = float(combo_mana_mind_multiplier(player, reg))
+            mana_mult = float(mana_mult) * mind_mult
+        except Exception:
+            mind_mult = 1.0
 
     base_mana = sum(int(s.get("cost_mana", 0)) for s in skills)
     total_mana = int(round(base_mana * mana_mult))
@@ -118,6 +166,7 @@ def resolve_combo(
             "status_chance": 0.0,
             "length": 1,
             "mana_mult": mana_mult,
+            "mind_mana_mult": mind_mult,
         }
 
     power = sum(int(s.get("power", 0)) for s in skills if not s.get("heal"))
@@ -173,6 +222,7 @@ def resolve_combo(
         "status_chance": status_chance,
         "length": n,
         "mana_mult": mana_mult,
+        "mind_mana_mult": mind_mult,
         "base_mana": base_mana,
     }
 
@@ -184,7 +234,7 @@ def preview_combo_mana(
 ) -> Dict[str, Any]:
     """Preview cost before commit — for UI."""
     max_n = max_combo_for_player(player, reg)
-    combo = resolve_combo(skill_ids, reg, max_n=max_n)
+    combo = resolve_combo(skill_ids, reg, max_n=max_n, player=player)
     if not combo.get("ok"):
         return combo
     have = int(player.get("mana") or 0)
@@ -204,61 +254,51 @@ def _is_consecutive_subseq(hay: Sequence[str], needle: Sequence[str]) -> bool:
 
 
 def defense_skills(player: Mapping[str, Any], reg: DataRegistry) -> List[Tuple[str, Dict[str, Any]]]:
-    from game.domain.skill_charges import is_skill_usable
+    """All usable defense skills (DD2 groups use guard_groups.skills_by_guard_group)."""
+    from game.domain.guard_groups import defense_skills_list
 
-    out = []
-    owned = set(player.get("skills") or [])
-    for sid in ["guard_basic", "guard_water_veil", "guard_earth", "guard_shadow"]:
-        if sid in reg.skills and (sid == "guard_basic" or sid in owned):
-            if sid == "guard_basic" or is_skill_usable(player, sid):
-                out.append((sid, reg.skills[sid]))
-    for sid in player.get("skills") or []:
-        sk = reg.skills.get(sid)
-        if (
-            sk
-            and sk.get("slot") == "defense"
-            and sid not in {x[0] for x in out}
-            and is_skill_usable(player, sid)
-        ):
-            out.append((sid, sk))
-    return out
+    return defense_skills_list(player, reg)
 
 
 def apply_defense(
     incoming: int,
     attack_tags: Sequence[str],
     guard_skill: Optional[Mapping[str, Any]],
+    *,
+    damage_class: Optional[str] = None,
+    reg: Any = None,
 ) -> Tuple[int, str, str]:
-    if not guard_skill:
-        return incoming, "none", "ไม่ป้องกัน"
+    """Tag + soft guard_class match (DD2)."""
+    from game.domain.guard_groups import apply_defense_with_class
 
-    tags = {str(t).lower() for t in attack_tags}
-    strong = {str(t).lower() for t in (guard_skill.get("strong_vs") or [])}
-    weak = {str(t).lower() for t in (guard_skill.get("weak_vs") or [])}
-
-    if tags & strong:
-        mult = float(guard_skill.get("damage_mult_strong", 0.1))
-        grade = "strong"
-        msg = f"★ {guard_skill.get('name')} ได้ผลดี!"
-    elif tags & weak:
-        mult = float(guard_skill.get("damage_mult_weak", 0.9))
-        grade = "weak"
-        msg = f"✗ {guard_skill.get('name')} แทบไม่มีผล..."
-    else:
-        mult = float(guard_skill.get("damage_mult_neutral", 0.55))
-        grade = "neutral"
-        msg = f"· {guard_skill.get('name')} กันได้บางส่วน"
-
-    final = max(0, int(round(incoming * mult)))
-    if grade == "strong" and final <= 2 and incoming > 0:
-        final = 0 if mult <= 0.1 else final
-    return final, grade, msg
+    return apply_defense_with_class(
+        incoming,
+        attack_tags,
+        guard_skill,
+        damage_class=damage_class,
+        reg=reg,
+    )
 
 
-def apply_player_defense_stat(incoming: int, player: Mapping[str, Any]) -> int:
-    pdef = float(player.get("power_def", 5.0))
-    reduce = pdef / (pdef + 45.0)
-    dmg = max(0, int(round(incoming * (1.0 - min(0.55, reduce)))))
+def apply_player_defense_stat(
+    incoming: int,
+    player: Mapping[str, Any],
+    *,
+    attack_tags: Optional[Sequence[str]] = None,
+    damage_class: Optional[str] = None,
+    reg: Any = None,
+) -> Tuple[int, str]:
+    """
+    Class-aware mitigation (DD1). Returns (dmg, soft_flavor).
+    Legacy callers that expect int still work via first element if they unpack wrong —
+    prefer the tuple form.
+    """
+    from game.domain.damage_class import apply_class_mitigation, resolve_damage_class
+
+    dclass = damage_class
+    if not dclass:
+        dclass = resolve_damage_class(None, tags=attack_tags or [], reg=reg)
+    dmg, flavor = apply_class_mitigation(incoming, player, dclass, reg)
     # ward / buff damage taken mult (soft)
     try:
         from game.domain.status_fx import active_status_mods
@@ -268,4 +308,4 @@ def apply_player_defense_stat(incoming: int, player: Mapping[str, Any]) -> int:
             dmg = max(0, int(round(dmg * mult)))
     except Exception:
         pass
-    return dmg
+    return dmg, flavor

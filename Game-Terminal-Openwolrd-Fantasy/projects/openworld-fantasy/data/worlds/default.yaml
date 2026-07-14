@@ -3,7 +3,7 @@ name: โลกเริ่มต้น — เอลิเรีย
 difficulty: 1
 difficulty_label: ปกติ
 starting_area: dark_forest
-description: สมดุลมาตรฐาน · ประวัติและอันดับแยกเฉพาะโลกนี้
+description: สมดุลมาตรฐาน — เหมาะเริ่มต้น
 independent: true
 modifiers:
   enemy_hp_mult: 1.0

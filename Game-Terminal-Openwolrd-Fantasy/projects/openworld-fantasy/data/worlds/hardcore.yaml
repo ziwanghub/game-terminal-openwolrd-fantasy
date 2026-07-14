@@ -3,7 +3,7 @@ name: โลกท้าทาย — เงานิรันดร์
 difficulty: 2
 difficulty_label: ท้าทาย
 starting_area: cave_shadow
-description: ยากขึ้น · เซฟ/อันดับ/ประวัติผู้เล่นแยกจากโลกอื่น
+description: ศัตรูแข็งขึ้น — รางวัลพอประมาณ
 independent: true
 modifiers:
   enemy_hp_mult: 1.35

@@ -20,6 +20,7 @@ class DataRegistry:
     shops: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     quests: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     recipes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    craft_rules: Dict[str, Any] = field(default_factory=dict)
     gear_sets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     unit_classes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     library_entries: Dict[str, Dict[str, Any]] = field(default_factory=dict)
@@ -45,6 +46,8 @@ class DataRegistry:
     blessings: Dict[str, Any] = field(default_factory=dict)
     class_paths: Dict[str, Any] = field(default_factory=dict)
     mission_board: Dict[str, Any] = field(default_factory=dict)
+    chests_cfg: Dict[str, Any] = field(default_factory=dict)
+    damage_classes_cfg: Dict[str, Any] = field(default_factory=dict)
     root: Path = DATA_DIR
 
     @classmethod
@@ -66,13 +69,22 @@ class DataRegistry:
                     continue
                 if path.name.startswith("."):
                     continue
-                if path.name in ("masters.yaml", "catalog_meta.yaml"):
+                if path.name in ("masters.yaml", "catalog_meta.yaml", "rank_rules.yaml"):
                     continue
                 part = load_list_file(path)
                 for sid, sk in part.items():
                     sk = dict(sk)
                     sk.setdefault("id", sid)
                     reg.skills[sid] = sk
+        # SK-R0: skill rank rules (dict YAML, not a skill list)
+        rank_rules_path = skills_dir / "rank_rules.yaml"
+        if rank_rules_path.exists():
+            try:
+                rr = load_file(rank_rules_path)
+                if isinstance(rr, dict):
+                    reg.skill_rank_rules = rr  # type: ignore[attr-defined]
+            except Exception:
+                pass
         if not reg.skills:
             sk_path = skills_dir / "skills.yaml"
             if sk_path.exists():
@@ -123,6 +135,11 @@ class DataRegistry:
         recipes_path = root / "craft" / "recipes.yaml"
         if recipes_path.exists():
             reg.recipes = load_list_file(recipes_path)
+        craft_rules_path = root / "craft" / "rules.yaml"
+        if craft_rules_path.exists():
+            data = load_file(craft_rules_path)
+            if isinstance(data, dict):
+                reg.craft_rules = data
         sets_path = root / "sets" / "gear_sets.yaml"
         if sets_path.exists():
             reg.gear_sets = load_list_file(sets_path)
@@ -161,6 +178,11 @@ class DataRegistry:
             data = load_file(match_path)
             if isinstance(data, dict):
                 reg.matchups = list(data.get("matchups") or [])
+        dmg_cls_path = root / "elements" / "damage_classes.yaml"
+        if dmg_cls_path.exists():
+            data = load_file(dmg_cls_path)
+            if isinstance(data, dict):
+                reg.damage_classes_cfg = data
         fusion_path = root / "elements" / "fusions.yaml"
         if fusion_path.exists():
             data = load_file(fusion_path)
@@ -245,6 +267,22 @@ class DataRegistry:
             data = load_file(dung_path)
             if isinstance(data, dict):
                 reg.dungeons_cfg = data
+        # Chests L0–L4: data/chests/*.yaml
+        chests_dir = root / "chests"
+        if chests_dir.is_dir():
+            cfg: Dict[str, Any] = {}
+            for key, fname in (
+                ("ranks", "ranks.yaml"),
+                ("pools", "pools.yaml"),
+                ("sources", "sources.yaml"),
+                ("unit_uniques", "unit_uniques.yaml"),
+            ):
+                p = chests_dir / fname
+                if p.exists():
+                    data = load_file(p)
+                    if isinstance(data, dict):
+                        cfg[key] = data
+            reg.chests_cfg = cfg
         # Status catalog: data/statuses/statuses.yaml (list or map)
         st_path = root / "statuses" / "statuses.yaml"
         if st_path.exists():

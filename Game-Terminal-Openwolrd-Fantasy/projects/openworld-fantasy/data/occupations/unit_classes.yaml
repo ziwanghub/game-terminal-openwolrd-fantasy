@@ -1,57 +1,750 @@
-# Unit classes — exclusive. Only ONE unit class per character.
-# Unlock conditions are fully hidden (no UI spoilers).
-# Each grants exactly one exclusive unit skill (cannot be learned otherwise).
+# Unit classes — 33 total.
+# 1 player = 1 unit · 1 world owner per unit/skill · chance very low.
+# power_tier: broken | strong | mid | weak | joke
+# style_wants: hidden playstyle resonance (HSR) — never shown in UI
+#   joke + high match → extremely strong · broken + low match → nearly useless
 
 - id: unit_eclipse
   name: Unit · คราสเงา
   exclusive_skill: unit_eclipse_blade
+  power_tier: strong
   desc_hidden: true
   unlock:
-    min_level: 20
+    min_level: 22
     occupation_ids: [rogue, archer]
-    min_stat_crit: 12
-    min_boss_kills: 2
-    require_library_entries: 2
-    chance: 0.35
+    min_stat_crit: 14
+    min_boss_kills: 3
+    require_library_entries: 3
+    chance: 0.04
   latent_growth:
-    atk: 1.20
-    defense: 0.80
-    magic: 1.10
+    atk: 1.2
+    defense: 0.8
+    magic: 1.1
     speed: 1.25
-    crit: 1.50
+    crit: 1.5
+  style_wants:
+    crit_pts: 1.0
+    speed_pts: 0.7
+    kills: 0.5
+    flees: 0.25
+    boss_kills: 0.3
 
 - id: unit_aegis
   name: Unit · แอจิสนิรันดร์
   exclusive_skill: unit_aegis_wall
+  power_tier: strong
   desc_hidden: true
   unlock:
-    min_level: 20
+    min_level: 22
     occupation_ids: [warrior, priest]
-    min_stat_defense: 14
-    min_boss_kills: 2
-    require_library_entries: 2
-    chance: 0.35
+    min_stat_defense: 16
+    min_boss_kills: 3
+    require_library_entries: 3
+    chance: 0.04
   latent_growth:
-    atk: 0.90
+    atk: 0.9
     defense: 1.55
-    magic: 1.00
+    magic: 1.0
     speed: 0.85
-    crit: 0.70
+    crit: 0.7
+  style_wants:
+    def_pts: 1.2
+    heals: 0.3
+    boss_kills: 0.4
+    upgrades: 0.3
 
 - id: unit_nova
   name: Unit · โนวาอาร์เคน
   exclusive_skill: unit_nova_burst
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 24
+    occupation_ids: [mage, priest]
+    min_stat_magic: 18
+    min_combos: 40
+    min_boss_kills: 2
+    require_library_entries: 4
+    chance: 0.035
+  latent_growth:
+    atk: 0.75
+    defense: 0.8
+    magic: 1.6
+    speed: 1.1
+    crit: 1.2
+  style_wants:
+    magic_pts: 1.2
+    combos: 0.6
+    library: 0.4
+    intel_pts: 0.35
+
+- id: unit_worldpiercer
+  name: Unit · เจาะพิภพ
+  exclusive_skill: unit_world_pierce
+  power_tier: broken
+  desc_hidden: true
+  unlock:
+    min_level: 35
+    min_boss_kills: 8
+    min_kills: 200
+    require_library_entries: 6
+    min_stat_atk: 20
+    chance: 0.0126
+  latent_growth:
+    atk: 1.45
+    defense: 0.7
+    magic: 1.0
+    speed: 1.1
+    crit: 1.35
+  style_wants:
+    boss_kills: 1.3
+    kills: 0.7
+    atk_pts: 0.9
+    upgrades: 0.5
+
+- id: unit_eternalsun
+  name: Unit · สุริยันอมตะ
+  exclusive_skill: unit_eternal_sun
+  power_tier: broken
+  desc_hidden: true
+  unlock:
+    min_level: 38
+    occupation_ids: [mage, priest]
+    min_stat_magic: 22
+    min_boss_kills: 6
+    location_contains: crystal
+    chance: 0.0105
+  latent_growth:
+    atk: 0.8
+    defense: 0.9
+    magic: 1.7
+    speed: 1.0
+    crit: 1.1
+  style_wants:
+    magic_pts: 1.2
+    loc_crystal: 1.0
+    combos: 0.5
+    library: 0.3
+    boss_kills: 0.4
+
+- id: unit_voidcrown
+  name: Unit · มงกุฎสูญ
+  exclusive_skill: unit_void_crown
+  power_tier: broken
+  desc_hidden: true
+  unlock:
+    min_level: 40
+    min_boss_kills: 10
+    require_library_entries: 8
+    min_stat_intelligence: 16
+    location_contains: void
+    chance: 0.0084
+  latent_growth:
+    atk: 1.2
+    defense: 0.75
+    magic: 1.5
+    speed: 1.2
+    crit: 1.4
+  style_wants:
+    loc_void: 1.2
+    library: 1.0
+    intel_pts: 0.9
+    magic_pts: 0.5
+    boss_kills: 0.5
+
+- id: unit_ironlegion
+  name: Unit · กองทัพเหล็ก
+  exclusive_skill: unit_iron_legion
+  power_tier: broken
+  desc_hidden: true
+  unlock:
+    min_level: 32
+    occupation_ids: [warrior]
+    min_stat_defense: 20
+    min_stat_atk: 14
+    min_boss_kills: 5
+    chance: 0.014
+  latent_growth:
+    atk: 1.35
+    defense: 1.4
+    magic: 0.7
+    speed: 0.85
+    crit: 1.0
+  style_wants:
+    def_pts: 1.0
+    atk_pts: 0.7
+    upgrades: 0.6
+    boss_kills: 0.5
+    kills: 0.3
+
+- id: unit_bloodmoon
+  name: Unit · จันทร์โลหิต
+  exclusive_skill: unit_blood_moon
+  power_tier: broken
+  desc_hidden: true
+  unlock:
+    min_level: 30
+    occupation_ids: [rogue, mage]
+    min_stat_crit: 18
+    min_kills: 150
+    min_flees: 5
+    chance: 0.014
+  latent_growth:
+    atk: 1.3
+    defense: 0.75
+    magic: 1.15
+    speed: 1.3
+    crit: 1.55
+  style_wants:
+    crit_pts: 1.1
+    kills: 0.8
+    flees: 0.35
+    speed_pts: 0.4
+    loc_cave: 0.3
+
+- id: unit_stormhowl
+  name: Unit · หอนพายุ
+  exclusive_skill: unit_storm_howl
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 20
+    occupation_ids: [archer, mage]
+    min_stat_speed: 12
+    min_combos: 25
+    chance: 0.03
+  latent_growth:
+    atk: 1.1
+    defense: 0.85
+    magic: 1.2
+    speed: 1.4
+    crit: 1.15
+  style_wants:
+    speed_pts: 0.9
+    combos: 0.6
+    kills: 0.4
+    loc_mountain: 0.4
+
+- id: unit_tidecaller
+  name: Unit · เรียกน้ำขึ้น
+  exclusive_skill: unit_tide_call
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 21
+    occupation_ids: [mage, priest]
+    min_stat_magic: 14
+    location_contains: marsh
+    chance: 0.03
+  latent_growth:
+    atk: 0.85
+    defense: 1.0
+    magic: 1.45
+    speed: 1.0
+    crit: 0.95
+  style_wants:
+    magic_pts: 0.9
+    loc_marsh: 1.0
+    heals: 0.3
+    combos: 0.4
+
+- id: unit_gravewarden
+  name: Unit · เฝ้าสุสาน
+  exclusive_skill: unit_grave_ward
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 25
+    occupation_ids: [priest, rogue]
+    min_boss_kills: 3
+    location_contains: cave
+    chance: 0.028
+  latent_growth:
+    atk: 1.05
+    defense: 1.2
+    magic: 1.15
+    speed: 0.9
+    crit: 1.1
+  style_wants:
+    loc_cave: 0.8
+    def_pts: 0.5
+    boss_kills: 0.5
+    library: 0.3
+
+- id: unit_skyfang
+  name: Unit · เขี้ยวฟ้า
+  exclusive_skill: unit_sky_fang
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 23
+    occupation_ids: [archer, rogue]
+    min_stat_crit: 12
+    min_stat_speed: 10
+    chance: 0.032
+  latent_growth:
+    atk: 1.25
+    defense: 0.8
+    magic: 0.85
+    speed: 1.45
+    crit: 1.4
+  style_wants:
+    crit_pts: 0.9
+    speed_pts: 0.8
+    kills: 0.5
+
+- id: unit_forgeheart
+  name: Unit · หัวใจเตา
+  exclusive_skill: unit_forge_heart
+  power_tier: strong
   desc_hidden: true
   unlock:
     min_level: 22
-    occupation_ids: [mage, priest]
-    min_stat_magic: 16
-    min_combos: 30
-    require_library_entries: 3
-    chance: 0.30
+    occupation_ids: [warrior]
+    min_upgrades: 8
+    min_stat_atk: 12
+    chance: 0.03
   latent_growth:
-    atk: 0.75
-    defense: 0.80
-    magic: 1.60
-    speed: 1.10
-    crit: 1.20
+    atk: 1.3
+    defense: 1.15
+    magic: 0.8
+    speed: 0.9
+    crit: 1.05
+  style_wants:
+    upgrades: 1.0
+    atk_pts: 0.7
+    kills: 0.3
+
+- id: unit_silvergleam
+  name: Unit · แววเงิน
+  exclusive_skill: unit_silver_gleam
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 20
+    occupation_ids: [priest, archer]
+    min_heals: 30
+    min_stat_magic: 10
+    chance: 0.03
+  latent_growth:
+    atk: 0.9
+    defense: 1.1
+    magic: 1.35
+    speed: 1.05
+    crit: 0.95
+  style_wants:
+    heals: 0.9
+    magic_pts: 0.6
+    library: 0.3
+
+- id: unit_thornmaze
+  name: Unit · เขาวงหนาม
+  exclusive_skill: unit_thorn_maze
+  power_tier: strong
+  desc_hidden: true
+  unlock:
+    min_level: 19
+    occupation_ids: [rogue, archer]
+    location_contains: forest
+    min_explores: 40
+    chance: 0.032
+  latent_growth:
+    atk: 1.15
+    defense: 0.95
+    magic: 0.95
+    speed: 1.2
+    crit: 1.2
+  style_wants:
+    loc_forest: 1.0
+    explores: 0.7
+    kills: 0.4
+
+- id: unit_emberfox
+  name: Unit · จิ้งจอกถ่าน
+  exclusive_skill: unit_ember_fox
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 16
+    occupation_ids: [mage, rogue, vagabond]
+    min_kills: 40
+    chance: 0.035
+  latent_growth:
+    atk: 1.1
+    defense: 0.9
+    magic: 1.15
+    speed: 1.15
+    crit: 1.15
+  style_wants:
+    kills: 0.5
+    magic_pts: 0.4
+    speed_pts: 0.4
+    explores: 0.3
+
+- id: unit_stonepulse
+  name: Unit · ชีพจรหิน
+  exclusive_skill: unit_stone_pulse
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 17
+    occupation_ids: [warrior, priest]
+    min_stat_defense: 10
+    location_contains: mountain
+    chance: 0.035
+  latent_growth:
+    atk: 1.05
+    defense: 1.3
+    magic: 0.85
+    speed: 0.85
+    crit: 0.9
+  style_wants:
+    loc_mountain: 0.9
+    def_pts: 0.7
+    kills: 0.3
+
+- id: unit_duskarrow
+  name: Unit · ศรสนธยา
+  exclusive_skill: unit_dusk_arrow
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 18
+    occupation_ids: [archer]
+    min_stat_crit: 8
+    min_combos: 15
+    chance: 0.035
+  latent_growth:
+    atk: 1.15
+    defense: 0.85
+    magic: 0.95
+    speed: 1.25
+    crit: 1.3
+  style_wants:
+    crit_pts: 0.7
+    combos: 0.5
+    kills: 0.4
+
+- id: unit_lanternmonk
+  name: Unit · พระโคม
+  exclusive_skill: unit_lantern_monk
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 18
+    occupation_ids: [priest, vagabond]
+    min_heals: 20
+    require_library_entries: 2
+    chance: 0.033
+  latent_growth:
+    atk: 0.8
+    defense: 1.15
+    magic: 1.25
+    speed: 0.95
+    crit: 0.85
+  style_wants:
+    heals: 0.9
+    library: 0.5
+    rests: 0.4
+    low_kills: 0.3
+
+- id: unit_sandwraith
+  name: Unit · ภูตทราย
+  exclusive_skill: unit_sand_wraith
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 20
+    location_contains: desert
+    min_explores: 25
+    chance: 0.03
+  latent_growth:
+    atk: 1.1
+    defense: 0.9
+    magic: 1.05
+    speed: 1.2
+    crit: 1.1
+  style_wants:
+    loc_desert: 1.0
+    explores: 0.6
+    speed_pts: 0.4
+
+- id: unit_frostbite
+  name: Unit · กัดน้ำแข็ง
+  exclusive_skill: unit_frost_bite
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 19
+    occupation_ids: [mage, archer]
+    min_stat_magic: 10
+    chance: 0.034
+  latent_growth:
+    atk: 0.95
+    defense: 0.95
+    magic: 1.3
+    speed: 1.0
+    crit: 1.05
+  style_wants:
+    magic_pts: 0.8
+    combos: 0.4
+
+- id: unit_cinderstep
+  name: Unit · ก้าวเถ้า
+  exclusive_skill: unit_cinder_step
+  power_tier: mid
+  desc_hidden: true
+  unlock:
+    min_level: 15
+    occupation_ids: [rogue, warrior, vagabond]
+    min_stat_speed: 8
+    chance: 0.036
+  latent_growth:
+    atk: 1.15
+    defense: 0.9
+    magic: 0.9
+    speed: 1.35
+    crit: 1.15
+  style_wants:
+    speed_pts: 0.8
+    kills: 0.4
+    explores: 0.3
+
+- id: unit_dullblade
+  name: Unit · คมทื่อ
+  exclusive_skill: unit_dull_edge
+  power_tier: weak
+  desc_hidden: true
+  unlock:
+    min_level: 12
+    occupation_ids: [warrior, vagabond]
+    min_kills: 15
+    chance: 0.04
+  latent_growth:
+    atk: 1.05
+    defense: 1.0
+    magic: 0.9
+    speed: 0.95
+    crit: 0.9
+  style_wants:
+    atk_pts: 0.5
+    kills: 0.4
+    upgrades: 0.3
+
+- id: unit_mistcough
+  name: Unit · ไอหมอก
+  exclusive_skill: unit_mist_cough
+  power_tier: weak
+  desc_hidden: true
+  unlock:
+    min_level: 12
+    occupation_ids: [mage, priest]
+    min_stat_magic: 4
+    chance: 0.04
+  latent_growth:
+    atk: 0.9
+    defense: 0.95
+    magic: 1.05
+    speed: 1.0
+    crit: 0.95
+  style_wants:
+    magic_pts: 0.5
+    loc_marsh: 0.4
+    explores: 0.3
+
+- id: unit_rustshield
+  name: Unit · โล่สนิม
+  exclusive_skill: unit_rust_shield
+  power_tier: weak
+  desc_hidden: true
+  unlock:
+    min_level: 14
+    occupation_ids: [warrior, priest]
+    min_stat_defense: 6
+    chance: 0.038
+  latent_growth:
+    atk: 0.9
+    defense: 1.15
+    magic: 0.9
+    speed: 0.85
+    crit: 0.85
+  style_wants:
+    def_pts: 0.6
+    heals: 0.3
+
+- id: unit_softheal
+  name: Unit · รักษาแผ่ว
+  exclusive_skill: unit_soft_heal
+  power_tier: weak
+  desc_hidden: true
+  unlock:
+    min_level: 13
+    occupation_ids: [priest, vagabond]
+    min_heals: 8
+    chance: 0.04
+  latent_growth:
+    atk: 0.85
+    defense: 1.05
+    magic: 1.1
+    speed: 0.95
+    crit: 0.85
+  style_wants:
+    heals: 0.8
+    magic_pts: 0.4
+    rests: 0.3
+
+- id: unit_sparkwisp
+  name: Unit · วิญญาณประกาย
+  exclusive_skill: unit_spark_wisp
+  power_tier: weak
+  desc_hidden: true
+  unlock:
+    min_level: 11
+    min_combos: 5
+    chance: 0.042
+  latent_growth:
+    atk: 1.0
+    defense: 0.9
+    magic: 1.05
+    speed: 1.1
+    crit: 1.05
+  style_wants:
+    combos: 0.5
+    magic_pts: 0.3
+    speed_pts: 0.3
+
+- id: unit_papercut
+  name: Unit · บาดกระดาษ
+  exclusive_skill: unit_paper_cut
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 8
+    max_level: 25
+    min_flees: 3
+    chance: 0.045
+  latent_growth:
+    atk: 0.95
+    defense: 0.95
+    magic: 0.95
+    speed: 1.0
+    crit: 0.95
+  style_wants:
+    flees: 1.0
+    crit_pts: 0.9
+    speed_pts: 0.7
+    low_atk: 0.3
+    kills: 0.35
+
+- id: unit_yawn
+  name: Unit · หาวเวิ้ง
+  exclusive_skill: unit_great_yawn
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 10
+    occupation_ids: [vagabond]
+    min_explores: 5
+    chance: 0.05
+  latent_growth:
+    atk: 0.9
+    defense: 0.9
+    magic: 0.95
+    speed: 0.85
+    crit: 0.9
+  style_wants:
+    rests: 1.1
+    heals: 0.8
+    library: 0.7
+    low_kills: 0.6
+    low_money: 0.4
+
+- id: unit_mudsplash
+  name: Unit · สาดโคลน
+  exclusive_skill: unit_mud_splash
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 9
+    location_contains: marsh
+    chance: 0.045
+  latent_growth:
+    atk: 0.95
+    defense: 1.0
+    magic: 0.95
+    speed: 0.9
+    crit: 0.9
+  style_wants:
+    loc_marsh: 1.2
+    explores: 0.6
+    low_atk: 0.4
+    heals: 0.3
+
+- id: unit_echoempty
+  name: Unit · เสียงสะท้อนว่าง
+  exclusive_skill: unit_echo_empty
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 14
+    require_library_entries: 1
+    min_stat_intelligence: 2
+    chance: 0.04
+  latent_growth:
+    atk: 0.9
+    defense: 0.9
+    magic: 1.0
+    speed: 0.95
+    crit: 0.9
+  style_wants:
+    library: 1.2
+    intel_pts: 0.9
+    low_atk: 0.5
+    rests: 0.3
+    low_kills: 0.3
+
+- id: unit_luckless
+  name: Unit · โชคแห้ง
+  exclusive_skill: unit_luckless_tick
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 15
+    min_chests: 10
+    chance: 0.038
+  latent_growth:
+    atk: 0.95
+    defense: 0.95
+    magic: 0.95
+    speed: 0.95
+    crit: 0.85
+  style_wants:
+    chests: 1.1
+    upgrades: 0.8
+    low_money: 0.5
+    explores: 0.4
+    flees: 0.3
+
+- id: unit_pocketdust
+  name: Unit · ฝุ่นในกระเป๋า
+  exclusive_skill: unit_pocket_dust
+  power_tier: joke
+  desc_hidden: true
+  unlock:
+    min_level: 7
+    max_level: 18
+    occupation_ids: [vagabond, rogue]
+    chance: 0.05
+  latent_growth:
+    atk: 0.92
+    defense: 0.92
+    magic: 0.92
+    speed: 1.05
+    crit: 0.92
+  style_wants:
+    explores: 1.2
+    low_money: 0.9
+    flees: 0.6
+    speed_pts: 0.7
+    low_kills: 0.5
+    loc_city: 0.2

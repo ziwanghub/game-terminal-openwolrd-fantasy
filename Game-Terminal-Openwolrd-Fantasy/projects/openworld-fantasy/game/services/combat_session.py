@@ -102,22 +102,46 @@ def _monster_act(
     *,
     known: bool,
     enemy_name: str,
-) -> None:
-    """One enemy action when their ATB is full."""
+) -> Optional[str]:
+    """One enemy action when their ATB is full.
+
+    Returns ``\"fled\"`` if MI2 soft-escape ends the engagement for this foe.
+    """
     if should_skip_action(mon, reg, rng):
         emit_narrative(io, narrate(reg, "status_tick_freeze", rng, enemy=enemy_name))
         io.write_line("  ศัตรูถูกล็อกสถานะ — ข้ามการโจมตี!")
         tick = process_status_turn(mon, reg, rng, apply_dot=True, min_hp=0)
         if tick.damage:
             io.write_line(f"  [ตัวเลข] สถานะศัตรู −{tick.damage} HP")
-        return
+        return None
+
+    # MI2: smart elite may soft-flee before swinging when HP is low
+    try:
+        from game.domain.monster_ai import try_monster_flee
+
+        fled, flee_msg = try_monster_flee(mon, player, rng)
+        if fled:
+            nlines = narrate(reg, "enemy_flee", rng, enemy=enemy_name)
+            if nlines:
+                emit_narrative(io, nlines)
+            elif flee_msg:
+                io.write_line(f"  {flee_msg}")
+            else:
+                io.write_line(f"  {enemy_name} ถอย…")
+            io.write_line("  (ศัตรูถอย — ไม่มีดรอปจากร่าง)")
+            ac = dict(player.get("action_counts") or {})
+            ac["enemy_fled"] = int(ac.get("enemy_fled", 0)) + 1
+            player["action_counts"] = ac
+            return "fled"
+    except Exception:
+        pass
 
     hits = max(1, int(mon.get("extra_hits") or 1))
     guard_skill = None
     for hit_i in range(hits):
         if int(player.get("hp") or 0) <= 0:
             break
-        profile = pick_monster_attack(mon, rng)
+        profile = pick_monster_attack(mon, rng, player=player)
         tags = list(profile.get("tags") or mon.get("elements") or ["physical"])
         raw = monster_raw_damage(mon, profile, rng)
         raw, dodge_fl = apply_incoming_damage(player, raw, rng)
@@ -134,35 +158,108 @@ def _monster_act(
             )
             if hits > 1:
                 io.write_line(f"  (โจมตีซ้ำ {hits} ครั้ง)")
-            guards = defense_skills(player, reg)
-            io.write_line("เลือกป้องกัน:")
-            for i, (sid, sk) in enumerate(guards, 1):
-                cost = int(sk.get("cost_mana", 0))
-                io.write_line(f"  {i}. {sk.get('name', sid)} (MP {cost})")
-            io.write_line("  0. ไม่ป้องกัน")
-            gch = io.read_line("กัน: ").strip()
+            from game.domain.guard_groups import (
+                format_guard_group_box_lines,
+                group_menu_rows,
+                pick_skill_in_group,
+            )
+            from game.ui_terminal.layout import render_box
+
+            # DD2: soft groups กันกาย / กันเวท / กันธาตุ (no skill ids)
+            g_lines = format_guard_group_box_lines(player, reg)
+            io.write_line()
+            io.write_line(render_box(g_lines, double=False))
+            gch = io.read_line("\n  กัน (เลข · 0): ").strip()
             if gch not in ("0", ""):
                 try:
+                    rows = group_menu_rows(player, reg)
                     gi = int(gch) - 1
-                    if 0 <= gi < len(guards):
-                        _sid, guard_skill = guards[gi]
-                        cost = int(guard_skill.get("cost_mana", 0))
-                        if int(player["mana"]) < cost:
-                            io.write_line("มานาไม่พอ — กันไม่ได้")
+                    if 0 <= gi < len(rows):
+                        group_key = str(rows[gi]["key"])
+                        skills = list(rows[gi].get("skills") or [])
+                        # de-dupe sid
+                        seen_s = set()
+                        uniq_sk = []
+                        for sid, sk in skills:
+                            if sid in seen_s:
+                                continue
+                            seen_s.add(sid)
+                            uniq_sk.append((sid, sk))
+                        skill_index = None
+                        if len(uniq_sk) > 1:
+                            # soft sub-pick by flavor name only
+                            sub = [
+                                f" {rows[gi]['label']} — เลือกท่า",
+                                "---",
+                            ]
+                            for j, (sid, sk) in enumerate(uniq_sk, 1):
+                                cost = int(sk.get("cost_mana") or 0)
+                                sub.append(
+                                    f"  {j}  {sk.get('name', sid)}   "
+                                    f"(MP {cost})"
+                                )
+                            sub.extend(["---", "  0  ใช้ท่าที่เบาที่สุด"])
+                            io.write_line()
+                            io.write_line(render_box(sub, double=False))
+                            sub_ch = io.read_line("\n  ท่า (เลข · 0=เบา): ").strip()
+                            if sub_ch not in ("0", ""):
+                                try:
+                                    skill_index = int(sub_ch) - 1
+                                except Exception:
+                                    skill_index = None
+                        picked = pick_skill_in_group(
+                            player, reg, group_key, skill_index=skill_index
+                        )
+                        if not picked:
+                            io.write_line(" ไม่มีท่าในกลุ่มนี้")
                             guard_skill = None
                         else:
-                            player["mana"] = int(player["mana"]) - cost
-                            ac = dict(player.get("action_counts") or {})
-                            ac["defend"] = int(ac.get("defend", 0)) + 1
-                            player["action_counts"] = ac
-                            personality_event(player, "combat_defend", reg)
+                            _sid, guard_skill = picked
+                            # SK-R1/R2: rank-scale defense skill mana/reflect/counter
+                            try:
+                                from game.domain.skill_rank import scale_skill_for_player
+                                from game.domain.skill_slots import arm_defense_stance
+
+                                guard_skill = scale_skill_for_player(
+                                    player, guard_skill, reg, skill_id=str(_sid)
+                                )
+                                guard_skill["id"] = _sid
+                            except Exception:
+                                pass
+                            cost = int(guard_skill.get("cost_mana", 0))
+                            if int(player["mana"]) < cost:
+                                io.write_line(" มานาไม่พอ — กันไม่ได้")
+                                guard_skill = None
+                            else:
+                                player["mana"] = int(player["mana"]) - cost
+                                ac = dict(player.get("action_counts") or {})
+                                ac["defend"] = int(ac.get("defend", 0)) + 1
+                                player["action_counts"] = ac
+                                personality_event(player, "combat_defend", reg)
+                                try:
+                                    from game.domain.skill_slots import arm_defense_stance
+
+                                    for n in arm_defense_stance(player, guard_skill):
+                                        if n and ("สะท้อน" in n or "สวน" in n):
+                                            io.write_line(f"  {n}")
+                                except Exception:
+                                    pass
                 except Exception:
                     guard_skill = None
-        final, grade, gmsg = apply_defense(raw, tags, guard_skill)
-        final = apply_player_defense_stat(final, player)
+        from game.domain.damage_class import resolve_damage_class
+
+        atk_class = resolve_damage_class(profile, tags=tags, reg=reg)
+        final, grade, gmsg = apply_defense(
+            raw, tags, guard_skill, damage_class=atk_class, reg=reg
+        )
+        final, def_fl = apply_player_defense_stat(
+            final, player, attack_tags=tags, damage_class=atk_class, reg=reg
+        )
         player["hp"] = int(player["hp"]) - final
         if dodge_fl:
             io.write_line(f"  {dodge_fl.strip()}")
+        if def_fl:
+            io.write_line(f"  {def_fl.strip()}")
         emit_narrative(
             io,
             narrate_damage_in(
@@ -175,9 +272,30 @@ def _monster_act(
             ),
         )
         io.write_line(f"  [ตัวเลข] ดาเมจเข้า {final}" + (f" · {gmsg}" if gmsg else ""))
+        # SK-R1: reflect / counter after taking a hit
+        try:
+            from game.domain.skill_slots import consume_defense_stance_on_hit
+
+            extra, rnotes = consume_defense_stance_on_hit(player, mon, final, rng)
+            for n in rnotes:
+                io.write_line(f"  {n}")
+            if extra and int(mon.get("hp") or 0) <= 0:
+                io.write_line("  ศัตรูล้มจากสะท้อน/สวน!")
+        except Exception:
+            pass
         hit_note = apply_monster_hit_status(player, mon, profile, reg, rng)
         if hit_note:
             io.write_line(f"  {hit_note}")
+        else:
+            # DD4 soft resist flavor (no %)
+            try:
+                from game.domain.status_fx import format_last_resist_note
+
+                rnote = format_last_resist_note(player)
+                if rnote:
+                    io.write_line(f"  {rnote}")
+            except Exception:
+                pass
 
     m_tick = process_status_turn(mon, reg, rng, apply_dot=True, min_hp=0)
     if m_tick.damage:
@@ -185,6 +303,7 @@ def _monster_act(
     p_tick = process_status_turn(player, reg, rng, apply_dot=True, min_hp=1)
     if p_tick.damage:
         io.write_line(f"  [ตัวเลข] สถานะคุณ −{p_tick.damage} HP")
+    return None
 
 
 def _apply_splash_damage(
@@ -257,25 +376,49 @@ def _player_act(
     )
     max_combo = max_combo_for_player(player, reg)
     from game.domain.mode_shell import MODE_COMBAT, render_mode_actions
+    from game.ui_terminal.layout import render_box
 
+    io.write_line()
     io.write_line(render_mode_actions(MODE_COMBAT))
+    meta: List[str] = [" เงื่อนไขเทิร์น", "---"]
     if splash:
         n_sp = len([s for s in splash if int(s.get("hp") or 0) > 0])
         eff = splash_damage_mult(n_splash=n_sp, aoe_skill=False)
         eff = min(eff, splash_mult)
         splash_mult = eff
-        io.write_line(
-            f"  (หลายเป้า: หลัก + กระแส {n_sp} ตัว · กระแสแผ่วเมื่อฝูงใหญ่)"
-        )
+        meta.append(f" หลายเป้า  หลัก + กระแส {n_sp} ตัว (แผ่วเมื่อฝูงใหญ่)")
     try:
         from game.domain.intelligence import format_intel_status_line, ensure_intelligence
 
         ensure_intelligence(player, reg)
-        io.write_line(format_intel_status_line(player))
+        meta.append(f" {format_intel_status_line(player).strip()}")
     except Exception:
         pass
-    io.write_line(f"  (คอมโบสูงสุด {max_combo} ขั้น · มานาไม่พอใช้โซ่ไม่ได้)")
-    ch = io.read_line("〔ไฟต์〕 เลือก: ").strip()
+    meta.append(f" คอมโบสูงสุด  {max_combo} ขั้น · มานาไม่พอใช้โซ่ไม่ได้")
+    try:
+        from game.domain.combo_mind import ensure_focus_latent, soft_combo_mind_hint
+
+        ensure_focus_latent(player, reg)
+        meta.append(f" {soft_combo_mind_hint(player, reg)}")
+    except Exception:
+        pass
+    try:
+        from game.domain.monster_ai import talk_eligible
+
+        if talk_eligible(mon) and not mon.get("_parley_used"):
+            meta.append(" เจรจา soft  7 · บางศัตรู · ครั้งเดียว")
+    except Exception:
+        pass
+    io.write_line()
+    io.write_line(render_box(meta, double=False))
+    ch = io.read_line("\n  〔ไฟต์〕 เลือก (1–7): ").strip()
+
+    try:
+        from game.domain.skill_slots import begin_player_action
+
+        begin_player_action(player)
+    except Exception:
+        pass
 
     if ch == "1":
         skill = {"power": 8, "elements": ["physical"], "name": "โจมตีปกติ"}
@@ -339,7 +482,18 @@ def _player_act(
             flag = "" if sk.get("combo_ok", True) else " [ไม่เข้าคอมโบ]"
             aoe = " [AoE]" if sk.get("aoe") else ""
             chg = format_charge_hint(player, sid, reg)
-            io.write_line(f"  {i}. {sk.get('name', sid)}{chg} (MP {cost}){flag}{aoe}")
+            slot = str(sk.get("slot") or "combat")
+            slot_tag = {
+                "buff": " [บัฟ]",
+                "debuff": " [ดีบัฟ]",
+                "support": " [ซัพ]",
+                "combat": "",
+            }.get(slot, "")
+            rank_lab = sk.get("_rank_label") or ""
+            rank_bit = f" ·{rank_lab}" if rank_lab and rank_lab != "ธรรมดา" else ""
+            io.write_line(
+                f"  {i}. {sk.get('name', sid)}{chg}{slot_tag}{rank_bit} (MP {cost}){flag}{aoe}"
+            )
         io.write_line(f"  พิมพ์หมายเลขเดียว หรือคอมโบ เช่น 2,1,3 (สูงสุด {max_combo})")
         raw = io.read_line("สกิล: ").strip()
         idxs = parse_combo_input(raw, max_n=max_combo)
@@ -357,14 +511,55 @@ def _player_act(
             io.write_line("เลือกไม่ถูกต้อง")
             return False
         if len(skill_ids) > max_combo:
-            io.write_line(f"ตอนนี้เรียงได้สูงสุด {max_combo} ขั้น")
+            try:
+                from game.domain.combo_mind import soft_combo_too_long_message
+
+                io.write_line(
+                    soft_combo_too_long_message(
+                        player, len(skill_ids), max_combo, reg
+                    )
+                )
+            except Exception:
+                io.write_line(f"ตอนนี้เรียงได้สูงสุด {max_combo} ขั้น")
             return False
+        # N2: morale — block focus skills / soft fail
+        try:
+            from game.domain.needs import skill_blocked_by_morale, skill_fail_chance
+
+            for sid in skill_ids:
+                sk = reg.skills.get(sid) or {}
+                if skill_blocked_by_morale(player, sk):
+                    io.write_line("ขวัญย่ำแย่ — สกิลสมาธิไม่ยอมทำงาน")
+                    return True  # spend turn soft
+            if rng.random() < skill_fail_chance(player):
+                # still pay half mana if affordable, miss effect
+                prev0 = preview_combo_mana(player, reg, skill_ids)
+                cost0 = int(prev0.get("total_mana", 0)) // 2
+                if int(player.get("mana") or 0) >= cost0:
+                    player["mana"] = int(player["mana"]) - cost0
+                io.write_line("จังหวะหลุด… ขวัญยังไม่นิ่ง — สกิลพลาด")
+                return True
+        except Exception:
+            pass
         prev = preview_combo_mana(player, reg, skill_ids)
         cost = int(prev.get("total_mana", 0))
         if prev.get("ok") and not prev.get("can_afford", True):
-            io.write_line(
-                f"มานาไม่พอสำหรับลูกโซ่นี้ (ต้องการ {cost} · มี {player.get('mana')})"
-            )
+            try:
+                from game.domain.combo_mind import soft_combo_mana_fail_message
+
+                io.write_line(
+                    soft_combo_mana_fail_message(
+                        player,
+                        cost,
+                        int(player.get("mana") or 0),
+                        reg,
+                        length=len(skill_ids),
+                    )
+                )
+            except Exception:
+                io.write_line(
+                    f"มานาไม่พอสำหรับลูกโซ่นี้ (ต้องการ {cost} · มี {player.get('mana')})"
+                )
             return False
         combo = combo_damage_package(player, mon, reg, area_id, skill_ids, rng)
         if not combo.get("ok"):
@@ -372,11 +567,63 @@ def _player_act(
             return False
         cost = int(combo.get("total_mana", 0))
         if int(player["mana"]) < cost:
-            io.write_line(f"มานาไม่พอ (ต้องการ {cost})")
+            try:
+                from game.domain.combo_mind import soft_combo_mana_fail_message
+
+                io.write_line(
+                    soft_combo_mana_fail_message(
+                        player,
+                        cost,
+                        int(player.get("mana") or 0),
+                        reg,
+                        length=int(combo.get("length") or len(skill_ids)),
+                    )
+                )
+            except Exception:
+                io.write_line(f"มานาไม่พอ (ต้องการ {cost})")
             return False
+        # SK-R1: buff gate before paying (anti stack)
+        try:
+            from game.domain.skill_slots import can_cast_buff, normalize_slot
+
+            for sid in skill_ids:
+                sk0 = reg.skills.get(sid) or {}
+                if normalize_slot(sk0) == "buff":
+                    ok_b, why_b = can_cast_buff(player, sk0)
+                    if not ok_b:
+                        io.write_line(f"  {why_b}")
+                        return False
+        except Exception:
+            pass
         player["mana"] = int(player["mana"]) - cost
         skill_label = str(combo.get("flavor") or "สกิล")
         length = int(combo.get("length") or 1)
+        # CM: focus drift after long chains · fusion trains mind soft
+        try:
+            from game.domain.combo_mind import note_mind_growth, on_combo_resolved
+
+            fnote = on_combo_resolved(player, length, reg)
+            if fnote and length >= 3:
+                io.write_line(f"  …{fnote}")
+            # fusion flavor often contains ! / หลอม — soft train intellect
+            flav = str(combo.get("flavor") or "")
+            if length >= 2 and (
+                "!" in flav
+                or "หลอม" in flav
+                or "น้ำแข็ง" in flav
+                or "ไอน้ำ" in flav
+                or "สายฟ้า" in flav
+                or combo.get("status")
+            ):
+                mnote = note_mind_growth(player, 0.22, reason="fusion")
+                if mnote:
+                    io.write_line(f"  …{mnote}")
+            elif length >= 3:
+                mnote = note_mind_growth(player, 0.12, reason="combo")
+                if mnote:
+                    io.write_line(f"  …{mnote}")
+        except Exception:
+            pass
         # AoE skills expand splash to all other living pack members
         use_splash = list(splash or [])
         use_mult = splash_mult
@@ -406,12 +653,41 @@ def _player_act(
                     reg, "skill", rng, skill=skill_label, enemy=enemy_name
                 ),
             )
+        # SK-R1/R2: buff / debuff side effects + mastery tick
+        try:
+            from game.domain.skill_rank import note_skill_use_mastery, scale_skill_for_player
+            from game.domain.skill_slots import (
+                apply_buff_skill,
+                apply_debuff_from_skill,
+                normalize_slot,
+            )
+
+            for sid in skill_ids:
+                base_sk = reg.skills.get(sid) or {}
+                sk_u = scale_skill_for_player(player, base_sk, reg, skill_id=sid)
+                slot = normalize_slot(sk_u)
+                if slot == "buff":
+                    for note in apply_buff_skill(player, sk_u, reg, rng):
+                        io.write_line(f"  {note}")
+                elif slot in ("debuff", "combat"):
+                    for note in apply_debuff_from_skill(
+                        mon, sk_u, reg, rng, aoe=bool(sk_u.get("aoe"))
+                    ):
+                        io.write_line(f"  {note}")
+                mnote = note_skill_use_mastery(player, sid, reg, rng)
+                if mnote:
+                    io.write_line(f"  …{mnote}")
+        except Exception:
+            pass
         if combo.get("heal"):
             heal = int(combo["heal"])
             player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + heal)
             io.write_line(f"  [ตัวเลข] ฟื้นฟู {heal} HP · MP -{cost}")
+        elif int(combo.get("damage") or combo.get("power") or 0) <= 0 and length == 1:
+            # pure buff / utility — already applied above
+            io.write_line(f"  (ใช้ท่า · MP -{cost})")
         else:
-            dmg = int(combo.get("damage", 0))
+            dmg = int(combo.get("damage") or combo.get("power") or 0)
             reflect = float(mon.get("reflect_pct") or 0)
             if reflect > 0:
                 back = max(1, int(dmg * reflect))
@@ -444,17 +720,32 @@ def _player_act(
                 rng=rng,
                 aoe_skill=is_aoe,
             )
+            n_foes = 1 + len(
+                [s for s in (use_splash or []) if int(s.get("hp") or 0) > 0]
+            )
             st = apply_status_to_monster(
                 mon,
                 combo.get("status"),
                 float(combo.get("status_chance") or 0),
                 rng,
                 reg,
+                aoe=bool(is_aoe),
+                n_targets=n_foes if is_aoe else 1,
+                attack_elements=list(combo.get("elements") or []),
             )
             if st:
                 io.write_line(
                     f"  [สถานะ] {status_display_name(st, reg)} ติดที่ศัตรู"
                 )
+            elif combo.get("status") and float(combo.get("status_chance") or 0) > 0:
+                try:
+                    from game.domain.status_fx import format_last_resist_note
+
+                    rnote = format_last_resist_note(mon)
+                    if rnote:
+                        io.write_line(f"  ศัตรู: {rnote}")
+                except Exception:
+                    pass
             for note in apply_on_hit_cards(player, mon, rng, reg):
                 io.write_line(f"  {note}")
             from game.domain.party import party_member_turns
@@ -477,9 +768,22 @@ def _player_act(
         return True
 
     if ch == "3":
-        io.write_line("── ยา / ล้าง / บัฟ ──")
-        io.write_line(" 1 ใช้ของจากคลัง  2 ล้างเร็ว  0 กลับ")
-        sub = io.read_line("เลือก: ").strip()
+        from game.ui_terminal.layout import render_box
+
+        io.write_line()
+        io.write_line(
+            render_box(
+                [
+                    " ยา / ล้าง / บัฟ",
+                    "---",
+                    "  1  ใช้ของจากคลัง",
+                    "  2  ล้างเร็ว",
+                    "  0  กลับไฟต์",
+                ],
+                double=False,
+            )
+        )
+        sub = io.read_line("\n  เลือก (1/2/0): ").strip()
         if sub in ("0", ""):
             return False
         if sub == "2":
@@ -541,6 +845,59 @@ def _player_act(
         # If gauge was already full, still costs intel for next surge buff only
         return True
 
+    if ch == "7":
+        # MI3 mid-fight soft parley — once per combat, smart foes only
+        from game.domain.monster_ai import (
+            apply_talk_rewards,
+            resolve_monster_talk,
+            talk_eligible,
+        )
+
+        if mon.get("_parley_used"):
+            io.write_line("  เจรจาไปแล้วในไฟต์นี้ — มันไม่ฟังอีก")
+            return False
+        if not talk_eligible(mon):
+            io.write_line("  ศัตรูนี้ไม่ฟังภาษา — เจรจาไม่ได้")
+            return False
+        mon["_parley_used"] = True
+        io.write_line("  คุณลดท่าทาง — พยายามสื่อสารกลางวงรบ…")
+        io.write_line("  1 สงบ  2 ของขวัญ  3 ข่ม  4 เลิก")
+        sub = io.read_line("  เจรจา: ").strip()
+        style_map = {"1": "calm", "2": "gift", "3": "threaten", "4": "walk"}
+        style = style_map.get(sub, "calm")
+        if sub in ("0", "4", ""):
+            io.write_line("  เลิกเจรจา — ยังอยู่ในวงรบ")
+            return True  # spent attempt / turn soft
+        outcome, lines = resolve_monster_talk(mon, player, style, rng, reg=reg)
+        for line in lines:
+            if line:
+                io.write_line(f"  {line}" if not str(line).startswith(" ") else line)
+        if outcome in ("combat", "ambush"):
+            io.write_line("  มันไม่ยอม — วงรบดำเนินต่อ (เสียจังหวะ)")
+            return True
+        if outcome == "flee":
+            mon["hp"] = 0
+            mon["_escaped"] = True
+            for note in apply_talk_rewards(player, mon, "flee", rng, reg=reg):
+                io.write_line(note)
+            mark_monster_seen(player, mon)
+            io.write_line("  (ศัตรูถอยกลางไฟต์ — ไม่มีดรอป)")
+            clear_party_call_buffs(player)
+            return None  # end fight like player flee path? need mon dead-ish
+        # truce / tip / tribute / walk mid-fight: soft leave if truce-like
+        if outcome in ("truce", "tip", "tribute", "walk"):
+            for note in apply_talk_rewards(player, mon, outcome, rng, reg=reg):
+                io.write_line(note)
+            if outcome in ("truce", "tip", "tribute"):
+                mon["hp"] = 0
+                mon["_escaped"] = True
+                mark_monster_seen(player, mon)
+                io.write_line("  วงรบคลาย — ไม่ฆ่าจบ (ไม่มีดรอปเต็ม)")
+                clear_party_call_buffs(player)
+                return None
+            return True
+        return True
+
     io.write_line("ไม่ถูกต้อง")
     return False
 
@@ -595,10 +952,18 @@ def _run_combat(
             else ("กลาง" if mon["level"] >= player["level"] else "พอไหว?")
         )
         io.write_line(f"   {mon['name']} · ความรู้สึก: {tier}")
+        try:
+            from game.domain.monster_ai import soft_intel_hint
+
+            hint = soft_intel_hint(mon, known=True)
+            if hint:
+                io.write_line(hint)
+        except Exception:
+            pass
 
     # Ambush: enemy strikes once before ATB loop
     if ambush and mon["hp"] > 0 and player["hp"] > 0:
-        profile = pick_monster_attack(mon, rng)
+        profile = pick_monster_attack(mon, rng, player=player)
         raw = monster_raw_damage(mon, profile, rng)
         raw, dodge_fl = apply_incoming_damage(player, raw, rng)
         emit_narrative(
@@ -628,8 +993,19 @@ def _run_combat(
         io.write_line(f"  [ตัวเลข] ดาเมจเข้า {raw} (ยังไม่ทันป้องกัน)")
 
     init_combat_atb(player, mon, reg, rng, ambush=ambush)
+    from game.ui_terminal.layout import render_box as _rb
+
+    io.write_line()
     io.write_line(
-        "  (จังหวะ: แท่งสเตตัสเต็มก่อนเลือกคำสั่ง — ความเร็วแต่ละฝ่ายไม่เท่ากัน · สูตรซ่อน)"
+        _rb(
+            [
+                " จังหวะ ATB",
+                "---",
+                " แท่งเต็มก่อนเลือกคำสั่ง",
+                " ความเร็วแต่ละฝ่ายไม่เท่ากัน · สูตรซ่อน",
+            ],
+            double=False,
+        )
     )
 
     while int(mon.get("hp") or 0) > 0 and int(player.get("hp") or 0) > 0:
@@ -671,10 +1047,10 @@ def _run_combat(
                             player, mon, known=known, reg=reg
                         ),
                         round_no=combat_round,
+                        banner=f"ศัตรูขยับ · จังหวะ {combat_round}",
                     )
                 )
-                io.write_line("── ศัตรูขยับ (แท่งจังหวะเต็ม) ──")
-                _monster_act(
+                mon_outcome = _monster_act(
                     player,
                     mon,
                     reg,
@@ -683,6 +1059,11 @@ def _run_combat(
                     known=known,
                     enemy_name=enemy_name,
                 )
+                if mon_outcome == "fled":
+                    mark_monster_seen(player, mon)
+                    clear_party_call_buffs(player)
+                    io.write_line("  ไฟต์จบ — ศัตรูถอย (ยังไม่ถือว่าฆ่าจบ)")
+                    return
                 spend_action(mon)
 
     if int(player.get("hp") or 0) <= 0:
@@ -749,9 +1130,9 @@ def _run_combat(
             emit_narrative(io, narrate_field(reg, "loot", rng))
             for line in present_loot_choices(loot):
                 io.write_line(line)
-            pick = io.read_line("เก็บ: ").strip()
+            pick = io.read_line("เก็บ (A / 1,2 / 0): ").strip()
             notes = resolve_loot_pick(player, reg, loot, pick)
-            if pick.strip() in ("0", "", "n", "N"):
+            if pick.strip().lower() in ("0", "", "n", "ไม่", "ทิ้ง"):
                 emit_narrative(io, narrate_field(reg, "loot_leave", rng))
             for line in notes:
                 io.write_line(line)
@@ -963,7 +1344,7 @@ def _run_combat_multi(
                 continue
             if rng.random() > 0.65:
                 continue
-            profile = pick_monster_attack(mon, rng)
+            profile = pick_monster_attack(mon, rng, player=player)
             raw = monster_raw_damage(mon, profile, rng)
             raw = max(1, int(raw * 0.75))
             raw, _ = apply_incoming_damage(player, raw, rng)
@@ -1064,7 +1445,7 @@ def _run_combat_multi(
                     )
                 )
                 io.write_line(f"── ศัตรู #{int(idx or 0) + 1} ขยับ ──")
-                _monster_act(
+                mon_outcome = _monster_act(
                     player,
                     mon,
                     reg,
@@ -1073,6 +1454,12 @@ def _run_combat_multi(
                     known=known,
                     enemy_name=enemy_name,
                 )
+                if mon_outcome == "fled":
+                    mon["hp"] = 0
+                    mon["_escaped"] = True
+                    mark_monster_seen(player, mon)
+                    spend_action(mon)
+                    continue
                 spend_action(mon)
 
     if int(player.get("hp") or 0) <= 0:
@@ -1093,20 +1480,35 @@ def _run_combat_multi(
                 io.write_line(line)
         return
 
-    # all foes down
+    # all foes down (killed or MI2 soft-escaped)
     clear_party_call_buffs(player)
-    _emit_personality_notes(io, personality_event(player, "combat_win", reg))
-    io.write_line(" ⚔ กลุ่มนี้แตกแล้ว")
-    mon = last_loot_mon or foes[-1]
-    loot = build_combat_loot_table(player, mon, reg, rng)
-    if loot:
-        emit_narrative(io, narrate_field(reg, "loot", rng))
-        for line in present_loot_choices(loot):
-            io.write_line(line)
-        pick = io.read_line("เก็บ: ").strip()
-        notes = resolve_loot_pick(player, reg, loot, pick)
-        for line in notes:
-            io.write_line(line)
+    any_killed = any(
+        int(f.get("hp") or 0) <= 0 and not f.get("_escaped") for f in foes
+    )
+    all_escaped = all(bool(f.get("_escaped")) for f in foes) and foes
+    if all_escaped:
+        io.write_line(" กลุ่มศัตรูถอยหมด — ไม่มีร่างให้เก็บของ")
+    else:
+        _emit_personality_notes(io, personality_event(player, "combat_win", reg))
+        io.write_line(" ⚔ กลุ่มนี้แตกแล้ว")
+        mon = last_loot_mon
+        if mon is None or mon.get("_escaped"):
+            mon = next(
+                (f for f in reversed(foes) if not f.get("_escaped")),
+                foes[-1],
+            )
+        if mon and not mon.get("_escaped") and any_killed:
+            loot = build_combat_loot_table(player, mon, reg, rng)
+            if loot:
+                emit_narrative(io, narrate_field(reg, "loot", rng))
+                for line in present_loot_choices(loot):
+                    io.write_line(line)
+                pick = io.read_line("เก็บ (A / 1,2 / 0): ").strip()
+                notes = resolve_loot_pick(player, reg, loot, pick)
+                if pick.strip().lower() in ("0", "", "n", "ไม่", "ทิ้ง"):
+                    emit_narrative(io, narrate_field(reg, "loot_leave", rng))
+                for line in notes:
+                    io.write_line(line)
     _emit_personality_notes(io, check_personality_point_grants(player, reg))
 
 

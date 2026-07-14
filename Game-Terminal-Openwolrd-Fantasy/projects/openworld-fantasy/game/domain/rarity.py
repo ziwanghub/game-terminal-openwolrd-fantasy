@@ -127,11 +127,16 @@ def ensure_inventory_rarity(player: MutableMapping[str, Any]) -> None:
     if len(rares) > len(ids):
         rares = rares[: len(ids)]
     player["inventory_rarities"] = rares
-    player.setdefault("equip_rarities", {"weapon": None, "armor": None, "accessory": None})
-    er = dict(player.get("equip_rarities") or {})
-    for s in ("weapon", "armor", "accessory"):
-        er.setdefault(s, None)
-    player["equip_rarities"] = er
+    from game.domain.equipment import EQUIP_SLOTS, migrate_equip_loadout
+
+    player.setdefault("equip_rarities", {})
+    try:
+        migrate_equip_loadout(player)
+    except Exception:
+        er = dict(player.get("equip_rarities") or {})
+        for s in EQUIP_SLOTS:
+            er.setdefault(s, None)
+        player["equip_rarities"] = er
 
 
 def append_item_rarity(
@@ -157,7 +162,7 @@ def append_item_rarity(
     if len(rares) > len(ids):
         rares = rares[: len(ids)]
     player["inventory_rarities"] = rares
-    player.setdefault("equip_rarities", {"weapon": None, "armor": None, "accessory": None})
+    player.setdefault("equip_rarities", {})
 
 
 def pop_item_rarity_at(player: MutableMapping[str, Any], index: int) -> str:
@@ -186,9 +191,21 @@ def find_inventory_index(player: Mapping[str, Any], item_id: str) -> int:
 
 
 def equip_rarity_for_slot(player: Mapping[str, Any], slot: str) -> str:
+    from game.domain.equipment import normalize_slot
+
     er = player.get("equip_rarities") or {}
-    r = er.get(slot)
+    ns = normalize_slot(slot)
+    r = er.get(ns)
+    if r in (None, "", "None"):
+        # legacy key fallback
+        r = er.get(slot)
     return str(r or "common")
+
+
+def _latent_rank_scale(reg: DataRegistry, rarity_id: str) -> float:
+    """Higher rarity → stronger hidden latent (player must observe)."""
+    rk = int(tier_rank(reg, rarity_id) or 1)
+    return 0.65 + min(1.8, rk * 0.18)
 
 
 def scaled_item_stats(
@@ -198,22 +215,89 @@ def scaled_item_stats(
     *,
     upgrade_level: int = 0,
     slot: str = "weapon",
-) -> Dict[str, int]:
-    """Final stats after rarity mult + upgrade."""
+) -> Dict[str, Any]:
+    """
+    Visible primary: atk (weapons) · def/mdef (armor/shield) · max_mana if any.
+    Latent (hidden): hp%/tough/status_resist/crit/atk_pct — scale with rarity rank.
+    """
+    from game.domain.equipment import normalize_slot
+
+    ns = normalize_slot(slot)
     atk = scale_stat(int(item.get("atk") or 0), rarity_id, reg)
     max_hp = scale_stat(int(item.get("max_hp") or 0), rarity_id, reg)
     max_mana = scale_stat(int(item.get("max_mana") or 0), rarity_id, reg)
+    defense = scale_stat(int(item.get("def") or item.get("defense") or 0), rarity_id, reg)
+    mdef = scale_stat(int(item.get("mdef") or 0), rarity_id, reg)
+    latent_max_hp = scale_stat(int(item.get("latent_max_hp") or 0), rarity_id, reg)
+    lat_scale = _latent_rank_scale(reg, rarity_id)
+    latent_hp_pct = float(item.get("latent_hp_pct") or 0.0) * lat_scale
+    # weapon latents (hidden offense)
+    latent_atk_pct = float(item.get("latent_atk_pct") or 0.0) * lat_scale
+    latent_crit = float(item.get("latent_crit") or 0.0) * lat_scale
+    # armor latents (hidden toughness)
+    latent_tough = float(item.get("latent_tough") or 0.0) * lat_scale  # extra power_def soft
+    latent_status_resist = float(item.get("latent_status_resist") or 0.0) * lat_scale
+
+    # defaults by kind if YAML omits latent (so every piece differs a bit)
+    grip = str(item.get("grip") or "")
+    armor_like = ns in ("body", "head", "legs", "feet", "armor")
+    shield_like = ns == "off_hand" and (grip == "shield" or defense > 0)
+    weapon_like = ns in ("main_hand", "weapon") or (
+        ns == "off_hand" and grip in ("one_hand", "two_hand", "focus") and atk > 0
+    )
+    if armor_like or shield_like:
+        if latent_hp_pct <= 0 and not item.get("latent_hp_pct"):
+            # mild default latent bulk — varies by weight
+            wc = str(item.get("weight_class") or "light")
+            base_l = {"heavy": 0.045, "medium": 0.032, "light": 0.022}.get(wc, 0.028)
+            if ns == "body":
+                base_l *= 1.15
+            elif ns == "feet":
+                base_l *= 0.7
+            latent_hp_pct = base_l * lat_scale
+        if latent_tough <= 0 and not item.get("latent_tough"):
+            latent_tough = (0.35 + defense * 0.04) * lat_scale * 0.15
+        if latent_status_resist <= 0 and not item.get("latent_status_resist"):
+            latent_status_resist = (0.008 if shield_like else 0.005) * lat_scale
+    if weapon_like and atk > 0:
+        if latent_atk_pct <= 0 and not item.get("latent_atk_pct"):
+            # higher rank weapons feel sharper — still hidden
+            latent_atk_pct = 0.012 * lat_scale
+        if latent_crit <= 0 and not item.get("latent_crit"):
+            latent_crit = 0.4 * lat_scale  # flat soft crit points
+
     up = max(0, int(upgrade_level))
-    # upgrade still adds flat; scaled lightly by rarity
     um = rarity_stat_mult(reg, rarity_id)
     atk += int(round(up * 2 * um))
-    if slot == "armor":
-        max_hp += int(round(up * 4 * um))
+    if armor_like or shield_like:
+        defense += int(round(up * 2.2 * um))
+        mdef += int(round(up * 1.2 * um))
+        latent_hp_pct += 0.004 * up * lat_scale
+        latent_tough += 0.08 * up
+        latent_status_resist += 0.002 * up
+        if max_hp > 0:
+            max_hp += int(round(up * 1 * um))
     else:
-        max_hp += int(round(up * 1 * um))
-    if slot in ("weapon", "accessory"):
+        # weapon upgrades: primary ATK + hidden offense latents
+        latent_atk_pct += 0.006 * up * lat_scale
+        latent_crit += 0.15 * up * lat_scale
+        if max_hp > 0:
+            max_hp += int(round(up * 1 * um))
+    if ns in ("main_hand", "off_hand", "weapon", "acc_1", "accessory"):
         max_mana += int(round(up * 1 * um))
-    return {"atk": atk, "max_hp": max_hp, "max_mana": max_mana}
+    return {
+        "atk": atk,
+        "max_hp": max_hp,
+        "max_mana": max_mana,
+        "def": defense,
+        "mdef": mdef,
+        "latent_max_hp": latent_max_hp,
+        "latent_hp_pct": float(latent_hp_pct),
+        "latent_atk_pct": float(latent_atk_pct),
+        "latent_crit": float(latent_crit),
+        "latent_tough": float(latent_tough),
+        "latent_status_resist": float(latent_status_resist),
+    }
 
 
 def format_rarity_tag(reg: Optional[DataRegistry], rarity_id: str) -> str:

@@ -1,19 +1,37 @@
 id: desert_heat
 name: ทะเลทรายร้อน
+climate: [hot, arid]
 world_tier: 3
 unlock_level: 8
 connections: [mountain_rock, ancient_city, void_rift]
+stations: [camp]
 mastery_start: 10
 ambient:
   hp_regen: 1
   mana_regen: 2
 monster_pools:
   - id: sand_scorpion
-    weight: 40
+    weight: 29
   - id: desert_raider
-    weight: 35
+    weight: 20
+  - id: sand_viper
+    weight: 20
+  - id: oasis_jackal
+    weight: 18
+  - id: dust_wisp
+    weight: 10
   - id: fire_salamander
-    weight: 25
+    weight: 6
+  - id: dune_stalker
+    weight: 4
+  - id: desert_vulture
+    weight: 12
+  - id: desert_scarab
+    weight: 11
+  - id: elite_dune_warlock
+    weight: 4
+  - id: desert_sand_golem
+    weight: 10
 
 boss_id: boss_sun_scourge
 boss_unlock_level: 14

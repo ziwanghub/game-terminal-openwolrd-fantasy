@@ -1,22 +1,37 @@
 id: void_rift
 name: รอยแยกสุญญะ
+climate: [dark, void, hot]
 world_tier: 4
 unlock_level: 14
 connections: [crystal_peak, desert_heat, ancient_city]
+stations: [camp, mystic]
 mastery_start: 5
 ambient:
   hp_regen: 1
   mana_regen: 3
 monster_pools:
   - id: void_mote
-    weight: 30
+    weight: 34
   - id: void_crawler
-    weight: 25
+    weight: 28
   - id: null_mage
     weight: 25
   - id: rift_beast
     weight: 15
   - id: entropy_spawn
     weight: 5
+  - id: void_shade_larva
+    weight: 12
+  - id: void_bone_moth
+    weight: 11
+  - id: elite_void_riven_knight
+    weight: 3
+  - id: void_rift_mite
+    weight: 11
+  - id: void_whisperer
+    weight: 8
+  - id: elite_void_null_archon
+    weight: 3
+
 boss_id: boss_void_herald
 boss_unlock_level: 16

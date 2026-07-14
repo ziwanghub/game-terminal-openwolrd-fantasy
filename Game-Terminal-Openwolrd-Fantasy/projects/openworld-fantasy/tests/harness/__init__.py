@@ -19,11 +19,11 @@ def isolated_saves(monkeypatch, tmp_path: Path) -> Path:
 
 def create_script(
     name: str = "SmokeHero",
-    gender: str = "ไม่ระบุ",
+    gender: str = "1",  # 1=ชาย 2=หญิง
     birth: str = "15/6/2000",
     occupation_index: str = "1",  # ignored — start as vagabond (no class pick)
 ) -> List[str]:
-    """Inputs for ``interactive_create`` (name, gender, birth, Enter)."""
+    """Inputs for ``interactive_create`` (name, gender 1|2, birth, Enter)."""
     return [name, gender, birth, ""]
 
 
@@ -33,11 +33,11 @@ def field_exit_script(
 ) -> List[str]:
     """Build a field-loop script that ends with ``0`` (auto-save exit).
 
-    Tutorial is 7 Enter pages when ``include_tutorial`` is True.
+    Tutorial is 8 Enter pages when ``include_tutorial`` is True (1.38+).
     """
     lines: List[str] = []
     if include_tutorial:
-        lines.extend(["", "", "", "", "", "", ""])  # 7 tutorial pages
+        lines.extend(["", "", "", "", "", "", "", ""])  # 8 tutorial pages
     lines.extend(actions)
     if not lines or lines[-1] != "0":
         lines.append("0")

@@ -170,12 +170,58 @@ def interactive_create(reg: DataRegistry, io: Optional[IO] = None) -> Dict[str, 
     io = io or _io()
     from game.domain.ui_prefs import ensure_ui_prefs
 
-    io.write_line("\n── สร้างตัวละคร (1/4) ชื่อ ──")
-    name = io.read_line("ชื่อตัวละคร: ").strip() or "นักผจญภัย"
-    io.write_line("\n── สร้างตัวละคร (2/4) เพศ ──")
-    gender = io.read_line("เพศ (ชาย/หญิง/อื่นๆ · Enter=ไม่ระบุ): ").strip() or "ไม่ระบุ"
-    io.write_line("\n── สร้างตัวละคร (3/3) วันเกิด ──")
-    birth = io.read_line("วัน/เดือน/ปี (เช่น 15/6/2000): ").strip()
+    io.write_line()
+    io.write_line(
+        render_box(
+            [
+                " สร้างตัวละคร  (1/3) ชื่อ",
+                "---",
+                " ตั้งชื่อที่จะใช้ในโลกนี้",
+            ],
+            double=False,
+        )
+    )
+    name = io.read_line("\n  ชื่อตัวละคร: ").strip() or "นักผจญภัย"
+
+    io.write_line()
+    io.write_line(
+        render_box(
+            [
+                " สร้างตัวละคร  (2/3) เพศ",
+                "---",
+                " 1  ชาย",
+                " 2  หญิง",
+                "---",
+                " พิมพ์ 1 หรือ 2 แล้ว Enter",
+            ],
+            double=False,
+        )
+    )
+    gender = "ชาย"
+    for _ in range(5):
+        gch = io.read_line("\n  เลือกเพศ (1–2): ").strip()
+        if gch in ("1", "ชาย", "ช", "m", "M", "male"):
+            gender = "ชาย"
+            break
+        if gch in ("2", "หญิง", "ญ", "f", "F", "female"):
+            gender = "หญิง"
+            break
+        io.write_line("  เลือก 1=ชาย หรือ 2=หญิง")
+    io.write_line(f"  → เพศ: {gender}")
+
+    io.write_line()
+    io.write_line(
+        render_box(
+            [
+                " สร้างตัวละคร  (3/3) วันเกิด",
+                "---",
+                " รูปแบบ  วัน/เดือน/ปี",
+                " ตัวอย่าง  15/6/2000",
+            ],
+            double=False,
+        )
+    )
+    birth = io.read_line("\n  วันเกิด: ").strip()
     try:
         day, month, year = [int(x) for x in birth.split("/")]
         zodiac = zodiac_from_date(day, month)
@@ -183,7 +229,7 @@ def interactive_create(reg: DataRegistry, io: Optional[IO] = None) -> Dict[str, 
     except Exception:
         zodiac = "เมษ"
         birth_s = "1/1/2000"
-    io.write_line(f"→ ราศี: {zodiac}  (ผลบางอย่าง… ยังมองไม่เห็น)")
+    io.write_line(f"  → ราศี: {zodiac}  (ผลบางอย่าง… ยังมองไม่เห็น)")
 
     # Start without fixed class — vagabond in the free city path
     starter_id = "vagabond" if "vagabond" in reg.occupations else next(iter(reg.occupations))
@@ -287,6 +333,14 @@ def run_field(
         player["tutorial_done"] = True
 
     ensure_dungeon_state(player)
+    # T1: show offline needs delta once after load
+    try:
+        notes = player.pop("_pending_load_notes", None)
+        if notes:
+            for line in notes:
+                io.write_line(line)
+    except Exception:
+        pass
     try:
         from game.domain.situation import format_inbox_preview, ensure_situation_fields
 
@@ -352,40 +406,50 @@ def run_field(
         area_name = reg.area_name(area_id)
 
         io.write_line()
-        io.write_line(render_mode_chrome("สำรวจ", f"โลก {world_id}"))
+        # ── A: chrome + status ──
+        io.write_line(render_mode_chrome("สำรวจ", f"{area_name}  ·  โลก {world_id}"))
         io.write_line(render_status_l1c(player, area_name))
-        # occasional area mood (not every tick — every 4 time units), 1 line
+
+        # ── B: area mood (soft, rare) ──
         if int(player.get("time_units", 0)) % 4 == 1:
-            emit_narrative(io, area_mood(reg, area_id, rng), max_lines=1)
-        io.write_line("\n── สิ่งที่สังเกต ──")
+            mood = area_mood(reg, area_id, rng)
+            if mood:
+                io.write_line()
+                emit_narrative(io, mood, max_lines=1)
+
+        # ── C: sights panel ──
+        from game.ui_terminal.layout import render_box
+        from game.ui_terminal.status import format_sights_panel_lines
+
+        flavor = ""
         if sights:
-            emit_narrative(
-                io, narrate_field(reg, "sights", rng, area_id=area_id), max_lines=1
-            )
+            flav_lines = narrate_field(reg, "sights", rng, area_id=area_id)
+            if flav_lines:
+                flavor = str(flav_lines[0])
         else:
-            emit_narrative(
-                io, narrate_field(reg, "no_sights", rng, area_id=area_id), max_lines=1
+            flav_lines = narrate_field(reg, "no_sights", rng, area_id=area_id)
+            if flav_lines:
+                flavor = str(flav_lines[0])
+        io.write_line()
+        io.write_line(
+            render_box(
+                format_sights_panel_lines(sights, flavor=flavor),
+                double=False,
             )
-        for i, s in enumerate(sights, 1):
-            h = s.get("handle") or f"#{i}"
-            io.write_line(
-                f"  {i}. {h}  [{s.get('kind')}] {s.get('label')} — {s.get('hint')}  "
-                f"เสี่ยง:{s.get('risk', '?')}"
-            )
-        if sights:
-            io.write_line("  (คำสั่ง: f_mn01 · o_ch01 · talk_np01 · ? = ช่วย)")
+        )
         try:
             maybe_onboarding_tip(player, io, area_id=area_id)
         except Exception:
             pass
-        # boss hint (single line under sights)
+        # boss hint
         ok_boss, boss_msg = can_challenge_boss(player, reg, area_id)
         boss_line = ""
         if ok_boss:
-            boss_line = f" ☠ บอส: {boss_msg} (B)"
+            boss_line = f"บอส: {boss_msg}  (B)"
         elif "เลเวล" in str(boss_msg):
-            boss_line = f" ☠ บอส: ล็อก — {boss_msg}"
+            boss_line = f"บอส ล็อก — {boss_msg}"
 
+        # ── D: actions ──
         io.write_line()
         io.write_line(
             render_field_actions(
@@ -394,7 +458,7 @@ def run_field(
                 boss_line=boss_line,
             )
         )
-        ch = io.read_line("\nเลือก: ").strip()
+        ch = io.read_line("\n  เลือก (เลขเมนู / เลขเป้า / 0 ออก): ").strip()
 
         # verb + target commands (f_mn02, upgrade_sw001, …)
         try:
@@ -520,6 +584,10 @@ def run_field(
                 io.write_line(line)
             io.write_line(" (หรือกด 5/I → 4 ภารกิจ)")
             io.read_line("Enter...")
+        elif ch in ("a", "A"):
+            from game.services.field_menus import run_rank_hub
+
+            run_rank_hub(player, reg, io, rng)
         elif ch in ("b", "B"):
             ok, msg = can_challenge_boss(player, reg, area_id)
             if not ok:

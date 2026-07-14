@@ -1,0 +1,76 @@
+# Craft success / fail rules (K1–K3) — soft, anti-spoiler
+# Players never see raw %; UI uses labels only.
+
+version: 2
+
+# K3: craft stations bound to areas (area YAML stations: overrides this)
+stations:
+  labels:
+    forge: หลอม / ตี
+    camp: ค่าย / ต้มยา
+    mystic: จารึก / เงา
+  # if area has no stations field
+  default: [camp]
+  # soft mult when recipe.station matches location (always true if filtered)
+  match_mult: 1.0
+  elsewhere_hint: "สูตรสถานีอื่นอยู่ที่เมือง / ถ้ำ / ยอดเขา — เดินทางก่อน"
+  missing_messages:
+    - 「ที่นี่ไม่มีเตา/ค่ายสำหรับงานนี้」
+    - 「สถานีไม่ตรง — ต้องไปจุดที่เหมาะสม」
+    - 「ไฟและเงาที่นี่ไม่ยอมสูตรนี้」
+
+# Base success by intended output_rarity tier
+base_success:
+  common: 0.92
+  uncommon: 0.82
+  rare: 0.68
+  sacred: 0.52
+  legendary: 0.40
+  divine: 0.34
+  archdivine: 0.28
+  mythic: 0.22
+  default: 0.85
+
+# Clamp final chance
+chance_min: 0.12
+chance_max: 0.97
+
+# K2: material quality above min rank (average surplus tiers)
+quality:
+  per_tier_bonus: 0.08      # +1 tier avg → ×1.08
+  max_bonus_tiers: 2        # cap +2 tiers → ×1.16
+  at_min_soft: 0.97         # only exact min → slight soft penalty product
+
+# Level soft: each level above unlock_level
+level_soft:
+  per_level: 0.012
+  max_bonus: 0.08
+
+# Daily / player noise
+noise:
+  min: 0.92
+  max: 1.08
+
+# Soft labels (no %)
+labels:
+  high: 0.80      # ≥ → โอกาสสูง
+  mid: 0.55       # ≥ → โอกาสปานกลาง else เสี่ยงสูง
+
+# Fail policy defaults (overridable per recipe.success)
+fail:
+  mode: soft                 # soft | hard
+  refund_money_pct: 0.45
+  refund_mat_pct: 0.50       # fraction of consumed stacks returned (round up at least 0 sometimes)
+  hard_chance: 0.18          # within a fail: chance of hard (no refund)
+  soft_messages:
+    - 「โลหะไม่ยอมจับรูป」
+    - 「ไฟในเตาดับก่อนเวลา」
+    - 「สูตรสั่น — ครั้งนี้ยังไม่ถึง」
+    - 「เงาวัตถุดิบไม่ประสาน」
+  hard_messages:
+    - 「เถ้าเท่านั้นที่เหลือ」
+    - 「แรงตีพลาด — ของหายไปกับประกาย」
+  success_flavors:
+    - 「ค้อนและไฟยอม」
+    - 「รูปทรงนิ่งลง」
+    - 「เงาจับแน่น」

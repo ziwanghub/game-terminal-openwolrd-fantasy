@@ -196,8 +196,60 @@ def _use_inventory_index(
     player["inventory"] = inv
     player["inventory_rarities"] = rar
 
-    it = reg.items.get(item_id) or {}
+    it = dict(reg.items.get(item_id) or {})
     io.write_line(f"ใช้: {it.get('name') or item_name}")
+
+    # L1: open sealed chest
+    try:
+        from game.domain.chest_loot import chest_rank_from_item, is_chest_item, open_chest
+
+        if is_chest_item(it):
+            rank = chest_rank_from_item(it)
+            for line in open_chest(player, reg, random.Random(), rank):
+                io.write_line(line)
+            return True
+    except Exception:
+        pass
+
+    # food: fill hunger (N4) — before potion path
+    try:
+        from game.domain.needs import apply_food_relief, is_food_item
+
+        if is_food_item(it):
+            hr = int(it.get("hunger_relief") or (20 + 12 * int(it.get("food_tier") or 1)))
+            fr = int(it.get("fatigue_relief") or max(0, 2 * int(it.get("food_tier") or 1)))
+            mb = int(it.get("morale_boost") or max(2, 3 * int(it.get("food_tier") or 1)))
+            for line in apply_food_relief(
+                player, hunger_relief=hr, fatigue_relief=fr, morale_boost=mb
+            ):
+                io.write_line(line)
+            if it.get("heal_hp"):
+                h = int(it["heal_hp"])
+                player["hp"] = min(int(player["max_hp"]), int(player.get("hp") or 0) + h)
+                io.write_line(f"อุ่นกาย ฟื้น HP +{h}")
+            if it.get("heal_mana"):
+                m = int(it["heal_mana"])
+                player["mana"] = min(
+                    int(player["max_mana"]), int(player.get("mana") or 0) + m
+                )
+                io.write_line(f"ชุ่มคอ MP +{m}")
+            buff = it.get("food_buff") or it.get("apply_status")
+            if buff:
+                sid = str(buff.get("id") if isinstance(buff, dict) else buff)
+                applied = apply_status(
+                    player,
+                    sid,
+                    reg,
+                    random.Random(),
+                    ignore_resist=True,
+                    source=item_id,
+                )
+                if applied:
+                    io.write_line(f"ได้รสอาหาร: {status_display_name(reg, applied)}")
+            io.write_line(f"กิน「{it.get('name') or item_name}」")
+            return True
+    except Exception:
+        pass
 
     if it.get("clear_all_debuffs") or str(it.get("clear_status") or "").lower() in (
         "all",
@@ -243,6 +295,16 @@ def _use_inventory_index(
         old = int(player.get("hp") or 0)
         player["hp"] = min(int(player["max_hp"]), old + h)
         io.write_line(f"ฟื้น HP +{h} → {player['hp']}/{player['max_hp']}")
+        # potion: tiny hunger ease only
+        try:
+            from game.domain.needs import apply_food_relief
+
+            for line in apply_food_relief(
+                player, hunger_relief=4, fatigue_relief=0, morale_boost=1
+            ):
+                io.write_line(line)
+        except Exception:
+            pass
     if it.get("heal_mana"):
         m = int(it["heal_mana"])
         player["mana"] = min(int(player["max_mana"]), int(player.get("mana") or 0) + m)
@@ -256,6 +318,44 @@ def _use_inventory_index(
                 io.write_line(note)
         except Exception:
             io.write_line("…จิตเปลี่ยนไปบ้าง")
+    # SK-R5 lite: essence → soft skill rank nudge
+    if it.get("skill_rank_nudge"):
+        skills = [str(s) for s in (player.get("skills") or []) if s]
+        if not skills:
+            io.write_line("ยังไม่มีสกิล — เก็บไว้ก่อน")
+            return False
+        from game.domain.skill_rank import (
+            format_skill_rank_hint,
+            try_rank_nudge_item,
+        )
+
+        io.write_line("  กระซิบเข้าท่าไหน?")
+        show = skills[:12]
+        for i, sid in enumerate(show, 1):
+            sk = reg.skills.get(sid) or {}
+            hint = format_skill_rank_hint(player, sid, reg)
+            io.write_line(f"  {i}. {sk.get('name') or sid} · {hint}")
+        raw = io.read_line("  เลขท่า (0=ยกเลิก): ").strip()
+        if raw in ("0", ""):
+            io.write_line("ยกเลิก — ไม่ใช้ของ")
+            return False
+        try:
+            ix = int(raw) - 1
+            sid = show[ix]
+        except Exception:
+            io.write_line("เลือกไม่ถูกต้อง")
+            return False
+        import random as _rnd
+
+        ok, msg = try_rank_nudge_item(
+            player,
+            sid,
+            reg,
+            _rnd.Random(),
+            bonus=float(it.get("skill_rank_nudge_bonus") or 0),
+        )
+        io.write_line(f"  {msg}")
+        return bool(ok)
     if not any(
         it.get(k)
         for k in (
@@ -267,6 +367,7 @@ def _use_inventory_index(
             "restore_intel",
             "boost_intel_max",
             "fill_intel",
+            "skill_rank_nudge",
         )
     ):
         io.write_line("ใช้แล้ว (ไม่มีผลรักษาชัดเจน)")
@@ -279,23 +380,48 @@ def _category_loop(
     io: IO,
     category: str,
 ) -> None:
+    from game.ui_terminal.layout import render_box
+
     while True:
         io.write_line()
-        for line in format_category_list(player, reg, category):
-            io.write_line(line)
+        io.write_line(render_box(format_category_list(player, reg, category), double=False))
         entries = list_bag_entries(player, reg, category)
-        if category == "healing":
-            ch = io.read_line("ใช้หมายเลข (0=กลับ): ").strip()
+        if category == "chest":
+            ch = io.read_line("\n  เปิดหมายเลข / A=ทั้งหมด (0=กลับ): ").strip()
+        elif category in ("healing", "food"):
+            ch = io.read_line("\n  ใช้/เปิด หมายเลข (0=กลับ): ").strip()
         elif category == "equipment":
-            ch = io.read_line("เลือกชิ้น (หมายเลขหรือ sw001 · 0=กลับ): ").strip()
+            ch = io.read_line("\n  เลือกชิ้น (หมายเลข/sw001 · 0=กลับ): ").strip()
         elif category == "material":
-            ch = io.read_line("ดูหมายเลข (0=กลับ): ").strip()
+            ch = io.read_line("\n  ดูหมายเลข (0=กลับ): ").strip()
         elif category == "card":
-            ch = io.read_line("เลือกการ์ด (0=กลับ): ").strip()
+            ch = io.read_line("\n  เลือกการ์ด (0=กลับ): ").strip()
         else:
-            ch = io.read_line("เลือก (0=กลับ): ").strip()
+            ch = io.read_line("\n  เลือก (0=กลับ): ").strip()
         if ch in ("0", ""):
             return
+
+        # L5: open all sealed chests in bag (soft confirm)
+        if category == "chest" and ch.lower() in ("a", "all", "ทั้งหมด", "*"):
+            if not entries:
+                io.write_line("ไม่มีหีบในคลัง")
+                continue
+            n = len(entries)
+            if not confirm_yn(io, f"เปิดหีบทั้งหมด {n} ใบ?"):
+                io.write_line("ยกเลิกเปิดทั้งหมด")
+                continue
+            # re-resolve by absolute index descending so pops stay stable
+            abs_idxs = sorted((int(e["index"]) for e in entries), reverse=True)
+            opened = 0
+            for abs_i in abs_idxs:
+                ids_now = list(player.get("inventory_ids") or [])
+                if abs_i < 0 or abs_i >= len(ids_now):
+                    continue
+                if _use_inventory_index(player, reg, abs_i, io):
+                    opened += 1
+            recompute_stats(player, reg)
+            io.write_line(f" เปิดครบ {opened}/{n} ใบจากคลัง")
+            continue
 
         entry = None
         if category == "equipment":
@@ -307,7 +433,7 @@ def _category_loop(
             try:
                 pick = int(ch) - 1
             except Exception:
-                io.write_line("ใส่หมายเลข")
+                io.write_line("ใส่หมายเลข" + (" หรือ A=เปิดทั้งหมด" if category == "chest" else ""))
                 continue
             if pick < 0 or pick >= len(entries):
                 io.write_line("นอกช่วง")
@@ -317,7 +443,7 @@ def _category_loop(
         iid = str(entry["id"])
         idx = int(entry["index"])
 
-        if category == "healing":
+        if category in ("healing", "food", "chest"):
             _use_inventory_index(player, reg, idx, io)
             recompute_stats(player, reg)
             continue
@@ -351,12 +477,14 @@ def _category_loop(
             for line in examine_item(iid, reg):
                 io.write_line(line)
             card_name = str((reg.cards.get(iid) or reg.items.get(iid) or {}).get("name") or iid)
-            io.write_line("ใส่ช่อง: 1=อาวุธ  2=เกราะ  0=ไม่ใส่")
+            io.write_line("ใส่ช่อง: 1=มือหลัก  2=ลำตัว  3=มือรอง  0=ไม่ใส่")
             slot_ch = io.read_line("ช่อง: ").strip()
             if slot_ch in ("0", ""):
                 io.write_line("ยกเลิกใส่การ์ด")
                 continue
-            slot = {"1": "weapon", "2": "armor"}.get(slot_ch)
+            slot = {"1": "main_hand", "2": "body", "3": "off_hand", "w": "main_hand", "a": "body"}.get(
+                slot_ch
+            )
             if not slot:
                 io.write_line("ช่องไม่ถูกต้อง — ยกเลิก")
                 continue
@@ -368,7 +496,9 @@ def _category_loop(
             if not socks:
                 io.write_line("ช่องนี้ยังไม่มีซ็อกเก็ต (สวมเกียร์ที่มีช่องก่อน)")
                 continue
-            slot_th = "อาวุธ" if slot == "weapon" else "เกราะ"
+            from game.domain.equipment import SLOT_LABEL_TH
+
+            slot_th = SLOT_LABEL_TH.get(slot, slot)
             io.write_line(f"ช่อง 1..{len(socks)} บน{slot_th}")
             try:
                 si = int(io.read_line("หมายเลขช่อง: ").strip()) - 1
@@ -424,13 +554,14 @@ def run_bag_hub(
         ensure_item_instances(player, reg)
     except Exception:
         pass
+    from game.ui_terminal.layout import render_box
+
     while True:
         apply_party_passives_to_player(player, reg)
         recompute_stats(player, reg)
         io.write_line()
-        for line in format_bag_hub(player, reg):
-            io.write_line(line)
-        ch = io.read_line("เลือกประเภท/ไอดี/คำสั่ง (equip_ sw001 · use_ · ?): ").strip()
+        io.write_line(render_box(format_bag_hub(player, reg), double=False))
+        ch = io.read_line("\n  เลือก (1–9 · C · M · J · 0 กลับ): ").strip()
         if ch in ("0", ""):
             break
         # verb commands inside bag hub
@@ -470,14 +601,18 @@ def run_bag_hub(
         if ch == "1":
             _category_loop(player, reg, io, "equipment")
         elif ch == "2":
-            _category_loop(player, reg, io, "healing")
+            _category_loop(player, reg, io, "food")
         elif ch == "3":
-            _category_loop(player, reg, io, "material")
+            _category_loop(player, reg, io, "healing")
         elif ch == "4":
-            _category_loop(player, reg, io, "card")
+            _category_loop(player, reg, io, "chest")
         elif ch == "5":
-            _category_loop(player, reg, io, "other")
+            _category_loop(player, reg, io, "material")
         elif ch == "6":
+            _category_loop(player, reg, io, "card")
+        elif ch == "7":
+            _category_loop(player, reg, io, "other")
+        elif ch == "8":
             if open_gear:
                 open_gear(player, reg, io)
             else:
@@ -491,20 +626,18 @@ def run_bag_hub(
                         _manage_equipped(player, reg, io, eq2)
                     else:
                         io.write_line("ไม่พบไอดีนั้นบนตัว")
-        elif ch == "7":
-            io.write_line(" ร้านหลักอยู่ที่สำรวจ → 6 (โหมดร้าน)")
-            ans = io.read_line("ทางลัดร้านท้องถิ่น? (y=เปิด / n=กลับ): ").strip().lower()
-            if ans in ("y", "yes", "ใช่", "1"):
-                if open_shop:
-                    open_shop(player, reg, io)
-                else:
-                    run_shop(player, reg, io)
-        elif ch == "8":
+        elif ch == "9":
+            # direct local shop shortcut (no extra y/n friction)
+            if open_shop:
+                open_shop(player, reg, io)
+            else:
+                run_shop(player, reg, io)
+        elif ch in ("c", "C", "craft", "คราฟ"):
             if open_craft:
                 open_craft(player, reg, io)
             else:
                 io.write_line("คราฟ: สำรวจ → 6 → 5 หรือเมนูเกียร์")
-        elif ch == "9":
+        elif ch in ("a", "A", "all", "ทั้งหมด"):
             for line in format_bag_panel(player, reg):
                 io.write_line(line)
             io.read_line("Enter...")
@@ -529,4 +662,4 @@ def run_bag_hub(
                 io.write_line("(ชิ้นนี้อยู่ในคลัง — ไปเมนู 1.อุปกรณ์ เพื่อสวม)")
                 io.read_line("Enter...")
             else:
-                io.write_line("เลือก 0–9 หรือพิมพ์ไอดีที่สวม เช่น sw001")
+                io.write_line("เลือก 0–9 / A / ไอดีที่สวม เช่น sw001")

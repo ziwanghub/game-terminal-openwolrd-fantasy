@@ -43,21 +43,21 @@ def test_instance_id_survives_ensure_and_save(tmp_path, monkeypatch):
     add_item(p, "iron_sword", reg, rarity="legendary")
     equip_item(p, "iron_sword", reg)
     ensure_item_instances(p, reg)
-    inst = get_equipped_instance(p, "weapon")
+    inst = get_equipped_instance(p, "main_hand")
     assert inst
     ref1 = format_instance_ref(inst)
     iid1 = inst["inst_id"]
 
     # ensure again must not change inst_id
     ensure_item_instances(p, reg)
-    inst2 = get_equipped_instance(p, "weapon")
+    inst2 = get_equipped_instance(p, "main_hand")
     assert inst2["inst_id"] == iid1
     assert format_instance_ref(inst2) == ref1
 
     path = save_player(p, world_id="default")
     loaded = load_player(str(path))
     ensure_item_instances(loaded, reg)
-    inst3 = get_equipped_instance(loaded, "weapon")
+    inst3 = get_equipped_instance(loaded, "main_hand")
     assert inst3 is not None
     assert inst3["inst_id"] == iid1
     assert str(inst3.get("rarity")) == "legendary"
@@ -84,8 +84,8 @@ def test_equip_verb_from_field():
         [],
         handle_sight=lambda s: None,
     )
-    assert (p.get("equip_ids") or {}).get("weapon") == "iron_sword"
-    inst = get_equipped_instance(p, "weapon")
+    assert (p.get("equip_ids") or {}).get("main_hand") == "iron_sword"
+    inst = get_equipped_instance(p, "main_hand")
     assert inst and inst.get("inst_id")
 
 
@@ -129,4 +129,4 @@ def test_socket_verb():
         [],
         handle_sight=lambda s: None,
     )
-    assert (p.get("sockets") or {}).get("weapon") == ["card_fire"]
+    assert (p.get("sockets") or {}).get("main_hand") == ["card_fire"]

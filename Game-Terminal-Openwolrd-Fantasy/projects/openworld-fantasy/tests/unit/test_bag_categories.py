@@ -23,6 +23,11 @@ def test_item_categories():
     assert item_category("card_fire", reg) == "card"
     assert item_category("antidote", reg) == "healing"
     assert item_category("balm_regen", reg) == "healing"
+    assert item_category("city_bread", reg) == "food"
+    assert item_category("hunter_ration", reg) == "food"
+    assert item_category("traveler_ration", reg) == "food"
+    assert item_category("sealed_chest_common", reg) == "chest"
+    assert item_category("sealed_chest_s", reg) == "chest"
 
 
 def test_list_and_counts():
@@ -31,17 +36,21 @@ def test_list_and_counts():
     # clear starter potion noise somewhat
     add_item(p, "iron_sword", reg)
     add_item(p, "potion_hp", reg)
+    add_item(p, "city_bread", reg)
     add_item(p, "upgrade_mat", reg)
     add_item(p, "card_fire", reg)
     c = count_bag_categories(p, reg)
     assert c["equipment"] >= 1
     assert c["healing"] >= 1
+    assert c["food"] >= 1
     assert c["material"] >= 1
     assert c["card"] >= 1
     eq = list_bag_entries(p, reg, "equipment")
     assert any(e["id"] == "iron_sword" for e in eq)
     heal = list_bag_entries(p, reg, "healing")
     assert any(e["id"] == "potion_hp" for e in heal)
+    food = list_bag_entries(p, reg, "food")
+    assert any(e["id"] == "city_bread" for e in food)
 
 
 def test_hub_text_has_categories():
@@ -50,7 +59,9 @@ def test_hub_text_has_categories():
     lines = format_bag_hub(p, reg)
     text = "\n".join(lines)
     assert "รักษา" in text
+    assert "อาหาร" in text
     assert "อุปกรณ์" in text
+    assert "หีบ" in text
     assert "วัตถุดิบ" in text
     assert "การ์ด" in text
 
@@ -78,10 +89,27 @@ def test_bag_hub_healing_path():
     p["inventory_ids"] = ["potion_hp"]
     p["inventory"] = ["ยา HP"]
     p["inventory_rarities"] = ["common"]
-    # 2 = healing, 1 = first item, 0 = back hub, 0 = exit
-    io = ScriptedIO(["2", "1", "0", "0"])
+    # 3 = healing (after food=2), 1 = first item, 0 = back hub, 0 = exit
+    io = ScriptedIO(["3", "1", "0", "0"])
     run_bag_hub(p, reg, io)
     assert p["hp"] > 30
+
+
+def test_bag_hub_food_path_reduces_hunger():
+    reg = DataRegistry.load(DATA_DIR)
+    p = create_player(reg, "foodbag", "warrior", "เมษ")
+    from game.domain.needs import ensure_needs
+
+    ensure_needs(p)
+    p["needs"]["hunger"] = 70
+    p["inventory_ids"] = ["city_bread"]
+    p["inventory"] = ["ขนมปังเมือง"]
+    p["inventory_rarities"] = ["common"]
+    # 2 = food, 1 = eat, 0 back, 0 exit
+    io = ScriptedIO(["2", "1", "0", "0"])
+    run_bag_hub(p, reg, io)
+    assert p["needs"]["hunger"] < 70
+    assert "city_bread" not in (p.get("inventory_ids") or [])
 
 
 def test_socket_card_requires_yn_confirm():
@@ -92,15 +120,15 @@ def test_socket_card_requires_yn_confirm():
     p["inventory_rarities"] = ["common"]
     equip_item(p, "iron_sword", reg)
     p["card_bag"] = ["card_fire"]
-    # cancel with n
-    io = ScriptedIO(["4", "1", "1", "1", "n", "0", "0"])
+    # cancel with n — card menu is now 6
+    io = ScriptedIO(["6", "1", "1", "1", "n", "0", "0"])
     run_bag_hub(p, reg, io)
     assert "card_fire" in (p.get("card_bag") or [])
-    assert not any((p.get("sockets") or {}).get("weapon") or [])
+    assert not any((p.get("sockets") or {}).get("main_hand") or [])
     assert "ยกเลิก" in io.joined()
     # confirm with y
-    io2 = ScriptedIO(["4", "1", "1", "1", "y", "0", "0"])
+    io2 = ScriptedIO(["6", "1", "1", "1", "y", "0", "0"])
     run_bag_hub(p, reg, io2)
     assert "card_fire" not in (p.get("card_bag") or [])
-    assert (p.get("sockets") or {}).get("weapon") == ["card_fire"]
+    assert (p.get("sockets") or {}).get("main_hand") == ["card_fire"]
     assert "ยืนยันใส่การ์ด" in io2.joined() or "จะใส่" in io2.joined()

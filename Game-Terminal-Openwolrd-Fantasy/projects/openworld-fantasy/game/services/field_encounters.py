@@ -35,6 +35,96 @@ def _master_teach_menu_lazy(player, reg, io, mid):
     from game.services.field_menus import _master_teach_menu
     _master_teach_menu(player, reg, io, mid)
 
+
+def _handle_monster_talk(
+    player: Dict[str, Any],
+    mon: Dict[str, Any],
+    reg: DataRegistry,
+    io: IO,
+    rng: random.Random,
+    *,
+    sight: Optional[Dict[str, Any]] = None,
+) -> None:
+    """
+    MI3: soft talk / negotiate with a monster (usually intel_tier ≥ 2).
+    Outcomes: truce · tip · tribute · flee · combat · ambush · walk.
+    """
+    from game.domain.monster_ai import (
+        apply_talk_rewards,
+        resolve_monster_talk,
+        talk_eligible,
+    )
+    from game.ui_terminal.layout import render_box
+
+    mon_name = str(
+        (sight or {}).get("label")
+        or mon.get("name")
+        or mon.get("base_name")
+        or "???"
+    )
+    eligible = talk_eligible(mon)
+    if not eligible:
+        # beast rare_talk: legacy one-liner (no menu)
+        io.write_line("สิ่งมีชีวิตนั้น... ส่งเสียงเหมือนพูด? ได้ชำนาญพื้นที่งอกเงย")
+        io.write_line(approach_outcome_line("monster", "rare_talk"))
+        for note in apply_talk_rewards(player, mon, "truce", rng, reg=reg):
+            io.write_line(note)
+        mark_monster_seen(player, mon)
+        _emit_personality_notes(io, personality_event(player, "approach_polite", reg))
+        return
+
+    io.write_line(f"  {mon_name}… ไม่พุ่งทันที — เหมือนรอการตอบสนอง")
+    io.write_line(approach_outcome_line("monster", "rare_talk"))
+    box = [
+        " สื่อสาร (soft)",
+        "---",
+        "  1  พูดสงบ / ลดอาวุธ",
+        "  2  ยื่นของขวัญเล็กน้อย (เงินโลก)",
+        "  3  ข่มขู่",
+        "  4  เดินจากไปช้าๆ",
+        "---",
+        "  (ผลไม่แน่นอน · ไม่โชว์%)",
+    ]
+    io.write_line()
+    io.write_line(render_box(box, double=False))
+    ch = io.read_line("\n  เลือก (1–4): ").strip()
+    style_map = {"1": "calm", "2": "gift", "3": "threaten", "4": "walk"}
+    style = style_map.get(ch, "calm")
+    if ch in ("0", ""):
+        style = "walk"
+
+    outcome, lines = resolve_monster_talk(mon, player, style, rng, reg=reg)
+    for line in lines:
+        if line:
+            io.write_line(f"  {line}" if not str(line).startswith(" ") else line)
+
+    if outcome in ("combat", "ambush"):
+        io.write_line(approach_outcome_line("monster", outcome if outcome == "ambush" else "fair_combat"))
+        mark_monster_seen(player, mon)
+        if style == "threaten":
+            _emit_personality_notes(io, personality_event(player, "approach_threaten", reg))
+        _run_combat(
+            player, reg, io, rng, mon=mon, ambush=(outcome == "ambush")
+        )
+        return
+
+    # peaceful-ish ends
+    for note in apply_talk_rewards(player, mon, outcome, rng, reg=reg):
+        io.write_line(note)
+    mark_monster_seen(player, mon)
+    if style == "gift":
+        _emit_personality_notes(io, personality_event(player, "approach_gift", reg))
+    elif style == "threaten":
+        _emit_personality_notes(io, personality_event(player, "approach_threaten", reg))
+    elif style == "walk":
+        _emit_personality_notes(io, personality_event(player, "approach_cautious", reg))
+    else:
+        _emit_personality_notes(io, personality_event(player, "approach_polite", reg))
+    if outcome == "flee":
+        io.write_line(approach_outcome_line("monster", "flee"))
+    else:
+        io.write_line("  ▸ ผล: การเผชิญหน้าจบโดยไม่ต้องฆ่าจบ")
+
 def _handle_player_echo(
     player: Dict[str, Any],
     reg: DataRegistry,
@@ -52,9 +142,12 @@ def _handle_player_echo(
 
     cfg = getattr(reg, "world_social", None) or {}
     approaches = list(cfg.get("approaches") or [])
-    io.write_line(f"\nคุณพบผู้เล่นในโลกนี้: {other.get('name')}")
+    nm = other.get("name") or "เงานิรนาม"
+    io.write_line(f"\nคุณพบเงาในโลกนี้: เงา·{nm}")
     io.write_line(f"  สายที่สังเกตได้: {other.get('occ_path') or other.get('occupation') or '???'}")
-    io.write_line("  (ไม่แสดงเลเวล/ค่าพลัง — ใช้ข้อมูลจริงในระบบ)")
+    if other.get("soft_titles"):
+        io.write_line(f"  ฉายาเลือน: {other['soft_titles'][0]}")
+    io.write_line("  (echo จากบันทึกโลก — ไม่แสดงเลเวล/ค่าพลัง · ไม่ทำร้ายเซฟเจ้าของ)")
     io.write_line("เข้าหาอย่างไร?")
     for i, a in enumerate(approaches, 1):
         io.write_line(f"  {i}. {a.get('label')}")
@@ -139,8 +232,8 @@ def _handle_player_echo(
             player["knowledge"] = know
     elif outcome == "foe":
         remember_social(player, oid, "foe")
-        io.write_line(f"\n⚔ {other.get('name')} กลายเป็นศัตรู!")
-        io.write_line("(ระบบดึงอาวุธ เกียร์ สเตตัสจริงของเขาเข้าสู่การต่อสู้)")
+        io.write_line(f"\n⚔ เงา·{other.get('name')} กลายเป็นศัตรู!")
+        io.write_line("(สู้กับ snapshot — เซฟเจ้าของเงาไม่ถูกแก้)")
         foe = other_as_combatant(other)
         foe = apply_world_enemy_mods(foe, player)
         _run_combat(player, reg, io, rng, mon=foe, ambush=rng.random() < 0.25)
@@ -172,6 +265,13 @@ def _handle_sight(
     if kind == "monster":
         mon = dict(sight.get("monster") or pick_monster(reg, str(player.get("location")), rng))
         outcome = resolve_approach("monster", reg, rng)
+        # MI3: smart monsters bias approach (talk / flee / ambush soft)
+        try:
+            from game.domain.monster_ai import bias_monster_approach
+
+            outcome = bias_monster_approach(outcome, mon, player, rng)
+        except Exception:
+            pass
         emit_narrative(io, narrate_field(reg, "approach_monster", rng))
         io.write_line(f"\nเข้าหา: {sight.get('label')} ({sight.get('hint')})")
         if outcome == "flee":
@@ -179,13 +279,7 @@ def _handle_sight(
             io.write_line(approach_outcome_line("monster", "flee"))
             mark_monster_seen(player, mon)
         elif outcome == "rare_talk":
-            io.write_line("สิ่งมีชีวิตนั้น... ส่งเสียงเหมือนพูด? ได้ชำนาญ +2%")
-            io.write_line(approach_outcome_line("monster", "rare_talk"))
-            aid = str(player.get("location"))
-            am = dict(player.get("area_mastery") or {})
-            am[aid] = min(100, int(am.get(aid, 0)) + 2)
-            player["area_mastery"] = am
-            mark_monster_seen(player, mon)
+            _handle_monster_talk(player, mon, reg, io, rng, sight=sight)
         elif outcome == "ambush":
             io.write_line("มันกระโจนใส่ก่อน!")
             io.write_line(approach_outcome_line("monster", "ambush"))

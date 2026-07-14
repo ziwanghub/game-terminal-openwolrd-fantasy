@@ -1,39 +1,67 @@
-# Shop stock: string id OR {id, rarity}
-# Specialty markets:
-#   min_rarity_rank / max_rarity_rank — only trade those grades (1=common … 8=mythic)
-#   sell_ratio, price_insurance_floor, sell_tax_bonus — economy knobs
+# Shop stock policy (1.14 + 1.24 economy):
+#   - ร้านระบบ = ของใช้ทั่วไป หาซื้อง่าย (common–uncommon เป็นหลัก)
+#   - เกียร์ rare+ / sacred+ / unit / หีบ / key ซ่อน = ไม่ขายในร้านระบบ
+#     → ดรอปจาก open world / หีบ / เควส แล้วขายตลาดผู้เล่น (ตั้งราคาเอง · ภาษีตามราคา)
+#   - การ์ด (card_*) = ไม่ขายในร้านระบบ · ได้จากการดรอปไฟต์/บอสเท่านั้น
+# Specialty markets (สวรรค์/นรก) = sink สกุลเงินพิเศษ + ของใช้ ไม่ขายเกียร์ตำนาน/การ์ด
+#
+# stock: string id OR {id, rarity}
+# min_rarity_rank / max_rarity_rank — เกรดที่ร้านรับซื้อ/โชว์ (1=common … 8=mythic)
 
 - id: traveling_merchant
   name: พ่อค้าเร่
   min_rarity_rank: 1
-  max_rarity_rank: 4
+  max_rarity_rank: 3
   stock:
+    # ยาทั่วไป
     - potion_hp_small
     - potion_hp
     - potion_mana
     - antidote
-    - panacea
     - balm_regen
-    - tonic_might
-    - oil_ward
+    - balm_nature
     - tea_focus
-    - hunter_ration
+    - oil_ward
+    - tonic_might
     - forest_charm
+    # อาหาร (needs)
+    - city_bread
+    - travel_pass_city
+    - repair_kit_basic
+    - incense_focus_bulk
+    - hunter_ration
+    - traveler_ration
+    - trail_stew
+    # วัสดุเล็ก
     - iron_arrowhead
+    - herb_bundle
+    - upgrade_mat
+    - forest_moss
+    - marsh_slime
+    - bird_quill
+    - chitin_plate_mat
+    - id: scroll_guard_level
+      rarity: common
+    - id: scroll_guard_break
+      rarity: common
+    # เกียร์ต้นทาง
     - id: iron_sword
       rarity: common
-    - id: iron_sword
-      rarity: uncommon
+    - id: bandit_knife
+      rarity: common
     - id: leather_armor
       rarity: common
-    - card_fire
-    - card_water
-    - card_vitality
+    - id: copper_ring
+      rarity: common
+    - id: bone_dagger
+      rarity: common
+    - id: dune_sandals
+      rarity: common
 
 - id: city_armory
   name: ร้านอาวุธเมือง
   min_rarity_rank: 1
-  max_rarity_rank: 5
+  max_rarity_rank: 3
   stock:
     - id: iron_sword
       rarity: common
@@ -41,105 +69,148 @@
       rarity: uncommon
     - id: steel_blade
       rarity: uncommon
-    - id: steel_blade
-      rarity: rare
-    - id: shadow_dagger
-      rarity: rare
     - apprentice_staff
     - leather_armor
     - id: iron_plate
       rarity: uncommon
     - mage_robe
-    - upgrade_mat
-    - card_lightning
-    - card_guard_water
-    - card_wind
-    - card_shadow
-    - id: shadow_cloak
-      rarity: rare
-    - id: thorn_blade
-      rarity: sacred
-    - id: thorn_mail
-      rarity: sacred
     - id: copper_ring
       rarity: common
     - id: silver_amulet
       rarity: uncommon
+    - id: bronze_charm
+      rarity: uncommon
+    - wood_shield
+    - id: iron_kite_shield
+      rarity: uncommon
+    - id: ash_longbow
+      rarity: uncommon
+    - oak_greatsword
+    - scout_spear
+    - woodsman_axe
+    - ash_club
+    - iron_helm
+    - leather_cap
+    - chain_coif
+    - leather_greaves
+    - iron_greaves
+    - ranger_leggings
+    - trail_boots
+    - hardened_boots
+    - iron_sabatons
+    - padded_helm
+    - climber_boots
+    - dune_sandals
+    - dune_wraps
+    - ridge_spear
+    - desert_scimitar
+    - bronze_buckler
+    - id: quill_bow
+      rarity: uncommon
+    - id: fang_charm
+      rarity: uncommon
+    - id: chitin_vest
+      rarity: uncommon
+    - balm_nature
+    - upgrade_mat
+    - iron_arrowhead
+    - wolf_fang
+    - goblin_scrap
+    - herb_bundle
+    - stone_chip
+    - rat_tail
+    - sand_cloak_mat
+    - crystal_dust
+    - eagle_feather
+    - jackal_fang
 
 - id: celestial_bazaar
   name: ตลาดสวรรค์
-  min_rarity_rank: 3
-  max_rarity_rank: 7
+  min_rarity_rank: 1
+  max_rarity_rank: 4
   sell_ratio: 0.42
   price_insurance_floor: 0.34
   sell_tax_bonus: -0.03   # slightly lower tax (heaven favor)
   stock:
+    # sink เงินสวรรค์ + ของใช้ — ไม่ขายเกียร์ตำนาน
     - id: blessed_charm
       rarity: sacred
-    - id: card_lightning
-      rarity: rare
-    - id: card_guard_water
-      rarity: rare
-    - potion_mana
     - spirit_incense
-    - id: arcane_circlet
-      rarity: sacred
-    - id: silver_amulet
-      rarity: rare
-    - id: thorn_blade
-      rarity: sacred
-    - id: steel_blade
-      rarity: legendary
+    - potion_mana
+    - focus_tea
+    - mind_elixir
+    - traveler_ration
+    - trail_stew
+    - inn_feast
 
 - id: infernal_market
   name: ตลาดนรก
-  min_rarity_rank: 3
-  max_rarity_rank: 7
+  min_rarity_rank: 1
+  max_rarity_rank: 4
   sell_ratio: 0.45
   sell_tax_bonus: 0.05    # higher tax (infernal cut)
   stock:
+    # sink เงินนรก + ของใช้ — ไม่ขายเกียร์ตำนาน/เงา high
     - id: hell_contract
       rarity: rare
-    - id: shadow_dagger
-      rarity: rare
-    - id: shadow_dagger
-      rarity: legendary
-    - id: card_shadow
-      rarity: rare
-    - id: rare_mat
-      rarity: uncommon
     - void_ash
-    - id: shadow_band
-      rarity: rare
-    - id: shadow_cloak
-      rarity: legendary
+    - tonic_might
+    - oil_ward
 
-# Specialty: rare+ exchange only
+# รับซื้อ/แลกวัสดุกลาง — ไม่ขายเกียร์ rare+ จากระบบ
 - id: rare_exchange
-  name: ตลาดแลกของหายาก
-  min_rarity_rank: 3
-  max_rarity_rank: 5
+  name: ตลาดวัสดุหายาก
+  min_rarity_rank: 2
+  max_rarity_rank: 4
   sell_ratio: 0.44
   price_insurance_floor: 0.33
   stock:
-    - id: steel_blade
-      rarity: rare
-    - id: shadow_dagger
-      rarity: rare
-    - id: shadow_cloak
-      rarity: rare
-    - id: iron_plate
-      rarity: rare
+    - upgrade_mat
     - id: rare_mat
+      rarity: uncommon
+    # ม้วนกัน — หลาย rank (ต้อง rank ≥ ชิ้นเกียร์)
+    - id: scroll_guard_level
+      rarity: common
+    - id: scroll_guard_level
+      rarity: uncommon
+    - id: scroll_guard_level
       rarity: rare
-    - id: dungeon_thread
+    - id: scroll_guard_break
+      rarity: common
+    - id: scroll_guard_break
+      rarity: uncommon
+    - id: scroll_guard_break
       rarity: rare
-    - id: card_lightning
+    - id: scroll_guard_break
+      rarity: sacred
+    - crystal_dust
+    - sand_cloak_mat
+    - panacea
+    - mind_elixir
+    - lucid_incense
+    - balm_nature
+    - oil_shadow
+    - bird_quill
+    - chitin_plate_mat
+    - plant_heart
+    - undead_ash
+    - void_filament
+    - prism_shard
+    - id: fang_charm
+      rarity: uncommon
+    - id: bone_circlet
+      rarity: uncommon
+    - id: chitin_vest
+      rarity: uncommon
+    - id: mid_storm_boots
       rarity: rare
-    - id: silver_amulet
+    - id: mid_steel_glaive
+      rarity: rare
+    - id: scroll_guard_break
       rarity: rare
 
-# Specialty: legend pavilion (ตำนาน–มหาเทพ)
+# ศาลาตำนาน = รับซื้อของแรงก์สูงจากผู้เล่น (max_rarity สูง) — stock ระบบว่าง
+# ของตำนานต้องดรอปจากโลก แล้วตั้งราคาขายตลาดผู้เล่นเอง
 - id: legend_pavilion
   name: ศาลาตำนาน
   min_rarity_rank: 5
@@ -147,20 +218,4 @@
   sell_ratio: 0.48
   price_insurance_floor: 0.38
   sell_tax_bonus: 0.08
-  stock:
-    - id: thorn_blade
-      rarity: legendary
-    - id: thorn_mail
-      rarity: legendary
-    - id: shadow_dagger
-      rarity: legendary
-    - id: arcane_circlet
-      rarity: divine
-    - id: blessed_charm
-      rarity: legendary
-    - id: rare_mat
-      rarity: sacred
-    - id: void_key_shard
-      rarity: sacred
-    - id: dungeon_thread
-      rarity: legendary
+  stock: []

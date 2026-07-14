@@ -377,15 +377,20 @@ def format_gear_showcase(
         inner.append("---")
         inner.append(f" {it.get('desc')}")
 
-    # Stats (scaled)
-    if it.get("atk") or it.get("max_hp") or it.get("max_mana"):
+    # Stats (scaled) — armor: DEF/MDEF shown; latent HP% never listed
+    if any(it.get(k) for k in ("atk", "max_hp", "max_mana", "def", "defense", "mdef")):
         st = scaled_item_stats(it, rid, reg, upgrade_level=0, slot=slot or "weapon")
         bits = []
-        if st["atk"]:
+        if st.get("atk"):
             bits.append(f"โจมตี +{st['atk']}")
-        if st["max_hp"]:
+        if st.get("def"):
+            bits.append(f"กันกาย +{st['def']}")
+        if st.get("mdef"):
+            bits.append(f"กันเวท +{st['mdef']}")
+        # explicit max_hp only (not latent)
+        if st.get("max_hp") and int(it.get("max_hp") or 0) > 0 and not it.get("latent_hp_pct"):
             bits.append(f"HP +{st['max_hp']}")
-        if st["max_mana"]:
+        if st.get("max_mana"):
             bits.append(f"MP +{st['max_mana']}")
         mult = rarity_stat_mult(reg, rid)
         if bits:
@@ -403,11 +408,19 @@ def format_gear_showcase(
                 inner.append(f" พลัง: อลังการ (×{mult:.2f})")
             else:
                 inner.append(f" พลัง: เหนือชั้น (×{mult:.2f})")
+        # latent never listed as numbers — soft observation only
+        if st.get("def") or st.get("mdef") or it.get("latent_hp_pct"):
+            if it.get("latent_hp_pct") or st.get("latent_tough") or st.get("latent_status_resist"):
+                inner.append(" …เกราะอุ้มร่าง/อึดอะไรบางอย่าง (สังเกตเลือด·ทนสถานะเอง)")
+        if st.get("atk") and (st.get("latent_atk_pct") or st.get("latent_crit") or not it.get("def")):
+            if float(st.get("latent_atk_pct") or 0) > 0 or float(st.get("latent_crit") or 0) > 0:
+                inner.append(" …คมแฝงอะไรบางอย่าง (สังเกตแรงโจมตี·คริในไฟต์)")
 
     if slot:
-        slot_th = {"weapon": "อาวุธ", "armor": "เกราะ", "accessory": "เครื่องประดับ"}.get(
-            slot, slot
-        )
+        from game.domain.equipment import SLOT_LABEL_TH, normalize_slot
+
+        ns = normalize_slot(str(slot))
+        slot_th = SLOT_LABEL_TH.get(ns) or SLOT_LABEL_TH.get(str(slot)) or str(slot)
         inner.append(f" ช่องสวม: {slot_th}")
     if it.get("sockets"):
         socks = "○" * int(it["sockets"]) if rank < 4 else "◉" * int(it["sockets"])

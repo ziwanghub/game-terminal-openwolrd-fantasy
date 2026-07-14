@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# game-start — เปิด Open World Fantasy (terminal)
+# ใช้: ./scripts/game-start
+#      ./scripts/game-start --help
+#      ./scripts/game-start --dashboard
+#      ./scripts/game-start --test
+
+set -euo pipefail
+
+# resolve symlink (เช่น ~/bin/game-start → scripts/game-start)
+_src="${BASH_SOURCE[0]}"
+while [[ -L "${_src}" ]]; do
+  _dir="$(cd "$(dirname "${_src}")" && pwd)"
+  _src="$(readlink "${_src}")"
+  [[ "${_src}" != /* ]] && _src="${_dir}/${_src}"
+done
+SCRIPT_DIR="$(cd "$(dirname "${_src}")" && pwd)"
+# projects/openworld-fantasy
+ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${ROOT}"
+
+PYTHON="${PYTHON:-python3}"
+
+usage() {
+  cat <<'EOF'
+Open World Fantasy — game-start
+
+Usage:
+  game-start              เริ่มเกม (python3 -m game)
+  game-start --dashboard  แดชบอร์ดระบบ (text)
+  game-start --test       รัน pytest -q
+  game-start --version    แสดงเวอร์ชันจาก config
+  game-start --help       ช่วยเหลือนี้
+
+Environment:
+  PYTHON   ตัว interpreter (default: python3)
+
+Play (สั้น):
+  เมนู 1 เข้าโลก · สำรวจ 1พัก 2สำรวจ 3เข้าหา 4เดินทาง
+  5/I ตัวละคร · 6 ร้าน · 7 ออโต้ · G ขอแรง · 0 เซฟออก
+  ดัน: 6 สัญญาณขอแรง · H ช่วย · T บทเรียน
+EOF
+}
+
+show_version() {
+  "${PYTHON}" - <<'PY'
+from game.config import APP_NAME, APP_VERSION, PHASE
+print(f"{APP_NAME}  {APP_VERSION}  ({PHASE})")
+PY
+}
+
+if [[ ! -d "${ROOT}/game" ]] || [[ ! -f "${ROOT}/game/__main__.py" ]]; then
+  echo "error: ไม่พบแพ็กเกจ game ที่ ${ROOT}" >&2
+  exit 1
+fi
+
+if ! command -v "${PYTHON}" >/dev/null 2>&1; then
+  echo "error: ไม่พบ ${PYTHON}" >&2
+  exit 1
+fi
+
+case "${1:-}" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  -v|--version|version)
+    show_version
+    exit 0
+    ;;
+  --dashboard|dashboard)
+    show_version
+    echo "── dashboard ──"
+    exec "${PYTHON}" -m game.admin.dashboard
+    ;;
+  --test|test)
+    show_version
+    echo "── pytest ──"
+    exec "${PYTHON}" -m pytest -q
+    ;;
+  "")
+    show_version
+    echo "── start ──  (Ctrl+C ออกฉุกเฉิน · ในเกม 0 = เซฟออก)"
+    echo
+    exec "${PYTHON}" -m game
+    ;;
+  *)
+    echo "unknown option: $1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

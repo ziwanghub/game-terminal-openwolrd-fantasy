@@ -136,21 +136,36 @@ def _resolve_equip_slot_from_target(
     reg: DataRegistry,
     target: str,
 ) -> Optional[str]:
+    from game.domain.equipment import EQUIP_SLOTS, LEGACY_SLOT_MAP, normalize_slot
+
     ensure_item_instances(player, reg)
     if not target:
-        # default weapon if any
+        # default main hand if any
+        if (player.get("equip_ids") or {}).get("main_hand"):
+            return "main_hand"
         if (player.get("equip_ids") or {}).get("weapon"):
-            return "weapon"
+            return "main_hand"
         return None
-    # by slot name
-    if target in ("weapon", "armor", "accessory", "อาวุธ", "เกราะ"):
-        m = {"อาวุธ": "weapon", "เกราะ": "armor"}.get(target, target)
+    # by slot name (legacy + new + Thai)
+    th_map = {
+        "อาวุธ": "main_hand",
+        "เกราะ": "body",
+        "มือหลัก": "main_hand",
+        "มือรอง": "off_hand",
+        "ศีรษะ": "head",
+        "ลำตัว": "body",
+        "ส่วนล่าง": "legs",
+        "เท้า": "feet",
+        "เครื่องประดับ": "acc_1",
+    }
+    if target in th_map or target in LEGACY_SLOT_MAP or target in EQUIP_SLOTS:
+        m = normalize_slot(th_map.get(target, target))
         return m if (player.get("equip_ids") or {}).get(m) else None
     hits = find_instances(player, reg, target, location="equip")
     if len(hits) == 1 and hits[0].get("_slot"):
-        return str(hits[0]["_slot"])
+        return normalize_slot(str(hits[0]["_slot"]))
     t = target.lower()
-    for slot in ("weapon", "armor", "accessory"):
+    for slot in EQUIP_SLOTS:
         inst = get_equipped_instance(player, slot)
         if not inst:
             eid = (player.get("equip_ids") or {}).get(slot)
@@ -170,11 +185,11 @@ def _resolve_equip_slot_from_target(
             return slot
     e2 = find_equipped_by_code(player, reg, target)
     if e2:
-        return str(e2.get("slot"))
+        return normalize_slot(str(e2.get("slot")))
     # template code only (sw001) when unique equipped match
     e3 = find_equipped_by_code(player, reg, t.split("_")[0] if "_" in t else t)
     if e3:
-        return str(e3.get("slot"))
+        return normalize_slot(str(e3.get("slot")))
     return None
 
 
@@ -231,11 +246,13 @@ def _cmd_upgrade(
 ) -> bool:
     ensure_gear_fields(player)
     ensure_item_instances(player, reg)
-    slot = _resolve_equip_slot_from_target(player, reg, target or "weapon")
+    from game.domain.equipment import EQUIP_SLOTS
+
+    slot = _resolve_equip_slot_from_target(player, reg, target or "main_hand")
     if not slot:
-        io.write_line("อัปเกรด: ต้องชี้ชิ้นที่สวม เช่น upgrade_sw001 หรือ upgrade_weapon")
+        io.write_line("อัปเกรด: ต้องชี้ชิ้นที่สวม เช่น upgrade_sw001 หรือ upgrade_main_hand")
         # list owned equipped
-        for s in ("weapon", "armor", "accessory"):
+        for s in EQUIP_SLOTS:
             inst = get_equipped_instance(player, s)
             if inst:
                 io.write_line(f"  · {format_instance_ref(inst)} ({s})")
@@ -257,7 +274,7 @@ def _cmd_upgrade(
 
 
 def _cmd_unequip(player: Dict[str, Any], reg: DataRegistry, io: IO, target: str) -> bool:
-    slot = _resolve_equip_slot_from_target(player, reg, target or "weapon")
+    slot = _resolve_equip_slot_from_target(player, reg, target or "main_hand")
     if not slot:
         io.write_line("ถอด: ระบุชิ้นที่สวม เช่น unequip_sw001")
         return True
@@ -410,20 +427,28 @@ def _cmd_socket(player: Dict[str, Any], reg: DataRegistry, io: IO, target: str) 
                 io.write_line(f"ไม่มีการ์ด «{card_part}» ในถุง")
                 return True
             cid = found
-    if slot_part in ("1", "weapon", "อาวุธ", "w"):
-        slot = "weapon"
+    from game.domain.equipment import SLOT_LABEL_TH, normalize_slot
+
+    if slot_part in ("1", "weapon", "อาวุธ", "w", "main_hand", "มือหลัก"):
+        slot = "main_hand"
         si = 0
-    elif slot_part in ("2", "armor", "เกราะ", "a"):
-        slot = "armor"
+    elif slot_part in ("2", "armor", "เกราะ", "a", "body", "ลำตัว"):
+        slot = "body"
+        si = 0
+    elif slot_part in ("3", "off_hand", "มือรอง", "o", "shield", "โล่"):
+        slot = "off_hand"
+        si = 0
+    elif slot_part in ("accessory", "acc_1", "เครื่องประดับ"):
+        slot = "acc_1"
         si = 0
     elif slot_part.isdigit():
-        slot = "weapon"
+        slot = "main_hand"
         si = max(0, int(slot_part) - 1)
     else:
-        slot = "weapon"
+        slot = normalize_slot(slot_part)
         si = 0
     if not (player.get("equip_ids") or {}).get(slot):
-        io.write_line(f"ยังไม่สวม{slot} — สวมเกียร์ก่อน")
+        io.write_line(f"ยังไม่สวม{SLOT_LABEL_TH.get(slot, slot)} — สวมเกียร์ก่อน")
         return True
     socks = list((player.get("sockets") or {}).get(slot) or [])
     if not socks:
@@ -432,7 +457,7 @@ def _cmd_socket(player: Dict[str, Any], reg: DataRegistry, io: IO, target: str) 
     if si >= len(socks):
         si = 0
     cname = (reg.cards.get(cid) or {}).get("name") or cid
-    slot_th = "อาวุธ" if slot == "weapon" else "เกราะ"
+    slot_th = SLOT_LABEL_TH.get(slot, slot)
     io.write_line(f" จะใส่: {cname} → {slot_th} ช่อง {si + 1}")
     if not _confirm_yn(io, "ยืนยันใส่การ์ด?"):
         io.write_line("ยกเลิกใส่การ์ด")

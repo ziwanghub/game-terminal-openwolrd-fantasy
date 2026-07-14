@@ -78,18 +78,18 @@ def test_unit_claim_exclusive():
     reg = DataRegistry.load(DATA_DIR)
     world = "_test_claim_world"
     # clean claims file if any
-    from game.domain.unit_system import claims_path, save_claims
+    from game.domain.unit_system import save_claims
 
-    save_claims(world, {})
+    save_claims(world, {"by_unit": {}, "by_skill": {}, "schema": 2})
     a = create_player(reg, "ua", "rogue", "พิจิก")
     a["world_id"] = world
     a["id"] = "player_a"
     b = create_player(reg, "ub", "rogue", "พิจิก")
     b["world_id"] = world
     b["id"] = "player_b"
-    assert claim_unit(world, "unit_eclipse", a)
+    assert claim_unit(world, "unit_eclipse", a, exclusive_skill="unit_eclipse_blade")
     assert is_unit_claimed(world, "unit_eclipse", except_player_id="player_b")
-    assert not claim_unit(world, "unit_eclipse", b)
+    assert not claim_unit(world, "unit_eclipse", b, exclusive_skill="unit_eclipse_blade")
 
 
 def test_mastery_mult_curve():
@@ -100,11 +100,11 @@ def test_mastery_mult_curve():
 def test_accessory_equip():
     reg = DataRegistry.load(DATA_DIR)
     assert "copper_ring" in reg.items
-    assert reg.items["copper_ring"].get("slot") == "accessory"
+    assert reg.items["copper_ring"].get("slot") in ("acc_1", "accessory")
     p = create_player(reg, "acc", "mage", "เมถุน")
     from game.domain.equipment import add_item, equip_item, recompute_stats
 
     add_item(p, "copper_ring", reg)
     msg = equip_item(p, "copper_ring", reg)
     assert "สวม" in msg or "copper" in msg.lower() or "แหวน" in msg
-    assert (p.get("equip_ids") or {}).get("accessory") == "copper_ring"
+    assert (p.get("equip_ids") or {}).get("acc_1") == "copper_ring"

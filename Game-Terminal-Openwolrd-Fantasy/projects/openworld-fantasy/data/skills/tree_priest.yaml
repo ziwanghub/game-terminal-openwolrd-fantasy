@@ -51,6 +51,7 @@
 - id: priest_sanctuary
   name: เขตศักดิ์สิทธิ์
   slot: defense
+  guard_class: elemental
   cost_mana: 14
   strong_vs: [shadow, fire, physical]
   weak_vs: [arcane]
@@ -81,3 +82,20 @@
     require_level: 26
     cost_world: 200
     cost_heaven: 5
+
+- id: priest_mend_light
+  name: แสงเยียวยา
+  slot: support
+  cost_mana: 12
+  heal: 22
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 3
+  requires: [priest_cleanse]
+  learn:
+    method: [self]
+    require_level: 13
+    cost_world: 100
+    cost_heaven: 1
+

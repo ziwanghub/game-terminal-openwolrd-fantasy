@@ -1,0 +1,309 @@
+# SK-R4 content pack — debuff / buff / utility per class (soft, not bulk dump)
+# Merged by registry with other skill YAMLs.
+
+# ── Mage ──
+- id: mage_cinder_hex
+  name: คำสาปเถ้า
+  slot: debuff
+  cost_mana: 11
+  power: 0
+  elements: [fire, arcane]
+  combo_ok: false
+  tree: mage
+  tier: 2
+  requires: [mage_ember]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: burn
+    chance: 0.42
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 70
+    cost_heaven: 1
+  desc: ร่ายเถ้าติดผิว — ไม่เน้นดาเมจ เน้นไหม้
+
+- id: mage_mind_focus
+  name: จิตจดจ่อ
+  slot: buff
+  buff_status: focus
+  buff_category: tempo
+  cost_mana: 10
+  elements: [arcane]
+  combo_ok: false
+  tree: mage
+  tier: 2
+  requires: [magic_missile]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 65
+    cost_heaven: 1
+
+- id: mage_frost_bind
+  name: น้ำแข็งพัน
+  slot: debuff
+  cost_mana: 13
+  power: 8
+  elements: [water]
+  combo_ok: true
+  tree: mage
+  tier: 3
+  requires: [mage_frost_shard]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: freeze
+    chance: 0.28
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 120
+    cost_heaven: 2
+
+# ── Rogue ──
+- id: rogue_toxin_cloud
+  name: เมฆพิษ
+  slot: debuff
+  cost_mana: 12
+  power: 6
+  elements: [nature, shadow]
+  combo_ok: false
+  aoe: true
+  tree: rogue
+  tier: 2
+  requires: [rogue_poison_edge]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: poison
+    chance: 0.38
+  learn:
+    method: [self]
+    require_level: 9
+    cost_world: 80
+    cost_hell: 1
+
+- id: rogue_quiet_focus
+  name: สมาธิเงียบ
+  slot: buff
+  buff_status: focus
+  buff_category: tempo
+  cost_mana: 9
+  elements: [shadow]
+  combo_ok: false
+  tree: rogue
+  tier: 2
+  requires: [shadow_strike]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 70
+    cost_hell: 1
+
+- id: rogue_nerve_cut
+  name: ตัดประสาท
+  slot: debuff
+  cost_mana: 14
+  power: 12
+  elements: [shadow, physical]
+  combo_ok: true
+  tree: rogue
+  tier: 3
+  requires: [rogue_backstab]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: stun
+    chance: 0.24
+  learn:
+    method: [self]
+    require_level: 15
+    cost_world: 130
+    cost_hell: 2
+
+# ── Warrior ──
+- id: warrior_battle_cry
+  name: ร้องรบ
+  slot: buff
+  buff_status: might
+  buff_category: atk
+  cost_mana: 9
+  elements: [physical]
+  combo_ok: false
+  tree: warrior
+  tier: 2
+  requires: [basic_strike]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 55
+
+- id: warrior_shockwave_stun
+  name: คลื่นมึน
+  slot: debuff
+  cost_mana: 12
+  power: 10
+  elements: [physical]
+  combo_ok: true
+  tree: warrior
+  tier: 2
+  requires: [warrior_cleave]
+  rank_default: N
+  rank_cap: S
+  apply_status:
+    id: stun
+    chance: 0.26
+  learn:
+    method: [self]
+    require_level: 10
+    cost_world: 85
+
+- id: warrior_mirror_guard
+  name: โล่เงาสะท้อน
+  slot: defense
+  defense_mode: reflect
+  reflect_pct: 0.16
+  guard_class: physical
+  cost_mana: 11
+  strong_vs: [physical, slash]
+  weak_vs: [arcane, shadow]
+  damage_mult_strong: 0.12
+  damage_mult_neutral: 0.48
+  damage_mult_weak: 0.88
+  tree: warrior
+  tier: 3
+  requires: [thorn_reflect, counter_guard]
+  rank_default: N
+  rank_cap: SS
+  learn:
+    method: [self]
+    require_level: 16
+    cost_world: 140
+
+# ── Priest ──
+- id: priest_holy_focus
+  name: แสงสมาธิ
+  slot: buff
+  buff_status: focus
+  buff_category: tempo
+  cost_mana: 10
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 2
+  requires: [heal]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 60
+    cost_heaven: 1
+
+- id: priest_regen_hymn
+  name: บทฟื้น
+  slot: buff
+  buff_status: regen
+  buff_category: resource
+  cost_mana: 12
+  heal: 6
+  elements: [holy]
+  combo_ok: false
+  tree: priest
+  tier: 2
+  requires: [heal]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 9
+    cost_world: 70
+    cost_heaven: 1
+
+- id: priest_smite_shock
+  name: ลงทัณฑ์ช็อก
+  slot: debuff
+  cost_mana: 13
+  power: 14
+  elements: [holy, lightning]
+  combo_ok: true
+  tree: priest
+  tier: 3
+  requires: [priest_smite]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: shock
+    chance: 0.30
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 120
+    cost_heaven: 2
+
+# ── Archer ──
+- id: archer_pin_leg
+  name: ศรตรึงขา
+  slot: debuff
+  cost_mana: 11
+  power: 11
+  elements: [physical]
+  combo_ok: true
+  tree: archer
+  tier: 2
+  requires: [arrow_shot]
+  rank_default: N
+  rank_cap: S
+  apply_status:
+    id: slow
+    chance: 0.40
+  learn:
+    method: [self]
+    require_level: 7
+    cost_world: 60
+
+- id: archer_hunters_calm
+  name: ใจนักล่า
+  slot: buff
+  buff_status: focus
+  buff_category: tempo
+  cost_mana: 8
+  elements: [wind]
+  combo_ok: false
+  tree: archer
+  tier: 2
+  requires: [arrow_shot]
+  rank_default: N
+  rank_cap: S
+  learn:
+    method: [self]
+    require_level: 8
+    cost_world: 65
+
+- id: archer_shock_bolt
+  name: ศรช็อก
+  slot: combat
+  cost_mana: 14
+  power: 18
+  elements: [lightning, physical]
+  combo_ok: true
+  tree: archer
+  tier: 3
+  requires: [wind_pierce]
+  rank_default: N
+  rank_cap: SS
+  apply_status:
+    id: shock
+    chance: 0.32
+  learn:
+    method: [self]
+    require_level: 14
+    cost_world: 125

@@ -3,12 +3,11 @@
 # priority_improve: 1 (สูงสุด) … 5 (ต่ำ / รอ)
 # แก้ไฟล์นี้เมื่อประเมินใหม่ แล้วรัน: python3 -m game.admin.dashboard
 
-version_note: "1.13.15-alpha · t0-needs-w0-rank"
+version_note: "1.48.0-alpha · solo-polish-post-cm"
 updated: "2026-07-14"
 overall_blurb: >
-  ระบบแกน (สนาม ไฟต์ คลัง ตลาด กระดาน Mode Shell) เล่นได้ในระดับ alpha แน่นพอสมควร
-  จุดอ่อนหลัก: playtest หลัง 1.13.10 ยังไม่รอบใหม่ · เนื้อหาความลึก · โลก-เซิร์ฟ/echo ยัง vision
-  · UX-Tama ยังไม่เริ่ม · narrative/LLM รอ
+  ระบบแกน + MI + Skill Rank + Combo Mind (สมาธิ/ฉลาด/เวท) เล่นได้ alpha
+  จุดอ่อนหลัก: playtest มือยาว · hotfix · narrative ลึก · online รอ
 
 # น้ำหนักรวม (optional) — ถ้าไม่ใส่ เฉลี่ยเท่ากัน
 weights:
@@ -28,23 +27,25 @@ weights:
   ux_tama: 0.6
   world_server: 0.7
   help_situation: 0.7
+  chest_loot: 0.8
 
 systems:
   - id: combat
     name: "ไฟต์ · ATB · กลุ่ม · AoE"
-    score: 8.2
+    score: 8.7
     maturity: solid
     priority_improve: 3
-    modules: ["domain/combat_atb.py", "services/combat_session.py", "domain/aoe_balance.py"]
-    docs: ["COMBAT_ATB.md"]
+    modules: ["domain/combat_atb.py", "services/combat_session.py", "domain/aoe_balance.py", "domain/monster_ai.py", "domain/combo_mind.py", "domain/skill_rank.py"]
+    docs: ["COMBAT_ATB.md", "COMBO_MIND_VISION.md", "SKILL_SLOT_RANK_VISION.md"]
     strengths:
-      - "multi-ATB ศัตรูพร้อมกัน + เลือกเป้า"
-      - "เป้า * / splash / AoE + diminishing"
-      - "เทส ATB · multi · aoe-balance"
+      - "multi-ATB · AoE · MI1–3"
+      - "Skill Rank N–SSS · slot buff/debuff · counter/reflect"
+      - "Combo Mind: สมาธิ/ฉลาด/เวท คุมขั้น+มานาโซ่"
+      - "เทส ATB · multi · skill rank · combo mind · smoke"
     gaps:
       - "playfeel คลื่นยาว / บอสหลายเฟส ยังตื้น"
-      - "AI ศัตรูยังไม่ลึก"
-    recommend: "playtest ไฟต์กลุ่ม 1–2 ชม. แล้วจูน spawn/XP เบา ๆ"
+      - "จูนหลัง playtest มือ"
+    recommend: "playtest คอมโบ+elite แล้วจูน weight เบา ๆ"
 
   - id: mode_shell
     name: "Mode Shell · UI โหมด"
@@ -63,18 +64,32 @@ systems:
 
   - id: inventory
     name: "คลัง · instance · bag"
-    score: 7.8
+    score: 8.0
     maturity: solid
     priority_improve: 4
     modules: ["domain/item_instances.py", "services/bag_hub.py", "domain/equipment.py"]
     docs: ["BAG_SYSTEM.md", "PARTY_INVENTORY.md", "COMMAND_AND_INSTANCE_IDS.md"]
     strengths:
       - "instance SoT · equip/use/socket"
-      - "short codes · sanitize"
+      - "หมวดกระเป๋า อาหาร/ยา/หีบ · short codes"
     gaps:
       - "UX รายการยาวใน terminal"
       - "party share ยังไม่ลึกทุกเคส"
     recommend: "จูน bag list/filter เมื่อ playtest ติด"
+
+  - id: chest_loot
+    name: "หีบรางวัล · sealed · unit"
+    score: 7.8
+    maturity: solid
+    priority_improve: 3
+    modules: ["domain/chest_loot.py", "data/chests", "services/bag_hub.py", "domain/quests.py"]
+    docs: ["CHEST_LOOT_VISION.md"]
+    strengths:
+      - "L0–L5: ดรอป · เปิด · เควส/กระดาน · unit · คลังหีบ UX (เรียง/เปิดทั้งหมด)"
+      - "3 unit unique · unique_claims · flags ซ่อน · anti_farm"
+    gaps:
+      - "ขยาย unit pool / polish บาลานซ์หลัง playtest"
+    recommend: "playtest คลังหีบ L5 (เปิดทั้งหมด) + บอสหีบ · แล้ว K4 หรือ hotfix"
 
   - id: economy
     name: "ตลาด · ภาษี · กระดาน"
@@ -93,33 +108,34 @@ systems:
 
   - id: content
     name: "เนื้อหา · พื้นที่ · มอน · เควส"
-    score: 6.8
+    score: 7.0
     maturity: alpha
     priority_improve: 2
     modules: ["data/areas", "data/monsters", "data/quests", "data/items"]
-    docs: ["NARRATIVE.md"]
+    docs: ["NARRATIVE.md", "MONSTER_CONTENT_PLAN.md"]
     strengths:
-      - "~8 พื้นที่ · pack bulk 1.13.8–9"
+      - "~8 พื้นที่ · IC/MC ปิด · elite ครบ"
+      - "area mood หนาขึ้น (1.42)"
       - "campaign รอบ 2 · side quests"
     gaps:
-      - "ความลึกเรื่อง/ลูปต่อพื้นที่ยังไม่เท่ากัน"
-      - "เมืองเริ่ม soft ยังบาง"
+      - "ลูปเควสต่อพื้นที่ยังไม่เท่ากัน"
     recommend: "เติมเนื้อหาหลัง playtest ชี้จุดเบื่อ — อย่า bulk เปล่า"
 
   - id: progression
     name: "อาชีพ · สกิล · พร · เลเวล"
-    score: 7.4
+    score: 7.8
     maturity: solid
     priority_improve: 3
-    modules: ["domain/progression.py", "domain/skill_tree.py", "domain/blessings.py", "domain/leveling.py"]
-    docs: ["OCCUPATION_STATS_BLESSING.md", "OCCUPATION_PROGRESSION.md", "SKILL_SYSTEM.md"]
+    modules: ["domain/progression.py", "domain/skill_tree.py", "domain/blessings.py", "domain/leveling.py", "domain/combo_mind.py"]
+    docs: ["OCCUPATION_STATS_BLESSING.md", "SKILL_SYSTEM.md", "COMBO_MIND_VISION.md"]
     strengths:
       - "soft occupation · skill tree · blessings"
+      - "Skill Rank · Combo Mind · P 4 สถานะ (ฉลาด soft)"
       - "เลเวลไร้เพดาน"
     gaps:
       - "build diversity ยังไม่โชว์ชัดใน mid-game"
       - "master teaching ใช้ไม่เต็ม"
-    recommend: "1–2 สาย build ตัวอย่างใน help / เมือง"
+    recommend: "playtest P/K/คอมโบ แล้วจูน soft band"
 
   - id: party
     name: "ปาร์ตี้ · companion AI"
@@ -138,7 +154,7 @@ systems:
 
   - id: narrative
     name: "บรรยาย · soft flavor"
-    score: 6.2
+    score: 6.6
     maturity: alpha
     priority_improve: 3
     modules: ["domain/narrative.py", "data/narrative"]
@@ -146,6 +162,7 @@ systems:
     strengths:
       - "flavor ไฟต์/สนาม data-driven"
       - "soft / anti-spoiler"
+      - "area mood 3 สาย/พื้นที่ · MI/echo flavor"
     gaps:
       - "ยังไม่ LLM"
       - "ความต่อเนื่องเรื่องข้ามพื้นที่บาง"
@@ -153,18 +170,19 @@ systems:
 
   - id: world_social
     name: "โลกสังคม · ranking soft"
-    score: 4.5
-    maturity: stub
-    priority_improve: 2
+    score: 6.4
+    maturity: alpha
+    priority_improve: 3
     modules: ["domain/world_social.py"]
     docs: ["WORLD_SOCIAL.md", "WORLD_SERVER_VISION.md"]
     strengths:
-      - "โครง ranking / เจอเซฟในโลก เบา"
-      - "vision W0–W4 ชัด"
+      - "W0 rank board + soft band + ร่องรอยตัวเอง"
+      - "W1 echo snapshot · freshness · relation soft"
+      - "W2 lite ท้าอันดับ + ค่าหัว"
     gaps:
-      - "echo จริงยังไม่มี"
-      - "บอร์ดอันดับ soft ยังไม่เต็ม W0"
-    recommend: "หลัง playtest → เริ่ม W0 rank board"
+      - "challenge cooldown/บำเหน็จจูนหลัง playtest"
+      - "echo density ต่อพื้นที่ยังสุ่ม"
+    recommend: "playtest A-key อันดับ + เจอเงา แล้วจูน sight_chance"
 
   - id: dungeon
     name: "ดันเจียน · encounter"
@@ -214,36 +232,37 @@ systems:
     modules: ["tests/", "ports/io.py"]
     docs: ["TESTING.md"]
     strengths:
-      - "~289 pytest · ScriptedIO · GitHub Actions"
+      - "~340+ pytest · ScriptedIO · GitHub Actions"
     gaps:
       - "e2e playtest คนยังสำคัญกว่า unit"
     recommend: "คง coverage เมื่อแตะระบบหลัก"
 
   - id: ux_tama
     name: "UX-Tama · needs · เวลา"
-    score: 4.5
-    maturity: stub
-    priority_improve: 3
-    modules: ["domain/needs.py"]
-    docs: ["UX_TAMA_VISION.md"]
+    score: 8.0
+    maturity: solid
+    priority_improve: 4
+    modules: ["domain/needs.py", "services/consumables.py", "services/personal_hub.py", "services/save_service.py"]
+    docs: ["UX_TAMA_VISION.md", "NEEDS_COMBAT_FOOD_VISION.md"]
     strengths:
-      - "T0: needs + event tick + soft PERSONAL"
+      - "T0–T2+N1–N4: load delta · Tama ASCII · R/E care · combat/ATB · อาหาร"
     gaps:
-      - "T1 load delta · T2 panel เต็ม ยังไม่ทำ"
-    recommend: "T1 saved_at + แถบตอนโหลด"
+      - "N5 unit soft · T3 live refresh"
+    recommend: "playtest ห่างเซฟแล้วโหลด · แล้ว W1 หรือ N5"
 
   - id: world_server
     name: "World Server · echo · rank"
-    score: 3.5
-    maturity: stub
+    score: 5.5
+    maturity: alpha
     priority_improve: 3
-    modules: ["domain/world_social.py"]
+    modules: ["domain/world_social.py", "domain/file_lock.py"]
     docs: ["WORLD_SERVER_VISION.md"]
     strengths:
-      - "W0: soft rank band · rank_board.json · help ในคะแนนซ่อน"
+      - "W0–W2 lite + W3 host file locks (async)"
+      - "echo schema · freshness · MI เงา"
     gaps:
-      - "W1 echo เต็ม · challenge ยังไม่ทำ"
-    recommend: "playtest อันดับ · แล้ว W1 echo"
+      - "W3 host process ยังไม่เต็ม · W4 online ระงับ"
+    recommend: "solo playtest echo/rank · online ท้ายสุด"
 
   - id: help_situation
     name: "ขอแรง · situation · ร่วมทีมช่วย"
@@ -261,24 +280,46 @@ systems:
 
 roadmap:
   near:
-    - id: playtest_1310
-      title: "Playtest 1–2 ชม. หลัง 1.13.10"
+    - id: playtest_150
+      title: "Playtest หลัง 1.15.0 (Tama · หีบ · คราฟ)"
       status: queued
-      note: "ตรวจ AoE · Mode Shell · เมืองเริ่ม · เศรษฐกิจ"
+      note: "ห่างเซฟ→โหลด · R/E · หีบ · คราฟเสี่ยง"
+    - id: w1_echo
+      title: "W1 player echo"
+      status: planned
     - id: content_optional
       title: "เนื้อหา / เป้าเล่น (optional)"
       status: optional
       note: "เติมเมื่อ playtest ชี้จุดเบื่อ"
+  chest:
+    - id: L0
+      title: "Data ranks · pools · sources"
+      status: done
+    - id: L1
+      title: "open_chest · หมวดหีบ"
+      status: done
+    - id: L2
+      title: "ดรอปบอส/มอน + anti_farm"
+      status: done
+    - id: L3
+      title: "เควสรางวัลหีบ"
+      status: done
+    - id: L4
+      title: "Unit unique ขยาย"
+      status: done
+    - id: L5
+      title: "คลังหีบ UX (สรุปแรงก์ · เปิดทั้งหมด)"
+      status: done
   tama:
     - id: T0
       title: "Needs data + tick"
       status: done
     - id: T1
       title: "Load delta + แถบ soft UI"
-      status: planned
+      status: done
     - id: T2
       title: "Tama panel เต็ม PERSONAL"
-      status: planned
+      status: done
     - id: T3
       title: "Live refresh (optional)"
       status: planned
@@ -332,9 +373,7 @@ roadmap:
       status: later
 
 recommended_order:
-  - "playtest หลัง 1.13.10+ (AoE · Mode Shell · เมือง)"
-  - "T0–T1 หรือ เนื้อหาตาม feedback (optional)"
-  - "H0 consent / W0 rank (ขนานได้)"
-  - "W1 echo → H1–H3 ขอแรง–ช่วย–อ่านชัย"
-  - "H4 สังคม · W2 challenge"
+  - "playtest หลัง 1.15.0 (Tama · หีบ · คราฟ)"
+  - "W1 echo → W2 challenge (Wave E)"
+  - "T3 live optional · N5 unit soft"
   - "Online / H5 / realtime ทีหลัง"

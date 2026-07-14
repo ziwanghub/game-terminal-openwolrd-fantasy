@@ -1,6 +1,10 @@
 # Rarity / grade tiers — equipment, companions (beasts/gods/etc.), drops
 # Stat mult applied to base atk/hp/mana (and companion bonuses).
 # Higher tiers rarer when rolling drops/recruits.
+#
+# Upgrade (hidden): higher rank → harder success, harsher fail, higher cost.
+# upgrade_bonus: tiny soft hold quality (partial only; rank penalty dominates).
+# Protect scrolls: instance rarity rank must be ≥ equipped piece rank.
 
 default: common
 

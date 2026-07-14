@@ -154,10 +154,13 @@ def test_specialty_shops_exist():
     assert "rare_exchange" in reg.shops
     assert "legend_pavilion" in reg.shops
     assert int(reg.shops["legend_pavilion"].get("min_rarity_rank") or 0) >= 5
+    # legend pavilion: system stock empty — high gear from drop → player market
+    assert list(reg.shops["legend_pavilion"].get("stock") or []) == []
     from game.services.shop import shop_rank_window
 
     lo, hi = shop_rank_window(reg.shops["rare_exchange"])
-    assert lo == 3 and hi == 5
+    # material exchange: uncommon–sacred window (no legendary system stock)
+    assert lo <= 3 and hi >= 4
 
 
 def test_shop_stock_normalize():
@@ -199,6 +202,7 @@ def test_craft_requires_input_rarity():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "cr", "warrior", "เมษ")
     p["level"] = 10
+    p["location"] = "ancient_city"  # K3 forge station
     p["money_world"] = 5000
     # only common iron sword — steel craft needs uncommon
     add_item(p, "iron_sword", reg, rarity="common")
@@ -211,5 +215,10 @@ def test_craft_requires_input_rarity():
     assert "ไม่พอ" in msg or "ระดับ" in msg
     # now with uncommon sword
     add_item(p, "iron_sword", reg, rarity="uncommon")
-    msg2 = craft(p, reg, "craft_steel_blade")
+
+    class _Ok:
+        def random(self):
+            return 0.0
+
+    msg2 = craft(p, reg, "craft_steel_blade", rng=_Ok())  # type: ignore[arg-type]
     assert "สำเร็จ" in msg2

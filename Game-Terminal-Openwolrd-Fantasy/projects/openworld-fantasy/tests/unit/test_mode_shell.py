@@ -21,10 +21,11 @@ def test_explore_actions_short_and_personal_entry():
     text = render_mode_actions(MODE_EXPLORE, stat_points=3, personality_points=1)
     assert "สำรวจ" in text or "พัก" in text
     assert "ตัวละคร" in text or "I" in text
-    assert "1 พัก" in text
+    assert "1" in text and "พัก" in text
     assert "ร้าน" in text  # Phase B: 6 shop
-    # should not dump full old alphabet soup as primary
-    assert text.count("\n") <= 12
+    assert "ทำอะไรต่อ" in text
+    # sectioned box — keep reasonably compact
+    assert text.count("\n") <= 20
 
 
 def test_field_actions_delegates_to_explore():
@@ -42,7 +43,8 @@ def test_personal_actions_menu():
     )
     assert "กระเป๋า" in t
     assert "ภารกิจ" in t
-    assert "150" in t
+    # money lives on hub frame now — menu is actions-only
+    assert "เมนูตัวละคร" in t or "1" in t
 
 
 def test_combat_actions_no_travel():

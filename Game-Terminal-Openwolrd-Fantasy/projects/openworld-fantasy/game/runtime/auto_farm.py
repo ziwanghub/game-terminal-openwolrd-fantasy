@@ -62,7 +62,7 @@ def auto_fight(
         mon["hp"] -= dmg
         if mon["hp"] <= 0:
             break
-        profile = pick_monster_attack(mon, rng)
+        profile = pick_monster_attack(mon, rng, player=player)
         raw = monster_raw_damage(mon, profile, rng)
         # crude auto-guard: half if HP low
         if int(player["hp"]) < int(player["max_hp"]) * 0.35:
@@ -154,12 +154,22 @@ def run_auto_farm(
     Returns (reason, optional_sight_to_handle).
     """
     rng = rng or random.Random()
-    io.write_line("\n══ โหมดออโต้ฟาร์ม ══")
-    io.write_line(f"สูงสุด {max_ticks} เทิร์น · XP ออโต้ x{AUTO_XP_FACTOR} · หยุดเมื่อเจอความเสี่ยง")
+    from game.ui_terminal.layout import render_box
+
+    lines = [
+        " โหมดออโต้ฟาร์ม",
+        "---",
+        f" สูงสุด   {max_ticks} เทิร์น",
+        f" XP ออโต้  ×{AUTO_XP_FACTOR}",
+        " หยุดเมื่อ  เจอความเสี่ยง / เลือดต่ำ",
+        "---",
+    ]
     if continuous:
-        io.write_line("โหมดต่อเนื่อง: รันจนครบ/เสี่ยง/เลือดต่ำ (ไม่ถาม Enter ทุกติก)")
+        lines.append(" โหมด  ต่อเนื่อง (ไม่ถาม Enter ทุกติก)")
     else:
-        io.write_line("แต่ละติก: Enter=ต่อ · s=หยุดออโต้")
+        lines.append(" แต่ละติก  Enter=ต่อ · s=หยุด")
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
 
     area_id = str(player.get("location"))
 
@@ -216,7 +226,7 @@ def run_auto_farm(
             sight = easy_mobs[0]
             mon = dict(sight.get("monster") or pick_monster(reg, area_id, rng))
             if resolve_approach("monster", reg, rng) == "ambush":
-                profile = pick_monster_attack(mon, rng)
+                profile = pick_monster_attack(mon, rng, player=player)
                 raw = monster_raw_damage(mon, profile, rng)
                 player["hp"] -= max(1, raw // 2)
                 io.write_line(f"ออโต้: โดนซุ่มเบาๆ -{max(1, raw // 2)} HP")

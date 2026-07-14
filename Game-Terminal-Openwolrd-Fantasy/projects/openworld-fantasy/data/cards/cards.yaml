@@ -87,3 +87,501 @@
     status: burn
     chance: 0.3
   price_hell: 5
+
+
+# MC1 bound cards (1.28) — drop only, not sold
+- id: card_cliff_eagle
+  name: การ์ดนกผา
+  rarity: uncommon
+  compatible: [main_hand, feet]
+  bonuses: { atk: 2 }
+  grant_tags: [wind]
+  price_world: 90
+
+- id: card_sand_viper
+  name: การ์ดงูทราย
+  rarity: uncommon
+  compatible: [main_hand, body]
+  bonuses: { atk: 3 }
+  grant_tags: [nature]
+  on_hit:
+    status: poison
+    chance: 0.18
+  price_world: 95
+
+- id: card_dust_wisp
+  name: การ์ดวิญญาณฝุ่น
+  rarity: rare
+  compatible: [body, head]
+  bonuses: { max_mana: 10, atk: 1 }
+  grant_tags: [wind, arcane]
+  price_world: 130
+
+- id: card_cave_bat
+  name: การ์ดค้างคาวถ้ำ
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, pressure: 3 }
+  grant_tags: [shadow]
+  price_world: 75
+
+- id: card_marsh_toad
+  name: การ์ดคางคกบึง
+  rarity: uncommon
+  compatible: [armor]
+  bonuses: { max_hp: 14, max_mana: 4 }
+  grant_tags: [nature, water]
+  price_world: 80
+
+- id: card_moss_sprite
+  name: การ์ดภูตมอส
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 6 }
+  grant_tags: [nature]
+  grant_skills: [open_mist_veil]
+  price_world: 110
+
+# IC2 unique mon cards
+- id: card_goblin_hunter
+  name: การ์ดก็อบลินนักล่า
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 3 }
+  grant_tags: [physical]
+  price_world: 90
+
+- id: card_forest_wolf
+  name: การ์ดหมาป่า
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, pressure: 2 }
+  grant_tags: [physical, wind]
+  price_world: 90
+
+- id: card_wood_ent
+  name: การ์ดเอนท์ไม้
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 16 }
+  grant_tags: [nature]
+  price_world: 90
+
+- id: card_cave_bat_swarm
+  name: การ์ดฝูงค้างคาว
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, pressure: 4 }
+  grant_tags: [shadow, wind]
+  price_world: 90
+
+- id: card_dark_slime
+  name: การ์ดสไลม์เงา
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 12, max_mana: 4 }
+  grant_tags: [shadow]
+  price_world: 90
+
+- id: card_shadow_wraith
+  name: การ์ดวิญญาณเงา
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 4 }
+  grant_tags: [shadow, fire]
+  on_hit:
+    status: burn
+    chance: 0.15
+  price_world: 90
+
+- id: card_rock_golem
+  name: การ์ดโกเล็มหิน
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 20 }
+  grant_tags: [physical]
+  price_world: 90
+
+- id: card_mountain_troll
+  name: การ์ดโทรลเขา
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 4, max_hp: 8 }
+  grant_tags: [physical]
+  price_world: 90
+
+- id: card_sand_scorpion
+  name: การ์ดแมงป่องทราย
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3 }
+  grant_tags: [physical, nature]
+  price_world: 90
+
+- id: card_desert_raider
+  name: การ์ดจู่โจมทะเลทราย
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 5 }
+  grant_tags: [fire, physical]
+  price_world: 90
+
+- id: card_marsh_leech
+  name: การ์ดปลิงหนอง
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 10, max_mana: 6 }
+  grant_tags: [water]
+  price_world: 90
+
+- id: card_crystal_golem
+  name: การ์ดโกเล็มผลึก
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 10 }
+  grant_tags: [lightning, arcane]
+  price_world: 90
+
+- id: card_void_mote
+  name: การ์ดละอองสุญญะ
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 4, pressure: 3 }
+  grant_tags: [shadow, arcane]
+  price_world: 90
+
+- id: card_city_rat
+  name: การ์ดหนูเมือง
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, pressure: 2 }
+  grant_tags: [physical]
+  price_world: 90
+
+- id: card_cursed_knight
+  name: การ์ดอัศวินสาป
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, max_hp: 8 }
+  grant_tags: [shadow, holy]
+  price_world: 90
+
+- id: card_cave_crystal_spider
+  name: การ์ดแมงมุมคริสตัล
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 5 }
+  grant_tags: [arcane]
+  price_world: 90
+
+- id: card_forest_boar
+  name: การ์ดหมูป่า
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_hp: 10 }
+  grant_tags: [physical]
+  price_world: 90
+
+- id: card_marsh_gas
+  name: การ์ดแก๊สบึง
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 8, max_mana: 8 }
+  grant_tags: [nature]
+  price_world: 90
+
+- id: card_peak_ice
+  name: การ์ดภูตน้ำแข็ง
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, max_mana: 12 }
+  grant_tags: [water, arcane]
+  price_world: 90
+
+- id: card_void_larva
+  name: การ์ดตัวอ่อนสุญญะ
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, pressure: 4 }
+  grant_tags: [shadow]
+  price_world: 90
+
+- id: card_ridge_goat
+  name: การ์ดแพะผา
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 2, max_hp: 12 }
+  grant_tags: [physical]
+  price_world: 90
+
+# MC3 role cards
+- id: card_forest_mantrap
+  name: การ์ดพืชกินคน
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 14 }
+  grant_tags: [nature]
+  price_world: 95
+
+- id: card_forest_hornet
+  name: การ์ดต่อป่า
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, pressure: 3 }
+  grant_tags: [nature]
+  price_world: 95
+
+- id: card_cave_skull
+  name: การ์ดหัวกะโหลก
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 4 }
+  grant_tags: [shadow]
+  price_world: 95
+
+- id: card_city_bone
+  name: การ์ดโครงกระดูกเมือง
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 4, max_hp: 6 }
+  grant_tags: [shadow]
+  price_world: 95
+
+- id: card_desert_vulture
+  name: การ์ดแร้งทราย
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, pressure: 2 }
+  grant_tags: [wind]
+  price_world: 95
+
+- id: card_desert_scarab
+  name: การ์ดสคารับ
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 12, atk: 2 }
+  grant_tags: [physical]
+  price_world: 95
+
+- id: card_marsh_reed
+  name: การ์ดกอหญ้า
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 12, max_mana: 6 }
+  grant_tags: [nature, water]
+  price_world: 95
+
+- id: card_crystal_song
+  name: การ์ดนกเพลง
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 8 }
+  grant_tags: [wind, arcane]
+  price_world: 95
+
+- id: card_carrion_crow
+  name: การ์ดกาซาก
+  rarity: common
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, pressure: 3 }
+  grant_tags: [wind, shadow]
+  price_world: 95
+
+- id: card_void_moth
+  name: การ์ดมอดสุญญะ
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, pressure: 4 }
+  grant_tags: [shadow]
+  price_world: 95
+
+# IC4 boss cards
+- id: card_boss_forest_king
+  name: การ์ดราชันย์เถื่อน
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 8, max_hp: 20 }
+  grant_tags: [nature]
+  price_world: 280
+
+- id: card_boss_shadow_queen
+  name: การ์ดราชินีเงา
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 7, pressure: 10 }
+  grant_tags: [shadow]
+  price_world: 300
+
+- id: card_boss_stone_titan
+  name: การ์ดไททันหิน
+  rarity: sacred
+  compatible: [armor]
+  bonuses: { max_hp: 40 }
+  grant_tags: [physical]
+  price_world: 290
+
+- id: card_boss_ruin_oracle
+  name: การ์ดนักพยากรณ์ซาก
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, max_mana: 25 }
+  grant_tags: [arcane, holy]
+  price_world: 310
+
+- id: card_boss_sun_scourge
+  name: การ์ดภัยพิบัติอาทิตย์
+  rarity: legendary
+  compatible: [weapon]
+  bonuses: { atk: 12 }
+  grant_tags: [fire, lightning]
+  on_hit:
+    status: burn
+    chance: 0.28
+  price_world: 450
+
+- id: card_boss_mist_hydra
+  name: การ์ดไฮดราหมอก
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, max_hp: 24 }
+  grant_tags: [water, nature]
+  price_world: 320
+
+- id: card_boss_prism
+  name: การ์ดเจ้าแห่งปริซึม
+  rarity: legendary
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, max_mana: 30 }
+  grant_tags: [arcane, lightning]
+  price_world: 460
+
+- id: card_boss_void_herald
+  name: การ์ดผู้ประกาศสุญญะ
+  rarity: legendary
+  compatible: [weapon, armor]
+  bonuses: { atk: 10, pressure: 8 }
+  grant_tags: [shadow, arcane]
+  price_world: 480
+
+# MC4 elite cards
+- id: card_elite_alpha_wolf
+  name: การ์ดหมาป่าอัลฟา
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, pressure: 4 }
+  grant_tags: [physical]
+  price_world: 180
+
+- id: card_elite_abyss_matron
+  name: การ์ดแม่มดเหว
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, max_mana: 12 }
+  grant_tags: [shadow]
+  price_world: 180
+
+- id: card_elite_ridge_warlord
+  name: การ์ดขุนศึกผา
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 7, max_hp: 15 }
+  grant_tags: [physical]
+  price_world: 180
+
+- id: card_elite_dune_warlock
+  name: การ์ดจอมเวทย์เนิน
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, max_mana: 16 }
+  grant_tags: [fire, arcane]
+  price_world: 180
+
+- id: card_elite_plague_toad
+  name: การ์ดคางคกโรค
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 22, max_mana: 8 }
+  grant_tags: [nature]
+  price_world: 180
+
+- id: card_elite_hex_captain
+  name: การ์ดหัวหน้าคำสาป
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 7, pressure: 5 }
+  grant_tags: [shadow]
+  price_world: 180
+
+- id: card_elite_prism_sentinel
+  name: การ์ดเซนทิเนลปริซึม
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, max_mana: 20 }
+  grant_tags: [arcane, lightning]
+  price_world: 180
+
+- id: card_elite_void_knight
+  name: การ์ดอัศวินรอยแยก
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 9, max_hp: 18 }
+  grant_tags: [shadow]
+  price_world: 180
+
+# MC5 late cards
+- id: card_crystal_swarm
+  name: การ์ดฝูงเศษปริซึม
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 3, max_mana: 10 }
+  grant_tags: [arcane]
+  price_world: 160
+
+- id: card_crystal_echo
+  name: การ์ดสะท้อนผลึก
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { max_mana: 14, atk: 3 }
+  grant_tags: [arcane]
+  price_world: 160
+
+- id: card_void_mite
+  name: การ์ดไรรอยแยก
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { atk: 4, pressure: 4 }
+  grant_tags: [shadow]
+  price_world: 160
+
+- id: card_void_whisper
+  name: การ์ดกระซิบสุญญะ
+  rarity: rare
+  compatible: [weapon, armor]
+  bonuses: { atk: 5, max_mana: 12 }
+  grant_tags: [shadow, arcane]
+  price_world: 160
+
+- id: card_elite_prism_guard
+  name: การ์ดองครักษ์ปริซึม
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 6, max_mana: 18 }
+  grant_tags: [arcane, lightning]
+  price_world: 160
+
+- id: card_elite_null_archon
+  name: การ์ดอาร์คอนศูนย์
+  rarity: sacred
+  compatible: [weapon, armor]
+  bonuses: { atk: 10, pressure: 6 }
+  grant_tags: [shadow]
+  price_world: 160
+
+- id: card_sand_golem
+  name: การ์ดโกเล็มทราย
+  rarity: uncommon
+  compatible: [weapon, armor]
+  bonuses: { max_hp: 20, atk: 3 }
+  grant_tags: [physical]
+  price_world: 160
+

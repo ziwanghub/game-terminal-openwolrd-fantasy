@@ -145,9 +145,11 @@ def list_equipped_entries(
     """
     from game.domain.rarity import equip_rarity_for_slot
 
+    from game.domain.equipment import EQUIP_SLOT_UI, ensure_gear_fields
+
+    ensure_gear_fields(player)  # type: ignore
     out: List[Dict[str, Any]] = []
-    labels = {"weapon": "อาวุธ", "armor": "เกราะ", "accessory": "เครื่องประดับ"}
-    for slot in ("weapon", "armor", "accessory"):
+    for slot, label in EQUIP_SLOT_UI:
         eid = (player.get("equip_ids") or {}).get(slot)
         if not eid:
             continue
@@ -160,7 +162,7 @@ def list_equipped_entries(
                 "code": item_code(str(eid), reg),
                 "rarity": rid,
                 "upgrade": up,
-                "label": labels.get(slot, slot),
+                "label": label,
                 "line": format_equipped_piece(str(eid), reg, rid, upgrade=up),
             }
         )
@@ -218,19 +220,25 @@ def format_bag_equip_summary_lines(
         get_equipped_instance,
     )
 
+    from game.domain.equipment import EQUIP_SLOT_UI, ensure_gear_fields
+
+    ensure_gear_fields(player)  # type: ignore
     ensure_item_instances(player, reg)  # type: ignore
-    lines = [" สวมอยู่ (พิมพ์รหัสชิ้นเพื่อดู/จัดการ):"]
-    labels = (("weapon", "อาวุธ"), ("armor", "เกราะ"), ("accessory", "เครื่องประดับ"))
+    # no standalone header — bag hub supplies "สวมอยู่" section title
+    lines: List[str] = []
     any_eq = False
     example = "sw001"
-    for slot, lab in labels:
+    for slot, lab in EQUIP_SLOT_UI:
         eid = (player.get("equip_ids") or {}).get(slot)
         if not eid:
-            lines.append(f"   {lab}: —")
+            # compact hub: skip empty armor parts to reduce noise; always show hands
+            if slot not in ("main_hand", "off_hand", "body", "acc_1"):
+                continue
+            lines.append(f"  {lab:<12} —")
             continue
         any_eq = True
         line = format_equipped_ref_line(player, reg, slot)
-        lines.append(f"   {lab}: {line}")
+        lines.append(f"  {lab:<12} {line}")
         inst = get_equipped_instance(player, slot)
         if inst:
             example = format_instance_ref(inst)

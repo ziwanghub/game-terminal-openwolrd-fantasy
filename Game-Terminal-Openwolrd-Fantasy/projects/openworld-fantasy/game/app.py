@@ -15,6 +15,8 @@ from game.services.save_service import (
 )
 from game.services.world_service import (
     enter_world_latest,
+    format_save_picker_lines,
+    format_world_picker_lines,
     list_world_menu_rows,
     world_summary_lines,
 )
@@ -26,35 +28,36 @@ def render_main_menu() -> str:
     lines = [
         " เมนูหลัก",
         "---",
-        " 1. เข้าโลก (เล่นต่อเซฟล่าสุด / สร้างใหม่)",
-        " 2. โหลดตัวละครในโลกที่เลือก",
-        " 3. อันดับชื่อเสียงของโลก (ไม่โชว์เลเวล/พลัง)",
-        " 4. เกี่ยวกับ",
-        " 5. นำเข้าเซฟจาก exports/",
-        " 8. แอดมิน",
-        " 0. ออก",
+        " 1  เข้าโลก          เล่นต่อ / สร้างตัวใหม่",
+        " 2  โหลดตัวละคร      เลือกจากรายชื่อในโลก",
+        " 3  อันดับชื่อเสียง   ของโลกที่เลือก",
+        " 4  เกี่ยวกับ",
+        " 5  นำเข้าเซฟ         จาก exports/",
+        " 6  โลก-host (W3)    สถานะ / ชี้โลก",
+        " 8  แอดมิน",
+        "---",
+        " 0  ออก",
     ]
     return render_box(lines, double=False)
 
 
 def pick_world(reg: DataRegistry, io) -> str:
+    """World picker — box UI, scannable blocks, clear prompt."""
     rows = list_world_menu_rows(reg)
     if not rows:
         return "default"
-    io.write_line("\n── เลือกโลก (อิสระ · เซฟ/ประวัติแยก) ──")
-    for i, r in enumerate(rows, 1):
-        save_txt = (
-            f"เซฟล่าสุด: {r['latest_name']}" if r["has_save"] else "ยังไม่มีเซฟ"
-        )
-        io.write_line(f"  {i}. {r['name']}")
-        io.write_line(
-            f"     ความยาก: {r['difficulty_label']} · ตัวละคร {r['char_count']} · {save_txt}"
-        )
-        io.write_line(f"     {r['description']}")
+    io.write_line()
+    io.write_line(render_box(format_world_picker_lines(reg), double=False))
+    n = len(rows)
+    raw = io.read_line(f"\n  เลือกโลก (1–{n}): ").strip()
+    if raw in ("", "0", "q", "Q"):
+        # empty / cancel → first (easiest) world as soft default
+        return str(rows[0]["id"])
     try:
-        idx = int(io.read_line("เลือกโลก: ").strip()) - 1
-        return str(rows[max(0, min(len(rows) - 1, idx))]["id"])
+        idx = int(raw) - 1
+        return str(rows[max(0, min(n - 1, idx))]["id"])
     except Exception:
+        io.write_line(" (ใช้เลขไม่ถูกต้อง — เลือกโลกแรก)")
         return str(rows[0]["id"])
 
 
@@ -83,16 +86,47 @@ def run() -> None:
                 continue
             try:
                 world_id = pick_world(reg, io)
-                for line in world_summary_lines(reg, world_id):
-                    io.write_line(line)
+                wname = (reg.worlds.get(world_id) or {}).get("name") or world_id
+                try:
+                    from game.domain.world_meta import set_client_pointer, host_status
+
+                    set_client_pointer(world_id, prefer_host=True)
+                    st = host_status(world_id)
+                    host_line = str(st.get("label") or "")
+                except Exception:
+                    host_line = ""
+                io.write_line()
+                summary = list(world_summary_lines(reg, world_id))
+                if host_line:
+                    summary.append(f" host: {host_line}")
+                io.write_line(
+                    render_box(
+                        [
+                            " สรุปโลกที่เลือก",
+                            "---",
+                            *summary,
+                        ],
+                        double=False,
+                    )
+                )
                 latest = enter_world_latest(world_id)
                 if latest:
+                    io.write_line()
                     io.write_line(
-                        f"\nพบเซฟล่าสุด: {latest.get('name')} "
-                        f"@ {latest.get('location')}"
+                        render_box(
+                            [
+                                " พบเซฟล่าสุด",
+                                "---",
+                                f" {latest.get('name')}  @  {latest.get('location')}",
+                                "---",
+                                " 1  เล่นต่อจากเซฟนี้",
+                                " 2  สร้างตัวใหม่ในโลกนี้",
+                                " 0  กลับเมนู",
+                            ],
+                            double=False,
+                        )
                     )
-                    io.write_line("1. เล่นต่อจากเซฟล่าสุด  2. สร้างตัวใหม่ในโลกนี้  0. กลับ")
-                    sub = io.read_line("เลือก: ").strip()
+                    sub = io.read_line("\n  เลือก (1/2/0): ").strip()
                     if sub == "1":
                         # ensure world mods present
                         if not latest.get("world_modifiers"):
@@ -105,7 +139,17 @@ def run() -> None:
                     if sub != "2":
                         continue
                 else:
-                    io.write_line("\nยังไม่มีประวัติในโลกนี้ — สร้างตัวละครใหม่")
+                    io.write_line()
+                    io.write_line(
+                        render_box(
+                            [
+                                f" {wname}",
+                                "---",
+                                " ยังไม่มีเซฟ — จะสร้างตัวละครใหม่",
+                            ],
+                            double=False,
+                        )
+                    )
                 player = interactive_create(reg, io)
                 player["world_id"] = world_id
                 player["world_modifiers"] = (
@@ -127,16 +171,22 @@ def run() -> None:
             world_id = pick_world(reg, io)
             saves = list_saves(world_id)
             if not saves:
-                io.write_line("โลกนี้ยังไม่มีเซฟ")
-                continue
-            io.write_line(f"\nตัวละครในโลก {world_id}:")
-            for i, s in enumerate(saves, 1):
+                io.write_line()
                 io.write_line(
-                    f"  {i}. {s['name']} · {s.get('occupation','?')} @ {s['location']}"
+                    render_box(
+                        [" โลกนี้ยังไม่มีเซฟ", "---", " ใช้เมนู 1 เพื่อสร้างตัวใหม่"],
+                        double=False,
+                    )
                 )
-                # deliberately no level in list for world lore feel — actually save list can show? user said ranking no level. load list can omit level
+                continue
+            wname = (reg.worlds.get(world_id) or {}).get("name") or world_id
+            io.write_line()
+            io.write_line(
+                render_box(format_save_picker_lines(world_id, wname), double=False)
+            )
             try:
-                idx = int(io.read_line("เลือก: ").strip()) - 1
+                raw = io.read_line(f"\n  เลือกตัวละคร (1–{len(saves)}): ").strip()
+                idx = int(raw) - 1
                 meta = saves[max(0, min(len(saves) - 1, idx))]
                 player = load_player(meta["path"])
                 player["world_id"] = world_id
@@ -164,6 +214,43 @@ def run() -> None:
                 "\nโลกอิสระ: ชื่อ · ความยาก · เซฟ/ประวัติ/อันดับแยก · "
                 "เจอผู้เล่นอื่นจากเซฟในโลก · เพื่อนหรือศัตรูขึ้นกับท่าที (สูตรซ่อน)"
             )
+            io.read_line("\nEnter...")
+
+        elif choice == "6":
+            # W3: host status + client pointer
+            if reg is None:
+                reg = get_registry()
+            world_id = pick_world(reg, io)
+            from game.domain.world_meta import (
+                format_host_status_lines,
+                refresh_world_index,
+                set_client_pointer,
+            )
+
+            try:
+                refresh_world_index(world_id)
+            except Exception:
+                pass
+            io.write_line()
+            io.write_line(render_box(format_host_status_lines(world_id), double=False))
+            io.write_line()
+            io.write_line(
+                render_box(
+                    [
+                        " ชี้ client ไปโลกนี้?",
+                        "---",
+                        "  1  ตั้ง pointer (prefer host)",
+                        "  0  กลับ",
+                        "---",
+                        " รัน host: python -m game.host " + world_id,
+                    ],
+                    double=False,
+                )
+            )
+            sub = io.read_line("\n  เลือก (1/0): ").strip()
+            if sub == "1":
+                set_client_pointer(world_id, prefer_host=True)
+                io.write_line(f" ตั้ง client_pointer → โลก {world_id}")
             io.read_line("\nEnter...")
 
         elif choice == "5":

@@ -13,11 +13,12 @@ def test_equip_and_socket_raises_atk():
     assert "สวม" in msg
     assert int(p["bonus_atk"]) >= base + 6
     add_item(p, "card_fire", reg)
-    msg2 = socket_card(p, "weapon", 0, "card_fire", reg)
+    msg2 = socket_card(p, "main_hand", 0, "card_fire", reg)
     assert "ใส่" in msg2
     assert int(p["bonus_atk"]) >= base + 6 + 4
     assert "fire" in (p.get("gear_tags") or [])
     assert any(e.get("status") == "burn" for e in (p.get("on_hit_effects") or []))
+    assert (p.get("equip_ids") or {}).get("main_hand") == "iron_sword"
 
 
 def test_cards_and_shops_loaded():

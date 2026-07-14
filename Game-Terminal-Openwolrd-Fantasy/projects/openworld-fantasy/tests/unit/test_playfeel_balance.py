@@ -100,8 +100,9 @@ def test_new_player_create_wizard_scripted(reg):
     from game.ports.io import ScriptedIO
     from game.services.field_loop import interactive_create
 
-    io = ScriptedIO(["Hero", "ชาย", "1/1/2000", "1", ""])
+    io = ScriptedIO(["Hero", "1", "1/1/2000", ""])
     p = interactive_create(reg, io)
     assert p["name"] == "Hero"
+    assert p.get("gender") == "ชาย"
     assert "ui_prefs" in p
-    assert "1/4" in io.joined() or "สร้างตัวละคร" in io.joined()
+    assert "1/3" in io.joined() or "สร้างตัวละคร" in io.joined()

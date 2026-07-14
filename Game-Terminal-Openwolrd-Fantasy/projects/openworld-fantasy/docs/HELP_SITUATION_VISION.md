@@ -1,7 +1,7 @@
 # วิสัยทัศน์ + แผนพัฒนา: สถานการณ์ขอแรง · ร่วมทีมช่วย · สังคมโลก
 
-**สถานะ:** **H0–H4 implement แล้ว** (1.13.14) · H5 live co-op ยังไม่ทำ  
-**เกมปัจจุบันอ้างอิง:** `1.13.14-alpha`  
+**สถานะ:** **H0–H4 + H5 lite (presence soft)** · true live room รอ W3+  
+**เกมปัจจุบันอ้างอิง:** `1.20.0-alpha`  
 **เอกสารแผนรวม:** [`IMPROVEMENT_PLAN.md`](IMPROVEMENT_PLAN.md)  
 **เกี่ยวข้อง:** [`WORLD_SERVER_VISION.md`](WORLD_SERVER_VISION.md) · [`WORLD_SOCIAL.md`](WORLD_SOCIAL.md) · [`DUNGEON.md`](DUNGEON.md) · [`UX_TAMA_VISION.md`](UX_TAMA_VISION.md)
 
@@ -139,7 +139,7 @@ Tama / PERSONAL: อารมณ์ soft ตามได้ช่วย / รอ
 | **H2** | Offer + escrow | เงิน/ไอเทมล็อก · คืน/จ่าย | H0 · inventory | **1.13.13** |
 | **H3** | Assist party + ผล + chronicle | ยื่นมือ · สู้บอสเงา · เขียนผล · inbox | H1–H2 · echo · combat | **1.13.13** |
 | **H4** | สังคมลึก | policy เพื่อน · ชื่อเสียงผู้ช่วย · เควสยื่นมือ · บันทึกสัญญาณโลก | H3 · world_social | **1.13.14** |
-| **H5** | Live co-op (optional) | คน 2 online พร้อมกันใน situation | H3 + online foundation | **รอ** |
+| **H5** | Live co-op (optional) | คน 2 online พร้อมกันใน situation | H3 + online foundation | **lite 1.20** · room เต็มรอ W3 |
 
 ### H0 — รายละเอียด
 

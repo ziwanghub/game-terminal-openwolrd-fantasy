@@ -184,6 +184,17 @@ def accept_mission(
         "special": bool(m.get("special")),
         "desc": m.get("desc"),
     }
+    # L3: carry sealed chest reward fields (soft — UI never shows %)
+    if m.get("reward_chest") is not None:
+        player["board_mission"]["reward_chest"] = m.get("reward_chest")
+    if m.get("reward_chests") is not None:
+        player["board_mission"]["reward_chests"] = m.get("reward_chests")
+    if m.get("reward_chest_chance") is not None:
+        player["board_mission"]["reward_chest_chance"] = m.get("reward_chest_chance")
+    if m.get("set_flags"):
+        player["board_mission"]["set_flags"] = dict(m.get("set_flags") or {})
+    if m.get("flags_on_complete"):
+        player["board_mission"]["flags_on_complete"] = dict(m.get("flags_on_complete") or {})
     player["mission_accepts"] = int(player.get("mission_accepts") or 0) + 1
     notes = f"รับงาน 「{m.get('name')}」 แรงก์ {m.get('rank')}"
     if paid < wage:
@@ -250,6 +261,38 @@ def complete_mission_if_done(
             notes.append(f"  ได้ {(reg.items.get(iid) or {}).get('name', iid)}")
         except Exception:
             pass
+    # L3: explicit reward_chest on mission template / accepted board_mission
+    try:
+        from game.domain.chest_loot import apply_reward_block, grant_reward_chests
+
+        mid = str(bm.get("id") or "")
+        tpl = {}
+        try:
+            for m in (getattr(reg, "mission_board", None) or {}).get("missions") or []:
+                if str(m.get("id")) == mid:
+                    tpl = dict(m)
+                    break
+        except Exception:
+            tpl = {}
+        # merge: board_mission snapshot may carry reward_chest from accept
+        block = {**tpl, **{k: bm[k] for k in bm if k.startswith("reward_chest") or k in ("set_flags", "flags_on_complete")}}
+        chest_notes = apply_reward_block(
+            player,
+            reg,
+            block,
+            seed_salt=f"mission|{mid}",
+        )
+        if not chest_notes and not (block.get("reward_chest") or block.get("reward_chests")):
+            # soft default: high board ranks may yield a sealed chest (hidden chance)
+            chest_notes = grant_reward_chests(
+                player,
+                reg,
+                board_rank=str(bm.get("rank") or ""),
+                seed_salt=f"mission_soft|{mid}|{player.get('mission_completes') or 0}",
+            )
+        notes.extend(chest_notes)
+    except Exception:
+        pass
     # rank progress — frequent accepts/completes raise rank
     player["mission_completes"] = int(player.get("mission_completes") or 0) + 1
     done_ids = list(player.get("board_missions_done") or [])

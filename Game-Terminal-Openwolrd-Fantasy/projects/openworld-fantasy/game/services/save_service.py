@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from game.config import PROJECT_ROOT, SAVES_DIR
 
-SAVE_VERSION = 3  # + inventory_items / equip_instances persistence
+SAVE_VERSION = 4  # EL0: multi-slot loadout main_hand/body/… (legacy weapon/armor migrate)
 EXPORT_DIR = PROJECT_ROOT / "exports"
 
 
@@ -59,9 +59,38 @@ def save_player(player: Dict[str, Any], world_id: Optional[str] = None) -> Path:
         pass
     player["save_version"] = SAVE_VERSION
     player["world_id"] = world_id
-    player["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    # T1: stamp saved_at for load-delta needs
+    try:
+        from game.domain.needs import stamp_saved_at
+
+        stamp_saved_at(player)
+    except Exception:
+        player["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        player["saved_at"] = player["updated_at"]
+        player["saved_at_unix"] = time.time()
+    # allow next load to re-apply offline delta
+    player.pop("_load_delta_done", None)
     path = folder / f"{player['id']}.json"
-    path.write_text(json.dumps(player, ensure_ascii=False, indent=2), encoding="utf-8")
+    # don't persist session-only flag
+    payload = {k: v for k, v in player.items() if not str(k).startswith("_")}
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    # W1: write combat/social echo snapshot (safe for others to fight)
+    try:
+        from game.domain.world_social import write_echo_snapshot
+
+        write_echo_snapshot(payload, world_id)
+    except Exception:
+        pass
+    # W3: soft touch player index occasionally (not every save — cheap check)
+    try:
+        import random as _r
+
+        if _r.random() < 0.25:
+            from game.domain.world_meta import refresh_world_index
+
+            refresh_world_index(world_id)
+    except Exception:
+        pass
     return path
 
 
@@ -81,7 +110,7 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("inventory_ids", [])
     data.setdefault("inventory", data.get("inventory") or [])
     data.setdefault("card_bag", [])
-    data.setdefault("equip_ids", {"weapon": None, "armor": None})
+    data.setdefault("equip_ids", {})
     # Repair orphan inventory names (e.g. iron_sword display without id)
     try:
         from game.data_load.registry import get_registry
@@ -90,13 +119,13 @@ def load_player(path: str) -> Dict[str, Any]:
         sanitize_inventory(data, get_registry())
     except Exception:
         pass
-    data.setdefault("sockets", {"weapon": [], "armor": []})
+    data.setdefault("sockets", {})
     data.setdefault("base_atk", int(data.get("bonus_atk", 5)))
     data.setdefault("base_max_hp", int(data.get("max_hp", 100)))
     data.setdefault("base_max_mana", int(data.get("max_mana", 50)))
     data.setdefault("base_skills", list(data.get("skills") or []))
     data.setdefault("base_pressure", int(data.get("pressure", 10)))
-    data.setdefault("upgrade_levels", {"weapon": 0, "armor": 0})
+    data.setdefault("upgrade_levels", {})
     data.setdefault("quests", {})
     data.setdefault("quests_done", [])
     data.setdefault("bosses_defeated", [])
@@ -128,15 +157,17 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("bag_cap", 40)
     data.setdefault("unit_mastery", 0)
     data.setdefault("unit_mastery_xp", 0)
-    eq = dict(data.get("equip_ids") or {})
-    eq.setdefault("weapon", None)
-    eq.setdefault("armor", None)
-    eq.setdefault("accessory", None)
-    data["equip_ids"] = eq
     data.setdefault("inventory_rarities", [])
-    data.setdefault("equip_rarities", {"weapon": None, "armor": None, "accessory": None})
+    data.setdefault("equip_rarities", {})
     data.setdefault("inventory_items", [])
-    data.setdefault("equip_instances", {"weapon": None, "armor": None, "accessory": None})
+    data.setdefault("equip_instances", {})
+    # EL0 migrate loadout slots
+    try:
+        from game.domain.equipment import ensure_gear_fields
+
+        ensure_gear_fields(data)
+    except Exception:
+        pass
     data.setdefault("dungeon_run", None)
     data.setdefault("dungeon_knowledge", {})
     data.setdefault("dungeons_cleared", [])
@@ -145,12 +176,17 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("help_rep", 0)
     data.setdefault("help_assists", 0)
     data.setdefault("help_requests", 0)
+    load_delta_notes: List[str] = []
     try:
-        from game.domain.needs import ensure_needs
+        from game.domain.needs import apply_load_delta, ensure_needs
 
         ensure_needs(data)
+        # T1: soft needs change from real-time away
+        load_delta_notes = apply_load_delta(data)
     except Exception:
         data.setdefault("needs", {"hunger": 18, "fatigue": 12, "morale": 72})
+    if load_delta_notes:
+        data["_pending_load_notes"] = list(load_delta_notes)
     try:
         from game.domain.situation import ensure_situation_fields, sync_situation_from_dungeon
 

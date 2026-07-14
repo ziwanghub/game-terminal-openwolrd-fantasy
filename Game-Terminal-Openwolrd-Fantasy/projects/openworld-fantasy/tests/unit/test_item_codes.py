@@ -52,11 +52,11 @@ def test_manage_sw001_unequip():
     p["inventory"] = ["ดาบเหล็ก"]
     p["inventory_rarities"] = ["common"]
     equip_item(p, "iron_sword", reg)
-    assert (p.get("equip_ids") or {}).get("weapon") == "iron_sword"
+    assert (p.get("equip_ids") or {}).get("main_hand") == "iron_sword"
     # hub → sw001 → 1 unequip → y confirm → 0 exit
     io = ScriptedIO(["sw001", "1", "y", "0"])
     run_bag_hub(p, reg, io)
-    assert (p.get("equip_ids") or {}).get("weapon") in (None, "")
+    assert (p.get("equip_ids") or {}).get("main_hand") in (None, "")
     assert "iron_sword" in (p.get("inventory_ids") or [])
     assert "ถอด" in io.joined() or "sw001" in io.joined()
 
@@ -85,6 +85,6 @@ def test_unequip_api():
     p = create_player(reg, "api", "warrior", "เมษ")
     add_item(p, "iron_sword", reg)
     equip_item(p, "iron_sword", reg)
-    msg = unequip_slot(p, "weapon", reg)
+    msg = unequip_slot(p, "weapon", reg)  # legacy alias
     assert "ถอด" in msg
-    assert p["equip_ids"]["weapon"] is None
+    assert p["equip_ids"]["main_hand"] is None

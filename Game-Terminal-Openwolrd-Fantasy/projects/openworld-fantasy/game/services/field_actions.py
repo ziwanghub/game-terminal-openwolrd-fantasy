@@ -56,6 +56,22 @@ def do_rest(
             io.write_line(f"  {imsg}")
     except Exception:
         pass
+    # CM: soft focus recovery (hidden latent)
+    try:
+        from game.domain.combo_mind import on_rest_focus
+
+        fmsg = on_rest_focus(player, reg)
+        if fmsg:
+            io.write_line(f"  {fmsg}")
+    except Exception:
+        pass
+    # DD4: familiarity decays on rest (not permanent farm)
+    try:
+        from game.domain.status_fx import decay_status_familiarity
+
+        decay_status_familiarity(player, factor=0.88)
+    except Exception:
+        pass
     bump_stat(player, "rests", 1)
     _emit_personality_notes(io, personality_event(player, "rest", reg))
     try:
@@ -134,10 +150,18 @@ def do_explore(
         player["area_mastery"] = am
         io.write_line(f"ชำนาญพื้นที่ +{gain}%")
     try:
-        from game.domain.needs import apply_needs_event
+        from game.domain.needs import apply_needs_event, try_hunger_collapse
+        from game.domain.balance import apply_soft_death
 
         for line in apply_needs_event(player, "explore"):
             io.write_line(line)
+        collapsed, cnotes = try_hunger_collapse(player, rng, action="explore")
+        for line in cnotes:
+            io.write_line(line)
+        if collapsed:
+            msg = apply_soft_death(player, reg)
+            io.write_line(str(msg))
+            return
     except Exception:
         pass
     for line in bump_quest(player, reg, "explore", area_id=area_id):
@@ -204,10 +228,18 @@ def do_travel(
     io.write_line(f"→ ถึง {reg.area_name(dest)}")
     bump_stat(player, "travels", 1)
     try:
-        from game.domain.needs import apply_needs_event
+        from game.domain.needs import apply_needs_event, try_hunger_collapse
+        from game.domain.balance import apply_soft_death
 
         for line in apply_needs_event(player, "travel"):
             io.write_line(line)
+        collapsed, cnotes = try_hunger_collapse(player, rng, action="travel")
+        for line in cnotes:
+            io.write_line(line)
+        if collapsed:
+            msg = apply_soft_death(player, reg)
+            io.write_line(str(msg))
+            return
     except Exception:
         pass
     for line in bump_quest(player, reg, "travel"):

@@ -14,15 +14,21 @@ Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy/
 | รัน | ไฟล์นี้ | คำสั่ง · เมนูสั้น |
 | วินัย dev | [`../../README.md`](../../README.md) + `core/` | **Z-MOS** — session/preflight ไม่ใช่ logic เกม |
 
-แผนงานค้าง: [`docs/IMPROVEMENT_PLAN.md`](docs/IMPROVEMENT_PLAN.md) · log เวอร์ชัน: [`docs/PHASES.md`](docs/PHASES.md)
+แผนหลัก: [`docs/ROADMAP.md`](docs/ROADMAP.md) · คิวงาน: [`docs/IMPROVEMENT_PLAN.md`](docs/IMPROVEMENT_PLAN.md) · log เวอร์ชัน: [`docs/PHASES.md`](docs/PHASES.md)
 
-## รัน (1.13.15-alpha · t0-needs-w0-rank)
+## รัน (1.15.0-alpha · tama-t1-t2)
 
 ```bash
 cd projects/openworld-fantasy
+./game-start                 # แนะนำ — เริ่มเกม
+./game-start --dashboard     # แดชบอร์ดระบบ (text)
+./game-start --test          # pytest -q
+./game-start --help          # ตัวเลือก + เมนูสั้น
+
+# เทียบเท่า
 python3 -m game
 python3 -m pytest -q
-python3 -m game.admin.dashboard   # แดชบอร์ดประเมินระบบ (text · export .txt/.md)
+python3 -m game.admin.dashboard
 ```
 
 | เมนูหลัก | |

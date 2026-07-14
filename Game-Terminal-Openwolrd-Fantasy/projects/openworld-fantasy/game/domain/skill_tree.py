@@ -191,6 +191,45 @@ def learn_skill(
     if skill_id not in unlocked:
         unlocked.append(skill_id)
         player["skill_tree_unlocked"] = unlocked
+    # SK-R2: roll skill rank on first learn
+    try:
+        import random
+
+        from game.domain.skill_rank import apply_learn_rank, ensure_skill_ranks
+
+        ensure_skill_ranks(player)
+        if skill_id not in (player.get("skill_ranks") or {}):
+            # stable-ish seed from player id + skill for reproducibility in tests if needed
+            rng = random.Random(
+                hash((str(player.get("id") or ""), skill_id, int(player.get("level") or 1)))
+                % (2**31)
+            )
+            # allow free/master paths to still roll; free may re-call — only if missing
+            _rank, notes = apply_learn_rank(player, skill_id, sk, rng, reg)
+            for n in notes:
+                if n:
+                    msg = f"{msg}\n  {n}"
+    except Exception:
+        pass
+    # CM4: soft mind growth on learn (hidden intellect path)
+    try:
+        from game.domain.combo_mind import note_mind_growth
+
+        mnote = note_mind_growth(
+            player, 0.4 if from_master else 0.28, reason="master" if from_master else "learn"
+        )
+        if mnote:
+            msg = f"{msg}\n  {mnote}"
+    except Exception:
+        pass
+    try:
+        from game.domain.soft_feel import soft_skill_learn_feel
+
+        feel = soft_skill_learn_feel(sk)
+        if feel:
+            msg = f"{msg}\n  {feel}"
+    except Exception:
+        pass
     return msg
 
 
