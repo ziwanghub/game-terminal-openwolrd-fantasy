@@ -140,6 +140,26 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("dungeon_run", None)
     data.setdefault("dungeon_knowledge", {})
     data.setdefault("dungeons_cleared", [])
+    data.setdefault("situation", None)
+    data.setdefault("world_inbox", [])
+    data.setdefault("help_rep", 0)
+    data.setdefault("help_assists", 0)
+    data.setdefault("help_requests", 0)
+    try:
+        from game.domain.needs import ensure_needs
+
+        ensure_needs(data)
+    except Exception:
+        data.setdefault("needs", {"hunger": 18, "fatigue": 12, "morale": 72})
+    try:
+        from game.domain.situation import ensure_situation_fields, sync_situation_from_dungeon
+
+        ensure_situation_fields(data)
+        # Re-sync situation if mid-dungeon save
+        if isinstance(data.get("dungeon_run"), dict) and data["dungeon_run"].get("dungeon_id"):
+            sync_situation_from_dungeon(data, preserve_help=True)
+    except Exception:
+        pass
     # migrate rarities length to match inventory_ids
     ids = list(data.get("inventory_ids") or [])
     rares = list(data.get("inventory_rarities") or [])

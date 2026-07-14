@@ -45,6 +45,21 @@ def run_personal_hub(
         io.write_line()
         io.write_line(render_mode_chrome("ตัวละคร", area_name))
         io.write_line(render_status_l1c(player, area_name))
+        try:
+            from game.domain.needs import (
+                ensure_needs,
+                format_needs_bar_line,
+                format_needs_soft_lines,
+                needs_pressure_hint,
+            )
+
+            ensure_needs(player)
+            io.write_line(format_needs_bar_line(player))
+            hint = needs_pressure_hint(player)
+            if hint:
+                io.write_line(hint)
+        except Exception:
+            pass
         io.write_line(
             render_mode_actions(
                 MODE_PERSONAL,
@@ -126,6 +141,14 @@ def _show_full_status(
         )
     for line in format_stats_lines(player):
         io.write_line(line)
+    try:
+        from game.domain.needs import format_needs_soft_lines
+
+        io.write_line()
+        for line in format_needs_soft_lines(player):
+            io.write_line(line)
+    except Exception:
+        pass
     io.read_line("Enter...")
 
 

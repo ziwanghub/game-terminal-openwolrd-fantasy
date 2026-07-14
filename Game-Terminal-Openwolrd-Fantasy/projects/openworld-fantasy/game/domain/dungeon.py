@@ -34,6 +34,12 @@ def ensure_dungeon_state(player: MutableMapping[str, Any]) -> None:
     player.setdefault("dungeon_run", None)
     player.setdefault("dungeon_knowledge", {})
     player.setdefault("dungeons_cleared", [])
+    try:
+        from game.domain.situation import ensure_situation_fields
+
+        ensure_situation_fields(player)
+    except Exception:
+        pass
 
 
 def in_dungeon(player: Mapping[str, Any]) -> bool:
@@ -204,6 +210,13 @@ def begin_dungeon(
     else:
         notes.append(" ไม่มีสิ่งใดรับประกันทางออก — ต้องเคลียร์หรือหาทางรอดเอง")
     notes.append(f" ชั้น 1/{floors} · ปาร์ตี้ {len(player.get('party') or [])}/3")
+    try:
+        from game.domain.situation import sync_situation_from_dungeon
+
+        sync_situation_from_dungeon(player, preserve_help=False)
+        notes.append(" …ถ้าตึงเครียด อาจเปิดสัญญาณขอแรงได้ (ยินยอมให้ช่วย — ระบบช่วยเต็มทีหลัง)")
+    except Exception:
+        pass
     return notes
 
 
@@ -711,12 +724,31 @@ def exit_dungeon(
     player["location"] = back
     player["dungeon_run"] = None
     player.pop("location_before_dungeon", None)
+    try:
+        from game.domain.situation import help_is_open, owner_exit_cleanup
+
+        was_help = help_is_open(player) or bool(
+            (player.get("situation") or {}).get("help", {}).get("escrow")
+        )
+        exit_extra = list(owner_exit_cleanup(player, reg))
+        if was_help and not any("สัญญาณ" in x for x in exit_extra):
+            exit_extra.append(" สัญญาณขอแรงดับลงพร้อมการออกจากสถานการณ์")
+    except Exception:
+        exit_extra = []
     name = run.get("name") or "ดันเจียน"
     if success and run.get("boss_defeated"):
-        return [f"คุณเดินออกจาก「{name}」อย่างผู้พิชิต", f" กลับสู่ {reg.area_name(str(back))}"]
+        return [
+            f"คุณเดินออกจาก「{name}」อย่างผู้พิชิต",
+            f" กลับสู่ {reg.area_name(str(back))}",
+            *exit_extra,
+        ]
     if escaped:
-        return [f"คุณรอดจาก「{name}」แบบหวุดหวิด", f" กลับสู่ {reg.area_name(str(back))}"]
-    return [f"ออกจาก「{name}」", f" กลับสู่ {reg.area_name(str(back))}"]
+        return [
+            f"คุณรอดจาก「{name}」แบบหวุดหวิด",
+            f" กลับสู่ {reg.area_name(str(back))}",
+            *exit_extra,
+        ]
+    return [f"ออกจาก「{name}」", f" กลับสู่ {reg.area_name(str(back))}", *exit_extra]
 
 
 def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str]:
@@ -751,6 +783,20 @@ def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[s
         lines.append(" …มีของบางอย่างในกระเป๋าตอนเข้า — อาจดึงกลับได้")
     else:
         lines.append(" ไม่มีหลักประกันทางออก (นอกจากเคลียร์)")
+    try:
+        from game.domain.situation import (
+            format_help_status_lines,
+            sync_situation_from_dungeon,
+        )
+
+        # refresh severity soft while viewing
+        if isinstance(player, dict):
+            sync_situation_from_dungeon(player, preserve_help=True)  # type: ignore[arg-type]
+        for hl in format_help_status_lines(player):
+            if "สัญญาณ" in hl or "สถานการณ์" in hl:
+                lines.append(" " + hl.lstrip())
+    except Exception:
+        pass
     lines.append(" (ความยาก · เวลา · สูตร — ซ่อนทั้งหมด)")
     return lines
 
@@ -759,12 +805,23 @@ def dungeon_menu_actions(player: Mapping[str, Any]) -> List[str]:
     run = get_run(player)
     if not run:
         return []
+    try:
+        from game.domain.situation import help_is_open
+
+        help_line = (
+            "6. สัญญาณขอแรง (เปิดอยู่ — ปิด/ดูสถานะ)"
+            if help_is_open(player)
+            else "6. สัญญาณขอแรง (ยินยอมให้ช่วย · ระบบสังคม)"
+        )
+    except Exception:
+        help_line = "6. สัญญาณขอแรง"
     acts = [
         "1. สำรวจชั้นนี้ (เหตุการณ์สุ่ม / ศัตรู / ของ / กับดัก)",
         "2. ลงลึกกว่านี้ (ภูมิชั้นใหม่)",
         "3. ท้าทายบอสดันเจียน (ชั้นในสุด)",
         "4. พยายามออก / ใช้ของหนี",
         "5. ดูสถานะดันเจียน",
+        help_line,
         "Y. ปาร์ตี้  0. ออก(ถ้าทางเปิด)",
     ]
     return acts

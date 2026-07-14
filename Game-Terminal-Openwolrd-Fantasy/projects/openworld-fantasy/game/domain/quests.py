@@ -151,6 +151,10 @@ def bump_quest(
                 match = True
         elif event == "board_complete" and qtype == "board_complete":
             match = True
+        elif event == "help_open" and qtype == "help_open":
+            match = True
+        elif event == "help_assist" and qtype == "help_assist":
+            match = True
         if not match:
             continue
         st = dict(st)

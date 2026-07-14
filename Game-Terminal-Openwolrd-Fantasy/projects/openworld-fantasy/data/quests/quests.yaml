@@ -315,6 +315,40 @@
   campaign: true
   chapter: second_horizon
 
+# H4 social help (1.13.14)
+- id: first_sos
+  name: สัญญาณแรก
+  description: เปิดสัญญาณขอแรงในสถานการณ์ 1 ครั้ง (ดัน · เมนู 6)
+  type: help_open
+  target: 1
+  reward_xp: 80
+  reward_money: 40
+  reward_items: [focus_tea]
+  unlock_level: 2
+  depends_on: [first_blood]
+
+- id: first_hand
+  name: มือแรกที่ยื่น
+  description: ยื่นมือช่วยสัญญาณของผู้อื่นสำเร็จ 1 ครั้ง (กระดาน G)
+  type: help_assist
+  target: 1
+  reward_xp: 120
+  reward_money: 60
+  reward_items: [potion_hp, upgrade_mat]
+  unlock_level: 2
+  depends_on: [first_blood]
+
+- id: world_helper
+  name: มืออาสาแห่งโลก
+  description: ช่วยผู้อื่นฝ่าสถานการณ์สำเร็จ 3 ครั้ง
+  type: help_assist
+  target: 3
+  reward_xp: 220
+  reward_money: 120
+  reward_items: [panacea, focus_tea]
+  unlock_level: 4
+  depends_on: [first_hand]
+
 # bulk side quests 1.13.9
 - id: rat_hunter
   name: นักล่าหนูเมือง

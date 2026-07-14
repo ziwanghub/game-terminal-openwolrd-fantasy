@@ -2,13 +2,21 @@
 
 **รูปแบบ:** 1–3 บรรทัดต่อเวอร์ชัน · รายละเอียดระบบอยู่ `ARCHITECTURE.md` + doc รายระบบ  
 **คิวงานค้าง:** `IMPROVEMENT_PLAN.md` เท่านั้น  
-**เวอร์ชันปัจจุบัน:** `1.13.10-alpha` (`aoe-pack-balance`) — ดู `game/config.py`
+**เวอร์ชันปัจจุบัน:** `1.13.15-alpha` (`t0-needs-w0-rank`) — ดู `game/config.py`  
+**แผนยังไม่โค้ด:** W0–W4 → `WORLD_SERVER_VISION.md` · T0–T3 → `UX_TAMA_VISION.md` · H0–H5 → `HELP_SITUATION_VISION.md` · ดู `IMPROVEMENT_PLAN.md`  
+**แดชบอร์ด:** `python3 -m game.admin.dashboard` · `data/meta/system_dashboard.yaml`
 
 ---
 
 | เวอร์ชัน | สรุป |
 |----------|------|
+| **1.13.15** | T0 needs tick · W0 rank soft band + rank_board.json |
+| **1.13.14** | H4 สังคมขอแรง · friends policy · ชื่อเสียงผู้ช่วย · world log · เควส |
+| **1.13.13** | H1–H3 กระดาน G · escrow · assist ช่วยดัน · inbox/chronicle |
+| **1.13.12** | H0 Help Situation · `situation`+consent ในดัน · เมนู 6 · พักรอแรง |
+| **1.13.11** | แดชบอร์ดระบบเกม · ประเมินคะแนน/ช่องว่าง/แผนเฟส · export text · admin 8 |
 | **1.13.10** | บาลานซ์ AoE/กลุ่ม · splash diminishing · soft kill XP · spawn กลุ่มตามเลเวล |
+| *(docs)* | vision W0–W4 · T0–T3 · **H0–H5 Help Situation** (ขอแรง/ร่วมทีม/escrow) |
 | **1.13.9** | เป้า `*` ทั้งกลุ่ม · สกิล AoE · เควส/คราฟ/สกิล bulk |
 | **1.13.8** | multi-ATB กลุ่มพร้อมกัน + เลือกเป้า · มอน/ไอเทม bulk · เมือง pool เบา |
 | **1.13.7** | Phase D tutorial 7 หน้า · campaign รอบ 2 · กระดาน void · pack roster |

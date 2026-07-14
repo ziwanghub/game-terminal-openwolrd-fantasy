@@ -217,6 +217,15 @@ def _use_potion(
         if it.get("clear_status"):
             clear_statuses(player, reg, clear_spec=it.get("clear_status"))
         io.write_line(f"ฟื้น HP +{heal}")
+    # T0: consumables that heal also ease hunger/morale soft
+    try:
+        from game.domain.needs import apply_needs_event
+
+        if it.get("heal_hp") or it.get("kind") == "consumable" or "ยา" in item_name or "food" in str(it.get("tags") or []):
+            for line in apply_needs_event(player, "eat"):
+                io.write_line(line)
+    except Exception:
+        pass
     return True
 
 

@@ -5,7 +5,7 @@
 
 | ฟิลด์ | ค่า |
 |-------|-----|
-| **เวอร์ชันเกม** | 1.13.10-alpha (`aoe-pack-balance`) |
+| **เวอร์ชันเกม** | 1.13.15-alpha (`t0-needs-w0-rank`) |
 | **สถานะเอกสาร** | Living hub — อัปเดตเมื่อเพิ่มระบบหลัก |
 | **เจ้าของ** | ทีม openworld-fantasy |
 | **อัปเดตล่าสุด** | 2026-07-14 (onboarding + U prefs) |
@@ -102,8 +102,8 @@ projects/openworld-fantasy/
 │   ├── data_load/          # YAML → DataRegistry
 │   ├── ports/              # IO Protocol · ScriptedIO · RNG
 │   ├── runtime/            # auto_farm
-│   └── admin/              # CLI แอดมิน
-├── data/                   # ★ คอนเทนต์ (YAML)
+│   └── admin/              # CLI แอดมิน · dashboard ประเมินระบบ
+├── data/                   # ★ คอนเทนต์ (YAML) · meta/system_dashboard.yaml
 ├── saves/{world_id}/       # เซฟตัวละคร + market.json
 ├── tests/                  # unit / combat / smoke / data_validation
 └── docs/                   # เอกสาร (ไฟล์นี้ = hub)
@@ -132,6 +132,10 @@ projects/openworld-fantasy/
 | สเตตัส/พร/อาชีพ | `progression.py`, `blessings.py`, `class_paths.py` | OCCUPATION_STATS_BLESSING | **P** / **C** |
 | ความฉลาด | `intelligence.py` | OCCUPATION_STATS_BLESSING | ไฟต์ **6** · NPC ★ |
 | ตลาด | `market.py`, `market_service.py` | MARKET | กระเป๋า **M** |
+| แดชบอร์ดประเมินระบบ | `admin/dashboard.py` · `data/meta/system_dashboard.yaml` | IMPROVEMENT_PLAN | `python3 -m game.admin.dashboard` · admin **8** |
+| สถานการณ์ขอแรง (H0–H4) | `situation.py` · `help_service.py` · ดัน **6** · **G** | HELP_SITUATION_VISION | consent · escrow · friends · rep · log |
+| Needs Tama (T0) | `domain/needs.py` | UX_TAMA_VISION | พัก/สำรวจ/ไฟต์/กิน · soft PERSONAL |
+| Rank soft (W0) | `world_social.py` · เมนู **3** | WORLD_SERVER_VISION | soft band · rank_board.json |
 | ภาษี→ภารกิจ | `mission_board.py`, `mission_service.py` | MISSION_BOARD | กระเป๋า **J** |
 | เควสโลก | `quests.py` | (ใน quests.yaml) | **9** |
 | ดันเจียน | `dungeon.py`, `dungeon_session.py` | DUNGEON | สายตา dg |
@@ -177,9 +181,13 @@ projects/openworld-fantasy/
 | `SKILL_SYSTEM.md` / `COMBO_UNIT.md` | สกิลคอมโบ |
 | `DUNGEON.md` | ดันเจียน |
 | `PERSONALITY.md` | นิสัย |
-| `WORLD_SOCIAL.md` | โลก social |
+| `WORLD_SOCIAL.md` | โลก social (ของปัจจุบัน) |
+| `WORLD_SERVER_VISION.md` | **วิสัยทัศน์** โลก-เซิร์ฟ · echo · อันดับท้าสู้ (W0–W4 · ยังไม่ทำ) |
+| `UX_TAMA_VISION.md` | **วิสัยทัศน์** UX แนวทามาก๊อต · needs · เวลา hybrid (T0–T3 · ยังไม่ทำ) |
+| `HELP_SITUATION_VISION.md` | **วิสัยทัศน์** ขอแรง · situation บนเซฟ · ร่วมทีมช่วย · escrow (H0–H5 · ยังไม่ทำ) |
 | `NARRATIVE.md` | flavor ไฟต์/สนาม |
 | `WORKSPACE.md` | ลิงก์ monorepo สั้น (ไม่ซ้ำ Z-MOS) |
+| `MODE_SHELL_DESIGN.md` | โหมดสำรวจ/ตัวละคร/ร้าน/ไฟต์ |
 
 ### Single source of truth
 | ความรู้ | แหล่งเดียว |
@@ -189,6 +197,10 @@ projects/openworld-fantasy/
 | พฤติกรรมละเอียดที่รันได้ | **โค้ด domain + pytest** |
 | ตัวเลขคอนเทนต์ | **`data/**/*.yaml`** (ห้าม copy ตารางยาวลง md) |
 | คิวงานค้าง | **`IMPROVEMENT_PLAN.md`** |
+| วิสัยทัศน์โลก-เซิร์ฟ (W0–W4) | **`WORLD_SERVER_VISION.md`** |
+| วิสัยทัศน์ UX-Tama (T0–T3) | **`UX_TAMA_VISION.md`** |
+| วิสัยทัศน์ขอแรง/ช่วย situation (H0–H5) | **`HELP_SITUATION_VISION.md`** |
+| คะแนนประเมินระบบ (แดชบอร์ด) | **`data/meta/system_dashboard.yaml`** (+ รัน `game.admin.dashboard`) |
 | ประวัติเวอร์ชัน | **`PHASES.md`** (สั้น) |
 
 ### นอกโปรเจกต์
@@ -322,6 +334,14 @@ projects/openworld-fantasy/
 |--------|----------|
 | 2026-07-14 | สร้าง ARCHITECTURE.md เป็น hub กลางครั้งแรก (1.13.1) |
 | 2026-07-14 | **Doc Policy** · single source · ดัชนี 3 ชั้น · แยก Z-MOS ชัด · ยุบ docs ซ้ำ |
+| 2026-07-14 | ลิงก์ **WORLD_SERVER_VISION** (W0–W4) ในดัชนี + plan |
+| 2026-07-14 | ลิงก์ **UX_TAMA_VISION** (T0–T3) ในดัชนี + plan |
+| 2026-07-14 | แดชบอร์ดระบบเกม 1.13.11 · `admin/dashboard` · YAML scores |
+| 2026-07-14 | ลิงก์ **HELP_SITUATION_VISION** (H0–H5) ในดัชนี + plan |
+| 2026-07-14 | **H0** `situation.py` · consent ในดัน 1.13.12 |
+| 2026-07-14 | **H1–H3** กระดาน G · escrow · assist 1.13.13 |
+| 2026-07-14 | **H4** friends policy · help_rep · world_signals · เควส 1.13.14 |
+| 2026-07-14 | **T0** needs · **W0** rank soft 1.13.15 |
 
 ---
 

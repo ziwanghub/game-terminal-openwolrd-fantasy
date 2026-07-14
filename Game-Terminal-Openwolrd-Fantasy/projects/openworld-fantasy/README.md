@@ -16,12 +16,13 @@ Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy/
 
 แผนงานค้าง: [`docs/IMPROVEMENT_PLAN.md`](docs/IMPROVEMENT_PLAN.md) · log เวอร์ชัน: [`docs/PHASES.md`](docs/PHASES.md)
 
-## รัน (1.13.10-alpha · aoe-pack-balance)
+## รัน (1.13.15-alpha · t0-needs-w0-rank)
 
 ```bash
 cd projects/openworld-fantasy
 python3 -m game
 python3 -m pytest -q
+python3 -m game.admin.dashboard   # แดชบอร์ดประเมินระบบ (text · export .txt/.md)
 ```
 
 | เมนูหลัก | |
@@ -34,8 +35,8 @@ python3 -m pytest -q
 | **8** | แอดมิน |
 | **0** | ออก |
 
-**Mode Shell:** 〔สำรวจ〕1–4 · **5/I** ตัวละคร · **6** ร้าน/ตลาด/คราฟ · **7** ออโต้ · **0** ออก  
-〔ตัวละคร〕กระเป๋า·เกียร์·เควส·แต้ม · 〔ร้าน〕ท้องถิ่น·M·คราฟ · 〔ไฟต์〕1–6  
+**Mode Shell:** 〔สำรวจ〕1–4 · **5/I** ตัวละคร · **6** ร้าน · **7** ออโต้ · **G** สัญญาณขอแรง · **0** ออก  
+〔ดัน〕**6** ขอแรง/พักรอแรง · 〔ตัวละคร〕กระเป๋า·เควส · 〔ร้าน〕M·คราฟ  
 คำสั่ง: `f_mn01` · `sw001` · `?`
 
 ## โครงเอนจิน

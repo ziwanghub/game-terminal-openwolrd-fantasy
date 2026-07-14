@@ -24,6 +24,7 @@ def run_admin(io: Optional[IO] = None) -> None:
         io.write_line("5. Reload data registry")
         io.write_line("6. ตรวจสุขภาพ data")
         io.write_line("7. รายการ exports/")
+        io.write_line("8. แดชบอร์ดระบบเกม (ประเมิน text + แผนเฟส)")
         io.write_line("0. กลับ")
         ch = io.read_line("admin> ").strip()
 
@@ -108,6 +109,14 @@ def run_admin(io: Optional[IO] = None) -> None:
                 io.write_line("(ว่าง)")
             for p in exps[:30]:
                 io.write_line(f" · {p}")
+        elif ch == "8":
+            from game.admin.dashboard import run_dashboard
+
+            try:
+                run_dashboard(io, do_export=True)
+            except Exception as exc:
+                io.write_line(f"dashboard failed: {exc}")
+            io.read_line("\nEnter...")
         elif ch == "0":
             break
         else:

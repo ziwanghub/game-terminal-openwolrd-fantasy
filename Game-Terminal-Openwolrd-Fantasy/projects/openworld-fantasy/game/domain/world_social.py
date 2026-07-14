@@ -37,7 +37,24 @@ def hidden_rank_score(player: Mapping[str, Any]) -> float:
     # gear wealth proxy
     score += len(player.get("inventory_ids") or []) * 0.3
     score += sum(int(x) for x in (player.get("upgrade_levels") or {}).values()) * 4
+    # W0+: social help contributes (never shown as number)
+    score += int(player.get("help_assists") or 0) * 9
+    score += int(player.get("help_rep") or 0) * 0.35
+    score += len(player.get("dungeons_cleared") or []) * 14
     return score
+
+
+def soft_rank_band(rank: int) -> str:
+    """Soft place label — not a numeric score."""
+    if rank <= 1:
+        return "เงาแรกแห่งโลก"
+    if rank <= 3:
+        return "เงาชั้นบน"
+    if rank <= 7:
+        return "เงาที่รู้จัก"
+    if rank <= 15:
+        return "นักเดินทาง"
+    return "ร่องรอย"
 
 
 def reputation_title(score: float, reg) -> str:
@@ -53,6 +70,7 @@ def reputation_title(score: float, reg) -> str:
 def build_world_ranking(world_id: str, reg, limit: int = 15) -> List[Dict[str, Any]]:
     """
     Public ranking rows — NO level, NO atk/hp/power numbers.
+    W0: soft band + optional helper title.
     """
     rows = []
     for meta in list_saves(world_id):
@@ -62,14 +80,26 @@ def build_world_ranking(world_id: str, reg, limit: int = 15) -> List[Dict[str, A
             continue
         score = hidden_rank_score(p)
         path = p.get("occ_path") or p.get("occupation") or "???"
+        help_title = ""
+        try:
+            from game.domain.situation import helper_soft_title
+
+            help_title = helper_soft_title(p)
+        except Exception:
+            pass
+        # hide dungeon location soft
+        loc = str(p.get("location") or "?")
+        if loc.startswith("dungeon:"):
+            loc = "ในเงาถ้ำ…"
         rows.append(
             {
                 "id": p.get("id"),
                 "name": p.get("name", "?"),
                 "path": path,
                 "title": reputation_title(score, reg),
-                "area": p.get("location", "?"),
+                "area": loc,
                 "unit": bool(p.get("unit_class_id")),
+                "help_title": help_title,
                 "_score": score,  # strip before display
             }
         )
@@ -79,11 +109,14 @@ def build_world_ranking(world_id: str, reg, limit: int = 15) -> List[Dict[str, A
         out.append(
             {
                 "rank": i,
+                "id": r.get("id"),
                 "name": r["name"],
                 "path": r["path"],
                 "title": r["title"],
                 "area": r["area"],
                 "unit_mark": "◆" if r["unit"] else "",
+                "soft_band": soft_rank_band(i),
+                "help_title": r.get("help_title") or "",
             }
         )
     return out
@@ -94,17 +127,61 @@ def format_ranking_lines(world_id: str, reg) -> List[str]:
     lines = [
         f"อันดับชื่อเสียง — {w.get('name', world_id)}",
         f"ความยาก: {w.get('difficulty_label', '?')} (โลกอิสระ)",
-        "— ไม่แสดงเลเวล / ค่าพลัง —",
+        "— ไม่แสดงเลเวล / ค่าพลัง / คะแนนดิบ —",
+        "— อันดับ ≠ ดาเมจสูงสุดเสมอ (ช่วยเหลือ·ภารกิจ·เอาตัวรอด ซ่อน) —",
     ]
     board = build_world_ranking(world_id, reg)
     if not board:
         lines.append("  (ยังไม่มีผู้เล่นในโลกนี้)")
         return lines
     for row in board:
+        extra = f" · 〔{row['help_title']}〕" if row.get("help_title") else ""
         lines.append(
-            f"  #{row['rank']} {row['unit_mark']}{row['name']} · {row['path']} · {row['title']}"
+            f"  #{row['rank']} {row['unit_mark']}{row['name']} · {row['path']} · "
+            f"{row['title']} · {row.get('soft_band', '')}{extra}"
         )
+        if row.get("area"):
+            lines.append(f"       ร่องรอย: {row['area']}")
+    # W0: write soft public card file (no scores)
+    try:
+        write_rank_board_soft(world_id, board)
+    except Exception:
+        pass
     return lines
+
+
+def write_rank_board_soft(world_id: str, board: List[Dict[str, Any]]) -> None:
+    """Persist public rank cards only (W0) — never write hidden scores."""
+    import json
+    import time
+    from pathlib import Path
+
+    from game.config import SAVES_DIR
+
+    folder = Path(SAVES_DIR) / world_id
+    folder.mkdir(parents=True, exist_ok=True)
+    public = []
+    for row in board:
+        public.append(
+            {
+                "rank": row.get("rank"),
+                "name": row.get("name"),
+                "path": row.get("path"),
+                "title": row.get("title"),
+                "soft_band": row.get("soft_band"),
+                "help_title": row.get("help_title") or "",
+                "area": row.get("area"),
+            }
+        )
+    payload = {
+        "world_id": world_id,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "cards": public,
+        "note": "public soft cards only — no scores",
+    }
+    (folder / "rank_board.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def list_other_players_in_world(

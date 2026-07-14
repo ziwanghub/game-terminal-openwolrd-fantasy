@@ -287,6 +287,16 @@ def run_field(
         player["tutorial_done"] = True
 
     ensure_dungeon_state(player)
+    try:
+        from game.domain.situation import format_inbox_preview, ensure_situation_fields
+
+        ensure_situation_fields(player)
+        if player.get("world_inbox"):
+            for line in format_inbox_preview(player, limit=3):
+                io.write_line(line)
+            io.write_line(" (อ่านละเอียด: สำรวจ → G → I)")
+    except Exception:
+        pass
     while True:
         _, need, pct = xp_progress(player, reg.levels)
         player["xp_percent"] = round(pct, 1)
@@ -308,7 +318,9 @@ def run_field(
                     str(run.get("name") or "ดันเจียน"),
                 )
             )
-            _dungeon_field_turn(player, reg, io, rng)
+            dg = _dungeon_field_turn(player, reg, io, rng)
+            if dg == "quit_save":
+                break
             if int(player["hp"]) <= 0:
                 player["hp"] = max(10, int(player["max_hp"]) // 2)
             continue
@@ -585,6 +597,11 @@ def run_field(
             show_help(io)
         elif ch in ("t", "T"):
             show_tutorial(io, force=True)
+        elif ch in ("g", "G"):
+            # H1–H3: world help board + assist
+            from game.services.help_service import run_help_board
+
+            run_help_board(player, reg, io, rng)
         elif ch == "0":
             path = save_player(player)
             io.write_line(f"บันทึกอัตโนมัติ → {path}")

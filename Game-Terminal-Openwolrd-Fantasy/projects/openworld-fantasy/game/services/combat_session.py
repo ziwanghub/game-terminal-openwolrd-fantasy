@@ -691,6 +691,13 @@ def _run_combat(
             io, narrate(reg, "defeat", rng, enemy=str(mon.get("name") or enemy_name))
         )
         _emit_personality_notes(io, personality_event(player, "combat_death", reg))
+        try:
+            from game.domain.needs import apply_needs_event
+
+            for line in apply_needs_event(player, "combat_loss"):
+                io.write_line(line)
+        except Exception:
+            pass
         death_msg = apply_soft_death(player, reg)
         io.write_line()
         io.write_line(soft_death_panel(death_msg))
@@ -707,6 +714,13 @@ def _run_combat(
 
     if int(mon.get("hp") or 0) <= 0:
         prev_lv = int(player.get("level", 1))
+        try:
+            from game.domain.needs import apply_needs_event
+
+            for line in apply_needs_event(player, "combat_win"):
+                io.write_line(line)
+        except Exception:
+            pass
         if mon.get("boss"):
             emit_narrative(
                 io,

@@ -1,11 +1,10 @@
-"""Dungeon field session — enter, floor turns, boss, escape."""
+"""Dungeon field session — enter, floor turns, boss, escape, help signal (H0–H2)."""
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from game.data_load.registry import DataRegistry
-from game.domain.boss import spawn_boss
 from game.domain.dungeon import (
     advance_floor,
     begin_dungeon,
@@ -21,9 +20,99 @@ from game.domain.dungeon import (
     try_escape,
 )
 from game.domain.party import format_party_panel
+from game.domain.situation import (
+    POLICY_FRIENDS,
+    POLICY_PUBLIC,
+    close_help_request,
+    consent_warning_lines,
+    format_help_status_lines,
+    help_is_open,
+    open_help_request,
+    sync_situation_from_dungeon,
+)
 from game.ports.io import IO
 from game.services.combat_session import _run_combat
 from game.services.field_menus import _party_menu
+from game.services.save_service import save_player
+
+
+def _help_signal_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> Optional[str]:
+    """
+    H0–H2: open/close help + offer escrow.
+    Returns 'quit_save' if owner wants to save & wait for help (leave field).
+    """
+    sync_situation_from_dungeon(player, preserve_help=True)
+    for line in format_help_status_lines(player):
+        io.write_line(line)
+    if help_is_open(player):
+        io.write_line("1. ปิดสัญญาณขอแรง (คืนของล็อก)")
+        io.write_line("2. ดูสถานะ")
+        io.write_line("3. บันทึกและพักรอแรง (ออกเมนูหลัก — ดันยังค้าง)")
+        io.write_line("0. กลับ")
+        ch = io.read_line("สัญญาณ> ").strip()
+        if ch == "1":
+            ok, notes = close_help_request(player, reg, reason="owner_cancel")
+            for n in notes:
+                io.write_line(n)
+        elif ch == "2":
+            for line in format_help_status_lines(player):
+                io.write_line(line)
+            io.read_line("Enter...")
+        elif ch == "3":
+            path = save_player(player)
+            io.write_line(f"บันทึกพักรอแรง → {path}")
+            io.write_line("สัญญาณยังเปิดในโลก — ผู้เล่นอื่นเปิดกระดาน G เพื่อยื่นมือ")
+            return "quit_save"
+        return None
+
+    for line in consent_warning_lines():
+        io.write_line(line)
+    io.write_line("1. เปิดสัญญาณ (อาสา — ไม่ล็อกของ)")
+    io.write_line("2. เปิดพร้อมข้อความสั้น")
+    io.write_line("3. เปิดพร้อมเงินตอบแทน")
+    io.write_line("4. เปิดพร้อมไอเทมตอบแทน (id แรกในกระเป๋าที่พิมพ์)")
+    io.write_line("0. ยังไม่ขอ")
+    ch = io.read_line("ขอแรง> ").strip()
+    if ch in ("0", ""):
+        io.write_line("ยังไม่เปิดสัญญาณ")
+        return None
+    note = ""
+    gold = 0
+    item_ids: list = []
+    if ch == "2":
+        note = io.read_line("ข้อความ (สั้น): ").strip()[:80]
+    elif ch == "3":
+        note = io.read_line("ข้อความ (Enter=ว่าง): ").strip()[:80]
+        try:
+            gold = int(io.read_line(f"เงินตอบแทน (มี {player.get('money_world', 0)}G): ").strip() or "0")
+        except ValueError:
+            gold = 0
+    elif ch == "4":
+        note = io.read_line("ข้อความ (Enter=ว่าง): ").strip()[:80]
+        bag = list(player.get("inventory_ids") or [])
+        io.write_line(" กระเป๋า (id): " + ", ".join(bag[:12]) + ("…" if len(bag) > 12 else ""))
+        raw = io.read_line("ไอเทม id (คั่นด้วยช่องว่าง ถ้าหลายชิ้น): ").strip()
+        item_ids = [x for x in raw.split() if x]
+        try:
+            gold = int(io.read_line("เงินเพิ่ม (0=ไม่มี): ").strip() or "0")
+        except ValueError:
+            gold = 0
+    elif ch != "1":
+        io.write_line("ยกเลิก")
+        return None
+    io.write_line(" ขอบเขตผู้รับสัญญาณ:")
+    io.write_line(" 1 สาธารณะในโลก  2 เฉพาะสายสัมพันธ์ (เพื่อน)")
+    pol_ch = io.read_line("ขอบเขต> ").strip()
+    policy = POLICY_FRIENDS if pol_ch == "2" else POLICY_PUBLIC
+    ok, notes = open_help_request(
+        player, reg, note=note, gold=gold, item_ids=item_ids, policy=policy
+    )
+    for n in notes:
+        io.write_line(n)
+    if ok:
+        io.write_line(" เปิดแล้ว — เลือก 6→3 เพื่อบันทึกพักรอแรง หรือเล่นต่อ")
+    return None
+
 
 def _enter_dungeon_flow(
     player: Dict[str, Any],
@@ -67,10 +156,10 @@ def _dungeon_field_turn(
     reg: DataRegistry,
     io: IO,
     rng: random.Random,
-) -> bool:
+) -> Union[bool, str]:
     """
     Restricted loop while locked in dungeon.
-    Returns False to exit main loop (quit save), True to continue.
+    Returns True to continue field, 'quit_save' to leave field after save.
     """
     run = get_run(player)
     if not run:
@@ -140,6 +229,10 @@ def _dungeon_field_turn(
         for line in format_dungeon_panel(player, reg):
             io.write_line(line)
         io.read_line("Enter...")
+    elif ch == "6":
+        result = _help_signal_menu(player, reg, io)
+        if result == "quit_save":
+            return "quit_save"
     elif ch in ("y", "Y"):
         _party_menu(player, reg, io)
     elif ch == "0":
@@ -147,10 +240,8 @@ def _dungeon_field_turn(
             io.write_line(line)
     else:
         io.write_line("เลือกไม่ถูกต้อง")
-    # time pressure after meaningful actions
     if acted and in_dungeon(player):
         for line in tick_dungeon_time(player, reg, rng, cost=1):
             io.write_line(line)
+        sync_situation_from_dungeon(player, preserve_help=True)
     return True
-
-

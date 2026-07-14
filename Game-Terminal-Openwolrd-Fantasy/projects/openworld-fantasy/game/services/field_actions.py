@@ -58,6 +58,13 @@ def do_rest(
         pass
     bump_stat(player, "rests", 1)
     _emit_personality_notes(io, personality_event(player, "rest", reg))
+    try:
+        from game.domain.needs import apply_needs_event
+
+        for line in apply_needs_event(player, "rest"):
+            io.write_line(line)
+    except Exception:
+        pass
     for line in bump_quest(player, reg, "rest", area_id=area_id):
         io.write_line(line)
     _try_board_complete(player, reg, io)
@@ -126,6 +133,13 @@ def do_explore(
         am[area_id] = min(100, int(am.get(area_id, 0)) + gain)
         player["area_mastery"] = am
         io.write_line(f"ชำนาญพื้นที่ +{gain}%")
+    try:
+        from game.domain.needs import apply_needs_event
+
+        for line in apply_needs_event(player, "explore"):
+            io.write_line(line)
+    except Exception:
+        pass
     for line in bump_quest(player, reg, "explore", area_id=area_id):
         io.write_line(line)
     _try_board_complete(player, reg, io)
@@ -189,6 +203,13 @@ def do_travel(
     emit_narrative(io, field_enter_area(reg, dest, rng))
     io.write_line(f"→ ถึง {reg.area_name(dest)}")
     bump_stat(player, "travels", 1)
+    try:
+        from game.domain.needs import apply_needs_event
+
+        for line in apply_needs_event(player, "travel"):
+            io.write_line(line)
+    except Exception:
+        pass
     for line in bump_quest(player, reg, "travel"):
         io.write_line(line)
     _try_board_complete(player, reg, io)

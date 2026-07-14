@@ -148,6 +148,7 @@ def create_player(
         "skill_tree_unlocked": [skill0, "guard_basic"],
         "party": [],
         "party_bonds": {},
+        "needs": {"hunger": 18, "fatigue": 12, "morale": 72},
         "party_bonus_atk": 0,
         "party_bonus_max_hp": 0,
         "party_bonus_max_mana": 0,
