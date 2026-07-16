@@ -73,6 +73,14 @@ def ensure_progression(player: MutableMapping[str, Any], reg: DataRegistry) -> N
     player.setdefault("dodge_chance", 3.0)  # soft evade %
     player.setdefault("luck_score", 0.0)  # hidden — never display raw
     player.setdefault("learn_points", 0)  # hidden sources
+    # WO-035: anima = Spirit core facet value (not morale / not relic.spirit_*)
+    try:
+        from game.domain.stat_arch import ensure_stat_arch
+
+        ensure_stat_arch(player)
+    except Exception:
+        player.setdefault("anima", 45.0)
+        player.setdefault("world_relations", {})
     player.setdefault("intel_options", False)
     player.setdefault("intel_current", None)  # filled by intelligence.ensure
     player.setdefault("intel_max", 3)
@@ -284,6 +292,13 @@ def on_level_up_points(player: MutableMapping[str, Any], reg: DataRegistry, leve
     except Exception:
         pass
     recompute_powers(player, reg)
+    try:
+        from game.domain.stat_arch import recompute_anima, ensure_stat_arch
+
+        ensure_stat_arch(player)
+        recompute_anima(player, reg)
+    except Exception:
+        pass
     return notes
 
 
@@ -355,11 +370,20 @@ def allocate_stat(
         recompute_stats(player, reg)
     except Exception:
         pass
-    # player only sees invested points, not latent
-    msg = (
-        f"เพิ่ม{STAT_LABELS[stat]} +{points} "
-        f"(ลงทุนรวม {alloc[stat]}) · เหลือแต้ม {player['stat_points']}"
-    )
+    # WO-035: soft feedback — no raw invest total in player message
+    try:
+        from game.domain.stat_arch import soft_facet_label, recompute_anima
+
+        recompute_anima(player, reg)
+        feel = soft_facet_label(min(100, int(alloc[stat]) * 12.0 + 10))
+        msg = (
+            f"「{STAT_LABELS[stat]}」รู้สึกหนาขึ้น · 〔{feel}〕 · "
+            f"แต้มเหลือ {player['stat_points']} · (V=ประเมินตัวเอง)"
+        )
+    except Exception:
+        msg = (
+            f"เพิ่ม{STAT_LABELS[stat]} · เหลือแต้ม {player['stat_points']}"
+        )
     # soft path band if secret occupation active (stat+style HSR)
     if player.get("unit_class_id"):
         try:
@@ -520,6 +544,14 @@ def library_visit(player: MutableMapping[str, Any], reg: DataRegistry) -> List[s
             notes.append(mnote)
     except Exception:
         pass
+    # WO-037: Anima soft moment after reading
+    try:
+        from game.domain.stat_arch import anima_presence_lines, recompute_anima
+
+        recompute_anima(player, reg)
+        notes.extend(anima_presence_lines(player, "library", reg=reg))
+    except Exception:
+        pass
     # personality fragment tips (partial / rumor / rare complete) — separate pool
     try:
         from game.domain.personality import (
@@ -550,80 +582,49 @@ def grant_library_key(player: MutableMapping[str, Any]) -> str:
 
 def format_alloc_panel(player: Mapping[str, Any]) -> List[str]:
     """
-    Stat invest overview — sectioned for terminal scanability.
+    Stat invest overview — WO-035 soft shell (no raw ×N / power dump).
     luck never listed; crit legacy not shown in menu.
-    Allocation is free — class only soft-biases latent growth.
     """
+    try:
+        from game.domain.stat_arch import SOFT_INVEST_UI, format_soft_invest_lines
+
+        if SOFT_INVEST_UI:
+            return format_soft_invest_lines(player)
+    except Exception:
+        pass
+    # fallback legacy if soft module missing
     alloc = player.get("stats_alloc") or {}
     pts = int(player.get("stat_points") or 0)
-    occ = player.get("occupation") or "-"
-    rank = player.get("occ_rank_title") or "-"
-
     lines: List[str] = [
         " แจกแต้มสถานะ",
         "---",
         f" แต้มคงเหลือ  {pts}",
-        f" อาชีพ        {occ} · {rank}",
     ]
-    if player.get("unit_class_name"):
-        lines.append(f" อาชีพลับ    {player.get('unit_class_name')}")
-
-    lines.append("---")
-    lines.append(" การลงทุน (มองเห็น · ลงได้อิสระ)")
     for i, k in enumerate(ALLOCATE_KEYS, 1):
         n = int(alloc.get(k, 0))
-        # soft bar: filled by invest count (display cap 8)
         filled = min(8, n)
         dots = "█" * filled + "░" * (8 - filled)
-        lines.append(f"  {i}. {STAT_LABELS[k]:<8}  [{dots}]  ×{n}")
-
-    lines.append("---")
-    lines.append(" หมายเหตุ soft")
-    lines.append("  · ลงโจมตี/กัน/เวท/เร็วได้อิสระ — ไม่บังคับตามสาย")
-    lines.append("  · ความฉลาด แจกตรงไม่ได้ — โชว์เป็นแบนด์ (โตจากเรียน/อ่าน/คิด)")
-    lines.append("  · อาชีพลับ/Unit: สกิลแรงตามแนวแต้มที่เข้าทาง — ลงผิดอาจแผ่ว")
-    lines.append("  · โชคมีผลบางครั้ง — แจกตรงไม่ได้")
-
-    try:
-        from game.domain.combo_mind import soft_intellect_label, soft_focus_label
-
-        lines.append("---")
-        lines.append(" ความคิด (soft · ไม่ใช่แต้ม P)")
-        lines.append(
-            f"  ฉลาด〔{soft_intellect_label(player)}〕· "
-            f"จิต〔{soft_focus_label(player)}〕"
-        )
-        lines.append("  · มีผลคอมโบ/มานาโซ่ (สูตรซ่อน)")
-    except Exception:
-        pass
-    try:
-        from game.domain.intelligence import format_intel_status_line, ensure_intelligence
-
-        ensure_intelligence(player)  # type: ignore
-        lines.append("---")
-        lines.append(" สติ (ทรัพยากรใช้เร่งจังหวะ)")
-        lines.append(f"  {format_intel_status_line(player).strip()}")
-        lines.append("  · ไฟต์กด 6 = เร่งจังหวะ (ใช้สติ)")
-        lines.append("  · ฟื้น: พัก · เวลา · ชาสมาธิ")
-    except Exception:
-        pass
+        lines.append(f"  {i}. {STAT_LABELS[k]:<8}  [{dots}]")
     return lines
 
 
 def format_alloc_menu_lines(player: Mapping[str, Any]) -> List[str]:
     """Numbered invest choices only (used under the overview box)."""
-    alloc = player.get("stats_alloc") or {}
+    try:
+        from game.domain.stat_arch import SOFT_INVEST_UI, format_soft_invest_menu_lines
+
+        if SOFT_INVEST_UI:
+            return format_soft_invest_menu_lines(player)
+    except Exception:
+        pass
     nkeys = len(ALLOCATE_KEYS)
     lines: List[str] = [
         " ลงทุนที่",
         "---",
     ]
     for i, k in enumerate(ALLOCATE_KEYS, 1):
-        n = int(alloc.get(k, 0))
-        lines.append(f"  {i}  {STAT_LABELS[k]:<8}  (ลงทุนแล้ว ×{n})")
+        lines.append(f"  {i}  {STAT_LABELS[k]:<8}")
     lines.append("---")
     lines.append("  0  กลับ")
-    lines.append("---")
     lines.append(f" พิมพ์ 1–{nkeys} แล้วใส่จำนวนแต้ม")
-    lines.append(" (ความฉลาดไม่อยู่ในเมนูนี้)")
     return lines

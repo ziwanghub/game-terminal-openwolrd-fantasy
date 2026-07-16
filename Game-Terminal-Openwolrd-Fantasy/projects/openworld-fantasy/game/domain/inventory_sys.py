@@ -923,12 +923,14 @@ def upgrade_success_chance(
     *,
     reg: Optional[DataRegistry] = None,
     rarity_id: str = "common",
+    player: Optional[Mapping[str, Any]] = None,
 ) -> float:
     """
     Hidden curve — higher +level AND higher gear rank = lower success.
     Exact % never shown; soft-labeled in UI.
     Tier upgrade_bonus (YAML) softens slightly for well-made pieces but
     rank penalty still dominates on high tiers.
+    WO-035.3: luck is a soft multiplier (small) — materials/rank still primary.
     """
     # +0 common: ~92%, +5: ~60%, +9: ~33%
     base = 0.92 - level * 0.065
@@ -939,6 +941,13 @@ def upgrade_success_chance(
     base -= (rk - 1) * 0.025
     bonus = float(tier_by_id(reg, rarity_id).get("upgrade_bonus") or 0)
     base += bonus * 0.45  # partial quality hold — net still harder for high rank
+    # WO-036: luck soft bias ±~6% relative — rank/materials stay primary
+    if player is not None:
+        try:
+            luck = float(player.get("luck_score") or 0.0)
+            base *= 1.0 + max(-0.07, min(0.07, luck * 0.20))
+        except Exception:
+            pass
     return max(0.16, min(0.96, base))
 
 
@@ -1073,8 +1082,11 @@ def upgrade_chance_label(
     *,
     reg: Optional[DataRegistry] = None,
     rarity_id: str = "common",
+    player: Optional[Mapping[str, Any]] = None,
 ) -> str:
-    rate = upgrade_success_chance(slot, level, reg=reg, rarity_id=rarity_id)
+    rate = upgrade_success_chance(
+        slot, level, reg=reg, rarity_id=rarity_id, player=player
+    )
     if rate >= 0.8:
         return "โอกาสสูง"
     if rate >= 0.55:
@@ -1172,7 +1184,9 @@ def format_upgrade_preview(
     else:
         lines.append("  · วัสดุหายาก: ไม่ต้องใช้ในขั้นนี้")
 
-    feel = upgrade_chance_label(slot, cur, reg=reg, rarity_id=gear_rid)
+    feel = upgrade_chance_label(
+        slot, cur, reg=reg, rarity_id=gear_rid, player=player
+    )
     lines.append("---")
     lines.append(f" โอกาสสำเร็จ (ประมาณ): {feel}  (ขึ้นกับ +level และ Rank ชิ้น)")
     lines.append(
@@ -1288,7 +1302,9 @@ def upgrade_equipped_opaque(
     if cost["rare_mat"]:
         consume_materials(player, "rare_mat", cost["rare_mat"], reg)
 
-    chance = upgrade_success_chance(slot, cur, reg=reg, rarity_id=gear_rid)
+    chance = upgrade_success_chance(
+        slot, cur, reg=reg, rarity_id=gear_rid, player=player
+    )
     if rng.random() <= chance:
         ups[slot] = cur + 1
         player["upgrade_levels"] = ups

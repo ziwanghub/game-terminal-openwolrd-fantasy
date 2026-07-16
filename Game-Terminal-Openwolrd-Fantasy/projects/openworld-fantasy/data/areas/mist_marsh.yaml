@@ -29,3 +29,7 @@ monster_pools:
 
 boss_id: boss_mist_hydra
 boss_unlock_level: 9
+# WO-029 soft loop copy
+loop_soft:
+  - "หนองหมอก: ลดปลิง·ทางกออ้อ · แล้วค่อยล่าไฮดรา"
+  - "หมอกจำกลิ่น — กลับมาสำรวจซ้ำได้ผล soft"

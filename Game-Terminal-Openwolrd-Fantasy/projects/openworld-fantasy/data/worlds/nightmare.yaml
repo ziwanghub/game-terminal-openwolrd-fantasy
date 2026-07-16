@@ -3,6 +3,7 @@ name: โลกฝันร้าย — เหวไม่มีก้น
 difficulty: 3
 difficulty_label: ฝันร้าย
 starting_area: desert_heat
+theme_id: dune_heat
 description: ยากสุด — เงิน/เริ่มต้นน้อย
 independent: true
 modifiers:

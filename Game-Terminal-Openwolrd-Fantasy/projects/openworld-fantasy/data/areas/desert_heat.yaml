@@ -35,3 +35,7 @@ monster_pools:
 
 boss_id: boss_sun_scourge
 boss_unlock_level: 14
+# WO-031 soft loop copy
+loop_soft:
+  - "ทะเลทราย: เดินเนิน·ล่าแมงป่อง·เงาใต้ดวงอาทิตย์ แล้วค่อยสิ้นแสง"
+  - "เรลิก: เถ้าโลกันตร์หลังสิ้นแสง — ลองห้อง G ก่อนใส่จริง"

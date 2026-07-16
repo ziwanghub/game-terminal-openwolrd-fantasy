@@ -16,14 +16,20 @@ def victory_panel(
 
 
 def soft_death_panel(summary: str, extra: Optional[Sequence[str]] = None) -> str:
+    """WO-012: soft death feedback — cause + impact for God readability."""
     lines = [
-        " ✦ ล้มลง — แต่ยังไม่จบ ✦",
+        " ✦ ล้มลง — แต่ยังไม่จบ (Soft Death) ✦",
         "---",
         f" {summary}",
     ]
     for e in extra or []:
-        lines.append(f" {e}")
-    lines.append(" ฟื้นในจุดปลอดภัย — ของบางอย่างอาจสูญเสีย")
+        t = str(e).strip()
+        if not t:
+            continue
+        lines.append(f" {t}" if not t.startswith(" ") else t)
+    lines.append("---")
+    lines.append(" ฟื้นครึ่งเลือด · เล่นต่อได้ · ไม่ใช่จบเกม")
+    lines.append(" ของ/เงิน/XP บางส่วนอาจสูญ — อ่านสาเหตุด้านบน")
     return render_box(lines, double=True)
 
 

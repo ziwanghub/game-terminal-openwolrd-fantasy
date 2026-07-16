@@ -1,15 +1,50 @@
 # Version log (สั้น)
 
 **รูปแบบ:** 1–3 บรรทัดต่อเวอร์ชัน · รายละเอียดระบบอยู่ `ARCHITECTURE.md` + doc รายระบบ  
-**คิวงานค้าง:** `IMPROVEMENT_PLAN.md` เท่านั้น  
-**เวอร์ชันปัจจุบัน:** `1.48.0-alpha` (`solo-polish-post-cm`) — ดู `game/config.py`  
+**คิวงานค้าง:** `IMPROVEMENT_PLAN.md` · **Work Order:** `WO_BACKLOG.md`  
+**เวอร์ชันปัจจุบัน:** `1.94.0-alpha` (`wo047-human-feedback-feel`) — ดู `game/config.py`  
 **แผนยังไม่โค้ด (solo-first):** playtest มือ · hotfix · W4 online ระงับ  
+**WO backlog:** `WO_BACKLOG.md`  
 **แดชบอร์ด:** `python3 -m game.admin.dashboard` · `data/meta/system_dashboard.yaml`
 
 ---
 
 | เวอร์ชัน | สรุป |
 |----------|------|
+| **1.94.0** | **WO-047:** Human Feedback + Feel Polish · synergy tone · DNA lock |
+| **1.93.0** | **WO-046:** Relic × Moment/Area Soft Synergy · foresight · auto · spar |
+| **1.92.0** | **WO-045:** Playtest Polish รอบใหญ่ · DNA lock lite · foresight/moment tone |
+| **1.91.0** | **WO-044:** Area moments ครบ 8 พื้นที่ · Soft Foresight ใบ้สายตา/moment |
+| **1.90.0** | **WO-043:** Soft Chorus 3+ · Soft Cap 4+ · third lean pieces · spar/auto |
+| **1.89.0** | **WO-042:** Area Mini-Moments ถ้ำ/ทะเลทราย/ผลึก · hell charm + echo shroud · Bond ครบ 3 |
+| **1.88.0** | **WO-041:** Relic Soft Bonds · resonance · tension · spar/world/auto |
+| **1.87.0** | **WO-040:** Anima × Relic Depth · lean · spar · explore whisper · auto frail |
+| **1.86.0** | **WO-039:** Faction Mini-Moments · 3 soft encounters · Auto soft |
+| **1.85.0** | **WO-038:** World Relations Lite · divine/infernal/echo · Soft Alert · Anima |
+| **1.84.0** | **WO-037:** Anima presence soft moments · morale/combat link · Soft Alert |
+| **1.83.0** | **WO-036:** playtest harness · soft P/V polish · enemy assess · luck cap |
+| **1.82.0** | **WO-035:** Stat 3-layer · anima · soft P · ประเมิน · luck/relations lite |
+| **1.81.0** | **WO-034.5:** aura_resisted soft · band_th polish · aura_strong tone |
+| **1.80.0** | **WO-034.2–4:** wire equip/unequip · combat spirit/mana/aura · critical/auto |
+| **1.79.0** | **WO-034.0–1:** Relic Alert catalog `relic.*` · alias burden→relic · spirit=morale |
+| **1.78.0** | **WO-033.4:** needs soft-warn เข้า Soft Alert Bus · record ตอนเข้าไฟต์ |
+| **1.77.0** | **WO-033:** Soft Alert Bus · burden catalog · throttle · pre-fight/auto/foresight |
+| **1.76.0** | **WO-032:** mountain/crystal/city/void loops · all 8 areas have loop_soft |
+| **1.75.0** | **WO-031:** cave + desert area loops · boss chain depth (lantern/sun ready) |
+| **1.74.0** | **WO-030:** human feedback playtest · burden medium lock · chamber/UX polish |
+| **1.73.0** | **WO-028/029:** human playtest pack · forest/marsh area loops · tips on travel |
+| **1.72.0** | **WO-027:** mid relic quests · chamber spar/summary · burden feel · money dampen |
+| **1.71.0** | **WO-026:** playtest stabilize · burden soft · tutorial เรลิก · god burden log |
+| **1.70.0** | **WO-025:** relic quests · auto avoid relic-aura echo · policy hub B |
+| **1.69.0** | **WO-024:** echo aura menu · relic boss/dungeon drops · foresight/hub burden |
+| **1.68.0** | **WO-023:** Divine Burden · Godforge Chamber · Relic Aura · relic content 4 |
+| **1.67.0** | **WO-022:** money_factor 0.9 · auto_buy default · thrift/safe budget · economy Field30 |
+| **1.66.0** | **WO-021:** รายได้มือ≈ออโต้ · auto ซื้อ/ขายขยะ · ราคา early ลง · H/H จากดัน+เควส |
+| **1.58.0** | **WO-006/007/008:** field กายใจเด่น · เมนูตัวละคร index · Auto Policy Hub (A) |
+| **1.57.0** | **WO-005 P1.5:** combat vitals หิว/ล้า/ขวัญ · soft warn · ศัพท์ขวัญ · มือ≈ออโต้ feedback |
+| **1.56.0** | **WO-004 Phase 1:** auto_fight needs parity · morale prefs/policy · auto rest · care logs · field+dungeon |
+| **1.55.0** | WO-002 code (theme/custom world) + **defer:** default simple world list · `WORLD_THEME_UX_ENABLED=False` |
+| **1.54.0** | Party relationship assist · gifts · free ซุ่ม |
 | **1.48.0** | Post-CM polish: soft MP fail · สถานะโชว์จิต/ฉลาด · smoke CM+rank |
 | **1.47.0** | **CM5:** focus ceil ตามเลเวล · soft เกินขั้น · ห้องสมุด/fusion โต mind · soft-cap growth |
 | **1.46.0** | **CM3–4 lite:** ฉลาดไม่อยู่ใน P · แบนด์ soft · mind growth เรียนสกิล · migrate |

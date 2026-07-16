@@ -3,6 +3,7 @@ name: โลกเริ่มต้น — เอลิเรีย
 difficulty: 1
 difficulty_label: ปกติ
 starting_area: dark_forest
+theme_id: forest_whisper
 description: สมดุลมาตรฐาน — เหมาะเริ่มต้น
 independent: true
 modifiers:

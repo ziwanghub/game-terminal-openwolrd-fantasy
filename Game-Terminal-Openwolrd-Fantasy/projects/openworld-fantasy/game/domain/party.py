@@ -1,6 +1,7 @@
 """
-Party system — max 3 companions (players or spirits/beasts/gods...).
-Recruitment requires hidden consent; calling power has per-use costs.
+Party system — max 3 companions.
+Assist is automatic (relationship-gated chance). No mana/gold call cost.
+Gifts/valuables build relationship; likes hidden (observe soft reactions).
 """
 from __future__ import annotations
 
@@ -22,6 +23,34 @@ def ensure_party(player: MutableMapping[str, Any]) -> List[Dict[str, Any]]:
     player["party"] = party[:MAX_PARTY]
     player.setdefault("party_bonds", {})  # member_id -> bond int
     player.setdefault("party_calls", 0)
+    # companions ever joined — can re-invite (P2)
+    player.setdefault("party_known", [])  # list of template/member ids
+    player.setdefault("party_known_meta", {})  # id -> {name, kind, joined, bond_peak}
+    # old saves: current party → known roster (so re-invite works after dismiss)
+    known = list(player.get("party_known") or [])
+    meta = dict(player.get("party_known_meta") or {})
+    bonds = player.get("party_bonds") or {}
+    for m in player["party"]:
+        if not isinstance(m, dict):
+            continue
+        mid = str(m.get("id") or "")
+        if not mid:
+            continue
+        if mid not in known:
+            known.append(mid)
+        prev = dict(meta.get(mid) or {})
+        bond_now = int(bonds.get(mid) or m.get("bond") or 1)
+        meta[mid] = {
+            "name": m.get("name") or prev.get("name") or mid,
+            "kind": m.get("kind") or prev.get("kind") or "other",
+            "joined": max(1, int(prev.get("joined") or 0)),
+            "bond_peak": max(int(prev.get("bond_peak") or 0), bond_now),
+            "template_id": m.get("template_id") or prev.get("template_id") or (
+                mid if not mid.startswith("player:") else None
+            ),
+        }
+    player["party_known"] = known
+    player["party_known_meta"] = meta
     return player["party"]
 
 
@@ -47,27 +76,375 @@ def template_by_id(reg: DataRegistry, tid: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+# ── Relationship (0–100) ─────────────────────────────────────────────
+
+def _migrate_bond_value(raw: Any) -> int:
+    """Old saves used small ints (0–10); new scale is 0–100."""
+    try:
+        v = int(raw or 0)
+    except Exception:
+        v = 0
+    if v <= 12:
+        return max(0, min(100, v * 10))
+    return max(0, min(100, v))
+
+
+def get_relationship(player: Mapping[str, Any], member_id: str, member: Optional[Mapping[str, Any]] = None) -> int:
+    bonds = player.get("party_bonds") or {}
+    mid = str(member_id)
+    if mid in bonds:
+        return _migrate_bond_value(bonds.get(mid))
+    if member is not None:
+        return _migrate_bond_value(member.get("bond") or member.get("relationship") or 12)
+    return 12
+
+
+def set_relationship(player: MutableMapping[str, Any], member_id: str, value: int) -> int:
+    ensure_party(player)
+    bonds = dict(player.get("party_bonds") or {})
+    v = max(0, min(100, int(value)))
+    bonds[str(member_id)] = v
+    player["party_bonds"] = bonds
+    # sync known meta peak
+    meta = dict(player.get("party_known_meta") or {})
+    e = dict(meta.get(str(member_id)) or {})
+    e["bond_peak"] = max(int(e.get("bond_peak") or 0), v)
+    meta[str(member_id)] = e
+    player["party_known_meta"] = meta
+    return v
+
+
+def adjust_relationship(
+    player: MutableMapping[str, Any],
+    member_id: str,
+    delta: float,
+) -> int:
+    cur = get_relationship(player, member_id)
+    return set_relationship(player, member_id, int(round(cur + delta)))
+
+
+def soft_relationship_label(score: int) -> str:
+    s = int(score)
+    if s >= 85:
+        return "ผูกพันลึก"
+    if s >= 65:
+        return "ไว้ใจ"
+    if s >= 45:
+        return "คุ้นเคย"
+    if s >= 25:
+        return "รู้จัก"
+    if s >= 10:
+        return "ห่างเหิน"
+    return "เย็นชา"
+
+
+def relationship_bar(score: int, width: int = 8) -> str:
+    s = max(0, min(100, int(score)))
+    filled = int(round(s / 100.0 * width))
+    filled = max(0, min(width, filled))
+    return "█" * filled + "░" * (width - filled)
+
+
+def assist_chance_from_relationship(score: int) -> float:
+    """Higher relationship → more frequent auto-assist (no player button)."""
+    s = max(0, min(100, int(score)))
+    # ~28% at 0 · ~55% at 40 · ~78% at 70 · ~94% at 100
+    return max(0.22, min(0.96, 0.28 + s / 100.0 * 0.66))
+
+
+def assist_chance_for_member(
+    player: Mapping[str, Any],
+    member_id: str,
+    member: Optional[Mapping[str, Any]] = None,
+) -> float:
+    """
+    WO-035.3: relationship primary + luck soft multiplier.
+    Still no raw % shown to player.
+    """
+    rel = get_relationship(player, member_id, member)
+    base = assist_chance_from_relationship(rel)
+    luck = float(player.get("luck_score") or 0.0)
+    # WO-036: luck soft only ±~6% relative — relationship stays primary
+    mult = 1.0 + max(-0.08, min(0.08, luck * 0.22))
+    return max(0.20, min(0.96, base * mult))
+
+
+def _gift_like_tags_for_member(member: Mapping[str, Any], reg: Optional[DataRegistry] = None) -> List[str]:
+    """Hidden preference tags — never listed in UI."""
+    mid = str(member.get("id") or "")
+    kind = str(member.get("kind") or "other")
+    # template override
+    if reg is not None:
+        tpl = template_by_id(reg, mid) or {}
+        if tpl.get("gift_likes"):
+            return [str(x) for x in tpl.get("gift_likes") or []]
+    by_kind = {
+        "spirit": ["food", "incense", "rare", "arcane"],
+        "beast": ["food", "material", "meat", "common"],
+        "heaven_beast": ["food", "sacred", "shiny", "heaven"],
+        "hell_beast": ["meat", "hell", "dark", "rare"],
+        "heaven_god": ["sacred", "divine", "heaven", "gem", "shiny"],
+        "hell_god": ["hell", "dark", "rare", "contract", "gem"],
+        "other": ["rare", "material", "arcane", "shiny"],
+        "player": ["food", "money", "rare", "shiny"],
+    }
+    tags = list(by_kind.get(kind, ["food", "material"]))
+    # id-stable spice so individuals differ without data spam
+    h = sum(ord(c) for c in mid) % 5
+    extras = ["shiny", "gem", "food", "dark", "heaven"]
+    tags.append(extras[h])
+    return tags
+
+
+def _item_gift_tags(item_id: str, item: Mapping[str, Any]) -> List[str]:
+    tags: List[str] = []
+    iid = str(item_id).lower()
+    kind = str(item.get("kind") or "").lower()
+    rar = str(item.get("rarity") or "common").lower()
+    itags = [str(t).lower() for t in (item.get("tags") or [])]
+    if is_foodish(item):
+        tags.append("food")
+        if "meat" in iid or "ration" in iid or "feast" in iid:
+            tags.append("meat")
+    if "incense" in iid or "ธูป" in str(item.get("name") or ""):
+        tags.append("incense")
+    if kind == "material" or "mat" in iid:
+        tags.append("material")
+    if rar in ("uncommon", "rare", "very_rare", "legendary", "sacred", "divine", "archdivine"):
+        tags.append("rare")
+        tags.append("shiny")
+    if rar in ("sacred", "divine", "archdivine") or "bless" in iid or "heaven" in iid:
+        tags.append("sacred")
+        tags.append("heaven")
+        tags.append("divine")
+    if "hell" in iid or "void" in iid or "umbra" in iid or "shadow" in iid:
+        tags.append("dark")
+        tags.append("hell")
+    if "contract" in iid:
+        tags.append("contract")
+    if "shard" in iid or "gem" in iid or "prism" in iid or "crystal" in iid:
+        tags.append("gem")
+        tags.append("shiny")
+    if "arcane" in iid or "mana" in iid or "mind" in iid:
+        tags.append("arcane")
+    tags.extend(itags)
+    price = int(item.get("price_world") or 0)
+    if price >= 150:
+        tags.append("valuable")
+        tags.append("shiny")
+    return list(dict.fromkeys(tags))
+
+
+def is_foodish(item: Mapping[str, Any]) -> bool:
+    try:
+        from game.domain.needs import is_food_item
+
+        return is_food_item(item)
+    except Exception:
+        tags = item.get("tags") or []
+        return "food" in tags or str(item.get("kind") or "") == "food"
+
+
+def evaluate_gift(
+    member: Mapping[str, Any],
+    item_id: str,
+    item: Mapping[str, Any],
+    reg: Optional[DataRegistry] = None,
+) -> Tuple[str, int, str]:
+    """
+    Returns (tier, delta, soft_msg).
+    tier: love | like | meh | dislike
+    """
+    likes = set(_gift_like_tags_for_member(member, reg))
+    got = set(_item_gift_tags(item_id, item))
+    overlap = likes & got
+    price = int(item.get("price_world") or 0)
+    rar = str(item.get("rarity") or "common").lower()
+
+    if overlap & {"divine", "sacred", "heaven"} and likes & {"divine", "sacred", "heaven"}:
+        return "love", 18, "…ดวงตาอ่อนลง ราวกับถูกเข้าใจ"
+    if overlap & {"hell", "dark", "contract"} and likes & {"hell", "dark", "contract"}:
+        return "love", 16, "…มันยิ้มแปลกๆ — ถูกใจอย่างชัด"
+    if "food" in overlap and "food" in likes:
+        return "like", 10, "…มันรับไปเงียบๆ บรรยากาศอุ่นขึ้น"
+    if overlap & {"gem", "shiny", "valuable", "rare"}:
+        return "like", 12 + (4 if price >= 200 else 0), "…ของสะท้อนแสง — มันสนใจ"
+    if overlap:
+        return "like", 8, "…มันพยักน้อยๆ"
+    if rar in ("common",) and price < 30:
+        return "meh", 2, "…รับไว้ แต่ไม่ตื่นเต้น"
+    if "food" in got and "food" not in likes:
+        return "meh", 3, "…กิน/ดมแล้วหันไป"
+    # disliked if strongly opposing
+    if ("heaven" in got or "sacred" in got) and likes & {"hell", "dark"}:
+        return "dislike", -4, "…มันเบือนหน้า — ไม่ถูกโทน"
+    if ("hell" in got or "dark" in got) and likes & {"heaven", "sacred"}:
+        return "dislike", -4, "…แสงรอบตัวมันหด — ไม่ชอบ"
+    return "meh", 3, "…รับไปโดยไม่บอกเหตุผล"
+
+
+def give_item_gift(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    member_index: int,
+    inv_index: int,
+) -> List[str]:
+    """Give inventory item to party member — builds/hides relationship."""
+    ensure_party(player)
+    party = list(player.get("party") or [])
+    if member_index < 0 or member_index >= len(party):
+        return ["ไม่มีสมาชิกช่องนั้น"]
+    ids = list(player.get("inventory_ids") or [])
+    if inv_index < 0 or inv_index >= len(ids):
+        return ["ไม่มีของช่องนั้น"]
+    m = party[member_index]
+    mid = str(m.get("id"))
+    iid = str(ids[inv_index])
+    it = dict((reg.items or {}).get(iid) or {"id": iid, "name": iid})
+    # remove item
+    try:
+        from game.domain.rarity import remove_inventory_at_index
+
+        remove_inventory_at_index(player, inv_index, reg)
+    except Exception:
+        ids.pop(inv_index)
+        player["inventory_ids"] = ids
+    tier, delta, soft = evaluate_gift(m, iid, it, reg)
+    # value bonus
+    price = int(it.get("price_world") or 0)
+    if tier in ("love", "like") and price >= 100:
+        delta += min(8, price // 80)
+    before = get_relationship(player, mid, m)
+    after = adjust_relationship(player, mid, delta)
+    name = m.get("name") or mid
+    iname = it.get("name") or iid
+    notes = [
+        f"คุณยื่น「{iname}」ให้ {name}",
+        f" {soft}",
+        f" ความสัมพันธ์ [{relationship_bar(after)}] {soft_relationship_label(after)}",
+    ]
+    if after > before + 10:
+        notes.append(" …รู้สึกใกล้ชิดขึ้นชัดเจน")
+    elif after < before:
+        notes.append(" …บรรยากาศเย็นลงนิด")
+    return notes
+
+
+def give_money_gift(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    member_index: int,
+    *,
+    currency: str = "world",
+    amount: int = 0,
+) -> List[str]:
+    """Offer money_world / heaven / hell as gift (valuables)."""
+    ensure_party(player)
+    party = list(player.get("party") or [])
+    if member_index < 0 or member_index >= len(party):
+        return ["ไม่มีสมาชิกช่องนั้น"]
+    m = party[member_index]
+    mid = str(m.get("id"))
+    key = {
+        "world": "money_world",
+        "heaven": "money_heaven",
+        "hell": "money_hell",
+    }.get(currency, "money_world")
+    have = int(player.get(key) or 0)
+    amt = max(0, int(amount))
+    if amt <= 0 or have < amt:
+        return ["เงินไม่พอ"]
+    player[key] = have - amt
+    likes = set(_gift_like_tags_for_member(m, reg))
+    soft_map = {
+        "world": ("money", "shiny"),
+        "heaven": ("heaven", "sacred", "shiny"),
+        "hell": ("hell", "dark", "valuable"),
+    }
+    tags = set(soft_map.get(currency, ("money",)))
+    if tags & likes:
+        delta = 6 + min(14, amt // (5 if currency != "world" else 25))
+        msg = "…มันพึงพอใจกับของมีค่านี้"
+    else:
+        delta = 2 + min(6, amt // (8 if currency != "world" else 40))
+        msg = "…รับไว้โดยไม่แสดงออกมาก"
+    after = adjust_relationship(player, mid, delta)
+    label = {"world": "เงินโลก", "heaven": "เงินสวรรค์", "hell": "เงินนรก"}.get(currency, "เงิน")
+    return [
+        f"คุณมอบ{label} {amt} ให้ {m.get('name')}",
+        f" {msg}",
+        f" ความสัมพันธ์ [{relationship_bar(after)}] {soft_relationship_label(after)}",
+    ]
+
+
+def tick_relationship_decay(player: MutableMapping[str, Any], *, ticks: int = 1) -> None:
+    """
+    Very slow decay for companions not currently in the active party.
+    ~0.12 point per field/dungeon tick (fractional debt → ~1 pt / 8–9 ticks).
+    Floor at 5 — never forgotten quickly. Active party members do not decay.
+    """
+    ensure_party(player)
+    active = {str(m.get("id")) for m in (player.get("party") or [])}
+    bonds = dict(player.get("party_bonds") or {})
+    debt = dict(player.get("party_bond_decay_debt") or {})
+    changed = False
+    for mid, raw in list(bonds.items()):
+        if mid in active:
+            # reset fractional debt while together
+            if mid in debt:
+                debt.pop(mid, None)
+                changed = True
+            continue
+        cur = _migrate_bond_value(raw)
+        if cur <= 5:
+            continue
+        # accumulate fractional decay so int bonds still drop slowly
+        d = float(debt.get(mid) or 0.0) + 0.12 * max(1, int(ticks))
+        drop = int(d)
+        if drop > 0:
+            d -= float(drop)
+            nxt = max(5, cur - drop)
+            if nxt != cur:
+                bonds[mid] = nxt
+                changed = True
+        debt[mid] = round(d, 4)
+        changed = True
+    if changed:
+        player["party_bonds"] = bonds
+        player["party_bond_decay_debt"] = debt
+
+
 def format_party_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str]:
     ensure_party(player)  # type: ignore
     mx = max_party_size(reg)
     lines = [f"── ปาร์ตี้ ({party_size(player)}/{mx}) ──"]
     party = list(player.get("party") or [])
     if not party:
-        lines.append("  ว่าง — ต้องได้รับการยอมรับจึงร่วมทีมได้ (วิธีได้มาไม่บอก)")
-        lines.append("  เรียกใช้พลังปาร์ตี้มีเงื่อนไขแต่ละครั้ง")
+        lines.append("  ว่าง — ต้องได้รับการยอมรับจึงร่วมทีมได้")
+        lines.append("  เงาในโลกอาจยื่นมือมาเมื่อคุณเดินทาง/สำรวจ…")
+        lines.append("  ความสัมพันธ์สร้างด้วยของขวัญ/ของมีค่า (ชอบอะไร — สังเกตเอง)")
+        known = list(player.get("party_known") or [])
+        if known:
+            lines.append(f"  สหายที่เคยร่วมทาง: {len(known)} ตน — Y เชิญกลับได้")
         return lines
-    bonds = player.get("party_bonds") or {}
     for i, m in enumerate(party, 1):
         kind = kind_label(reg, str(m.get("kind") or "other"))
         name = m.get("name") or m.get("id")
-        bond = int(bonds.get(str(m.get("id")), m.get("bond", 0)) or 0)
-        soft = "สนิท" if bond >= 5 else ("คุ้น" if bond >= 2 else "ใหม่")
+        mid = str(m.get("id"))
+        rel = get_relationship(player, mid, m)
+        soft = soft_relationship_label(rel)
+        bar = relationship_bar(rel)
         rlab = m.get("rarity_label") or m.get("rarity") or ""
         rbit = f" · {rlab}" if rlab else ""
-        lines.append(f"  {i}. {name} · {kind}{rbit} · ความผูกพัน:{soft}")
+        lines.append(f"  {i}. {name} · {kind}{rbit}")
+        lines.append(f"     สัมพันธ์ [{bar}] {soft} ({rel})")
         if m.get("flavor"):
             lines.append(f"     “{m.get('flavor')}”")
-    lines.append("  (ตัวเลขพลังสมาชิกซ่อน · เรียกใช้ตอนไฟต์มีต้นทุน · ช่วยโจมตีอัตโนมัติได้)")
+    lines.append("  ไฟต์: ช่วยโจมตีอัตโน (โอกาสตามสัมพันธ์) · ไม่เสียมานา/เงิน")
+    lines.append("  Y: ของขวัญ/เงินมีค่า เพิ่มสัมพันธ์ · ชอบอะไร — สังเกตปฏิกิริยา")
+    known_n = len(player.get("party_known") or [])
+    if known_n:
+        lines.append(f"  รู้จักสหาย {known_n} ตน — เชิญกลับได้ (นอกทีมสัมพันธ์ลดช้ามาก)")
     if player.get("unit_class_id"):
         from game.domain.unit_system import soft_mastery_label
 
@@ -120,6 +497,7 @@ def can_recruit_template(
         return False, "ขาดของจากสวรรค์"
     if int(player.get("money_hell", 0)) < int(template.get("require_money_hell") or 0):
         return False, "ขาดของจากนรก"
+    # hire costs are checked at attempt_join (may partially pay on fail)
     return True, "ok"
 
 
@@ -136,6 +514,7 @@ def add_member(player: MutableMapping[str, Any], member: Dict[str, Any], reg: Da
     bonds = dict(player.get("party_bonds") or {})
     bonds[mid] = int(member.get("bond") or 1)
     player["party_bonds"] = bonds
+    mark_known_companion(player, member)
     return f"✦ {member.get('name')} ยอมร่วมทางแล้ว ({kind_label(reg, str(member.get('kind')))})"
 
 
@@ -146,7 +525,9 @@ def remove_member(player: MutableMapping[str, Any], index: int) -> str:
         return "ไม่มีสมาชิกช่องนั้น"
     m = party.pop(index)
     player["party"] = party
-    return f"{m.get('name')} แยกทางไป..."
+    # stay in known roster for re-invite
+    mark_known_companion(player, m)
+    return f"{m.get('name')} แยกทางไป... (ยังจำคุณได้ — อาจเชิญกลับได้)"
 
 
 def member_from_template(
@@ -309,60 +690,40 @@ def call_party_power(
     member_index: int,
 ) -> Tuple[bool, str, Dict[str, int]]:
     """
-    Activate one member's full bonus for this fight burst.
-    Returns (ok, message, bonuses_applied).
-    Conditions/costs per member — player discovers by trying.
+    Combat menu 5: no mana/gold cost.
+    Relationship status + optional free focus if bond high.
+    Assists are automatic (party_member_turns).
     """
     ensure_party(player)
     party = list(player.get("party") or [])
     if member_index < 0 or member_index >= len(party):
         return False, "ไม่มีสมาชิก", {}
     m = party[member_index]
-    cm = int(m.get("call_mana") or _cfg(reg).get("call_base_mana") or 4)
-    cw = int(m.get("call_world") or 0)
-    ch = int(m.get("call_heaven") or 0)
-    cl = int(m.get("call_hell") or 0)
-    if int(player.get("mana", 0)) < cm:
-        return False, "มานาไม่พอสำหรับเรียกใช้", {}
-    if int(player.get("money_world", 0)) < cw:
-        return False, "เงื่อนไขเรียกใช้ยังไม่ครบ (ทรัพยากรโลก?)", {}
-    if int(player.get("money_heaven", 0)) < ch:
-        return False, "เงื่อนไขเรียกใช้ยังไม่ครบ (สวรรค์?)", {}
-    if int(player.get("money_hell", 0)) < cl:
-        return False, "เงื่อนไขเรียกใช้ยังไม่ครบ (นรก?)", {}
-
-    player["mana"] = int(player["mana"]) - cm
-    if cw:
-        player["money_world"] = int(player.get("money_world", 0)) - cw
-    if ch:
-        player["money_heaven"] = int(player.get("money_heaven", 0)) - ch
-    if cl:
-        player["money_hell"] = int(player.get("money_hell", 0)) - cl
-
-    bonds = dict(player.get("party_bonds") or {})
     mid = str(m.get("id"))
-    bonds[mid] = int(bonds.get(mid, 0)) + 1
-    player["party_bonds"] = bonds
-    player["party_calls"] = int(player.get("party_calls", 0)) + 1
-
-    bonuses = {
-        "atk": int(m.get("bonus_atk") or 0),
-        "max_hp": int(m.get("bonus_max_hp") or 0),
-        "max_mana": int(m.get("bonus_max_mana") or 0),
-    }
-    # temporary fight buff
-    player["bonus_atk"] = int(player.get("bonus_atk", 0)) + bonuses["atk"]
-    player["max_hp"] = int(player.get("max_hp", 0)) + bonuses["max_hp"]
-    player["hp"] = min(int(player["max_hp"]), int(player.get("hp", 0)) + bonuses["max_hp"] // 2)
-    player["max_mana"] = int(player.get("max_mana", 0)) + bonuses["max_mana"]
-    player["mana"] = min(int(player["max_mana"]), int(player.get("mana", 0)) + bonuses["max_mana"] // 3)
-    # track for end-of-fight cleanup optional
-    pend = list(player.get("party_call_active") or [])
-    pend.append({"id": mid, **bonuses})
-    player["party_call_active"] = pend
-
     name = m.get("name") or mid
-    return True, f"✧ เรียก「{name}」ช่วยแนวรบ! (ต้นทุนถูกหักตามเงื่อนไขซ่อน)", bonuses
+    rel = get_relationship(player, mid, m)
+    bar = relationship_bar(rel)
+    lab = soft_relationship_label(rel)
+    bonuses: Dict[str, int] = {"atk": 0, "max_hp": 0, "max_mana": 0}
+    if rel >= 40 and not player.get("_party_focus_used"):
+        bonuses["atk"] = max(1, int(m.get("bonus_atk") or 1) // 2)
+        player["bonus_atk"] = int(player.get("bonus_atk") or 0) + bonuses["atk"]
+        pend = list(player.get("party_call_active") or [])
+        pend.append({"id": f"focus:{mid}", **bonuses})
+        player["party_call_active"] = pend
+        player["_party_focus_used"] = True
+        adjust_relationship(player, mid, 1)
+        msg = (
+            f"「{name}」[{bar}] {lab} — ซุ่มช่วยอัตโนตามสัมพันธ์ · "
+            f"โฟกัสเบา (ไม่เสียมานา/เงิน)"
+        )
+        return True, msg, bonuses
+    msg = (
+        f"「{name}」[{bar}] {lab} — ช่วยโจมตีเองเมื่อจังหวะถึง "
+        f"(โอกาสตามสัมพันธ์ · ไม่กด · ไม่เสียทรัพยากร)"
+    )
+    return True, msg, bonuses
+
 
 
 def party_assist_damage(
@@ -390,27 +751,29 @@ def party_member_turns(
     if not party or int(mon.get("hp", 0)) <= 0:
         return notes
     bonds = player.get("party_bonds") or {}
-    notes.append("  ── เทิร์นปาร์ตี้ ──")
+    notes.append("  ── ซุ่มช่วย (ตามสัมพันธ์) ──")
     acted_any = False
     for m in party:
         if int(mon.get("hp", 0)) <= 0:
             break
         mid = str(m.get("id"))
-        bond = int(bonds.get(mid, m.get("bond", 1)) or 1)
-        # higher bond → almost always acts
-        chance = 0.55 + min(0.40, bond * 0.06)
+        rel = get_relationship(player, mid, m)
+        try:
+            chance = assist_chance_for_member(player, mid, m)
+        except Exception:
+            chance = assist_chance_from_relationship(rel)
         if rng.random() > chance:
             continue
         acted_any = True
         name = m.get("name") or mid
         kind = str(m.get("kind") or "")
         base = max(1, int(m.get("bonus_atk") or 2))
+        # relationship scales assist power ~0.85–1.45
+        rel_pow = 0.85 + (rel / 100.0) * 0.60
         hp_ratio = int(player.get("hp") or 0) / max(1, int(player.get("max_hp") or 1))
         mon_ratio = int(mon.get("hp") or 0) / max(1, int(mon.get("max_hp") or 1))
-        # choose action soft — situational (player low · finish elite · kind)
         action = "attack"
         if hp_ratio < 0.30:
-            # emergency heal bias for any kind
             if kind in ("spirit", "heaven_god", "heaven_beast", "player") or rng.random() < 0.55:
                 action = "heal"
             else:
@@ -420,27 +783,33 @@ def party_member_turns(
         elif kind in ("spirit",) and rng.random() < 0.35:
             action = "heal"
         elif mon_ratio <= 0.22 and (mon.get("elite") or mon.get("boss") or mon_ratio <= 0.15):
-            # finish wounded high-value foe
             action = "attack"
         elif kind in ("player", "beast", "hell_beast", "hell_god") or rng.random() < 0.7:
             action = "attack"
         else:
             action = "buff"
-        # finishing blow slightly stronger when mon is nearly done
         finish_mult = 1.0
         if action == "attack" and mon_ratio <= 0.25:
             finish_mult = 1.12 + (0.08 if mon.get("elite") or mon.get("boss") else 0.0)
 
         if action == "heal":
-            heal = max(2, int(round(base * (1.2 + bond * 0.1) + rng.randint(1, 4))))
-            player["hp"] = min(int(player.get("max_hp") or heal), int(player.get("hp") or 0) + heal)
-            notes.append(f"  › {name} รักษาเบา → HP +{heal}")
+            heal = max(
+                2,
+                int(round(base * (1.2 + rel / 100.0) * rel_pow + rng.randint(1, 4))),
+            )
+            player["hp"] = min(
+                int(player.get("max_hp") or heal), int(player.get("hp") or 0) + heal
+            )
+            notes.append(f"  › {name} ซุ่มรักษา → HP +{heal}")
         elif action == "buff":
-            player["bonus_atk"] = int(player.get("bonus_atk") or 0) + max(1, base // 3)
+            boost = max(1, int(round((base // 3) * rel_pow)))
+            player["bonus_atk"] = int(player.get("bonus_atk") or 0) + boost
             pend = list(player.get("party_call_active") or [])
-            pend.append({"id": f"softbuff:{mid}", "atk": max(1, base // 3), "max_hp": 0, "max_mana": 0})
+            pend.append(
+                {"id": f"softbuff:{mid}", "atk": boost, "max_hp": 0, "max_mana": 0}
+            )
             player["party_call_active"] = pend
-            notes.append(f"  › {name} เสริมพลังแนวรบ (ชั่วคราว)")
+            notes.append(f"  › {name} ซุ่มเสริมพลัง (ชั่วคราว)")
         else:
             kmult = {
                 "player": 1.15,
@@ -453,7 +822,15 @@ def party_member_turns(
             }.get(kind, 1.0)
             dmg = max(
                 1,
-                int(round(base * kmult * finish_mult * (0.85 + rng.random() * 0.55))),
+                int(
+                    round(
+                        base
+                        * kmult
+                        * rel_pow
+                        * finish_mult
+                        * (0.85 + rng.random() * 0.55)
+                    )
+                ),
             )
             mon["hp"] = int(mon.get("hp", 0)) - dmg
             try:
@@ -463,19 +840,17 @@ def party_member_turns(
                 if flavor:
                     notes.extend(flavor)
                 else:
-                    notes.append(f"  › {name} โจมตี → {dmg}")
+                    notes.append(f"  › {name} ซุ่มโจมตี → {dmg}")
             except Exception:
-                notes.append(f"  › {name} โจมตี → {dmg}")
+                notes.append(f"  › {name} ซุ่มโจมตี → {dmg}")
             if int(mon.get("hp", 0)) <= 0:
                 notes.append(f"  › {name} ปิดงาน!")
                 break
-        # soft bond growth rare
-        if rng.random() < 0.12:
-            bonds = dict(player.get("party_bonds") or {})
-            bonds[mid] = int(bonds.get(mid, bond)) + 1
-            player["party_bonds"] = bonds
+        # tiny relationship from fighting together
+        if rng.random() < 0.10:
+            adjust_relationship(player, mid, 1)
     if not acted_any:
-        notes.append("  › สมาชิกยังรอดูจังหวะ…")
+        notes.append("  › ทีมยังรอดูจังหวะ… (สัมพันธ์ยิ่งสูง ยิ่งซุ่มบ่อย)")
     return notes
 
 
@@ -492,6 +867,312 @@ def clear_party_call_buffs(player: MutableMapping[str, Any]) -> None:
         player["max_mana"] = max(0, int(player.get("max_mana", 0)) - int(b.get("max_mana") or 0))
         player["mana"] = min(int(player.get("mana", 0)), int(player["max_mana"]))
     player["party_call_active"] = []
+
+
+
+
+# ── P1–P3: known roster · tier hire · consent ─────────────────────────
+
+def mark_known_companion(player: MutableMapping[str, Any], member: Mapping[str, Any]) -> None:
+    """Remember companion for soft re-invite (never shows formulas)."""
+    player.setdefault("party_known", [])
+    player.setdefault("party_known_meta", {})
+    player.setdefault("party_bonds", {})
+    mid = str(member.get("id") or "")
+    if not mid:
+        return
+    known = list(player.get("party_known") or [])
+    if mid not in known:
+        known.append(mid)
+    player["party_known"] = known
+    meta = dict(player.get("party_known_meta") or {})
+    prev = dict(meta.get(mid) or {})
+    joined = int(prev.get("joined") or 0) + 1
+    bond_now = int((player.get("party_bonds") or {}).get(mid) or member.get("bond") or 1)
+    peak = max(int(prev.get("bond_peak") or 0), bond_now)
+    meta[mid] = {
+        "name": member.get("name") or prev.get("name") or mid,
+        "kind": member.get("kind") or prev.get("kind") or "other",
+        "joined": joined,
+        "bond_peak": peak,
+        "template_id": member.get("template_id") or (
+            mid if not str(mid).startswith("player:") else prev.get("template_id")
+        ),
+    }
+    player["party_known_meta"] = meta
+
+
+def template_tier(template: Mapping[str, Any]) -> int:
+    """
+    Hidden difficulty tier 0–3 for hire/consent scaling.
+    Explicit template.tier wins; else from kind + min_level.
+    """
+    if template.get("tier") is not None:
+        return max(0, min(3, int(template.get("tier") or 0)))
+    kind = str(template.get("kind") or "other")
+    lv = int(template.get("min_level") or 1)
+    base = {
+        "spirit": 0,
+        "beast": 0,
+        "heaven_beast": 2,
+        "hell_beast": 2,
+        "heaven_god": 3,
+        "hell_god": 3,
+        "other": 2,
+        "player": 1,
+    }.get(kind, 1)
+    if lv >= 28:
+        base = max(base, 3)
+    elif lv >= 18:
+        base = max(base, 2)
+    elif lv >= 10:
+        base = max(base, 1)
+    return max(0, min(3, base))
+
+
+def hire_cost_table(template: Mapping[str, Any]) -> Dict[str, int]:
+    """Costs to request join (world/heaven/hell). Explicit fields override tier defaults."""
+    tier = template_tier(template)
+    defaults = {
+        0: {"world": 0, "heaven": 0, "hell": 0},
+        1: {"world": 25, "heaven": 0, "hell": 0},
+        2: {"world": 40, "heaven": 1, "hell": 1},
+        3: {"world": 80, "heaven": 2, "hell": 2},
+    }
+    d = dict(defaults.get(tier) or defaults[1])
+    # kind-specific money realm
+    kind = str(template.get("kind") or "")
+    if kind in ("heaven_beast", "heaven_god") and d["heaven"] == 0 and tier >= 2:
+        d["heaven"] = max(1, tier - 1)
+        d["hell"] = 0
+    if kind in ("hell_beast", "hell_god") and d["hell"] == 0 and tier >= 2:
+        d["hell"] = max(1, tier - 1)
+        d["heaven"] = 0
+    # explicit overrides
+    if template.get("hire_world") is not None:
+        d["world"] = int(template.get("hire_world") or 0)
+    if template.get("hire_heaven") is not None:
+        d["heaven"] = int(template.get("hire_heaven") or 0)
+    if template.get("hire_hell") is not None:
+        d["hell"] = int(template.get("hire_hell") or 0)
+    # also count require_money as part of presence (not double-charged if hire covers)
+    return d
+
+
+def can_afford_hire(player: Mapping[str, Any], costs: Mapping[str, int]) -> Tuple[bool, str]:
+    if int(player.get("money_world") or 0) < int(costs.get("world") or 0):
+        return False, "ทรัพยากรยังไม่พอให้มันสนใจ (โลก?)"
+    if int(player.get("money_heaven") or 0) < int(costs.get("heaven") or 0):
+        return False, "ยังขาดสิ่งจากสวรรค์"
+    if int(player.get("money_hell") or 0) < int(costs.get("hell") or 0):
+        return False, "ยังขาดสิ่งจากนรก"
+    return True, "ok"
+
+
+def pay_hire(
+    player: MutableMapping[str, Any],
+    costs: Mapping[str, int],
+    *,
+    fraction: float = 1.0,
+) -> List[str]:
+    """Pay hire costs; fraction < 1 for soft fail tax."""
+    notes: List[str] = []
+    f = max(0.0, min(1.0, float(fraction)))
+    for key, label in (
+        ("world", "money_world"),
+        ("heaven", "money_heaven"),
+        ("hell", "money_hell"),
+    ):
+        amt = int(round(int(costs.get(key) or 0) * f))
+        if amt <= 0:
+            continue
+        pkey = label
+        have = int(player.get(pkey) or 0)
+        lose = min(have, amt)
+        player[pkey] = have - lose
+        if lose:
+            soft = {"world": "เงินโลก", "heaven": "เงินสวรรค์", "hell": "เงินนรก"}[key]
+            notes.append(f"  ใช้{soft} {lose}")
+    return notes
+
+
+def consent_chance(
+    template: Mapping[str, Any],
+    affinity: float,
+    *,
+    bond_peak: int = 0,
+    known: bool = False,
+) -> float:
+    """Hidden probability of accepting join request."""
+    tier = template_tier(template)
+    base = {0: 0.72, 1: 0.55, 2: 0.38, 3: 0.22}.get(tier, 0.5)
+    need = float(template.get("affinity_need") or 0.2)
+    # how far above need
+    surplus = max(0.0, float(affinity) - need)
+    base += min(0.28, surplus * 0.5)
+    if known:
+        base += 0.12 + min(0.15, bond_peak * 0.03)
+    # clamp
+    return max(0.08, min(0.92, base))
+
+
+def attempt_join_template(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    template: Mapping[str, Any],
+    rng: random.Random,
+    *,
+    affinity: Optional[float] = None,
+    known_reinvite: bool = False,
+) -> Tuple[bool, List[str]]:
+    """
+    Full join flow: gates → pay hire → consent roll → add member.
+    Harder tiers: costlier + lower consent. Soft messages only.
+    """
+    ensure_party(player)
+    notes: List[str] = []
+    tid = str(template.get("id") or "")
+    # known reinvite: slightly easier affinity floor
+    meta = dict((player.get("party_known_meta") or {}).get(tid) or {})
+    bond_peak = int(meta.get("bond_peak") or 0)
+    if affinity is None:
+        # reinvite uses bond; fresh uses soft random
+        if known_reinvite:
+            affinity = 0.25 + min(0.45, bond_peak * 0.06) + rng.random() * 0.15
+        else:
+            affinity = 0.2 + rng.random() * 0.45
+    aff = float(affinity)
+
+    ok, why = can_recruit_template(player, reg, template, affinity=aff)
+    if not ok:
+        return False, [why]
+
+    costs = hire_cost_table(template)
+    if known_reinvite:
+        # known: 40% cheaper
+        costs = {k: int(v * 0.6) for k, v in costs.items()}
+    afford, why_pay = can_afford_hire(player, costs)
+    if not afford:
+        return False, [why_pay]
+
+    # pay up-front (commitment)
+    if any(int(costs.get(k) or 0) > 0 for k in ("world", "heaven", "hell")):
+        notes.append("คุณยื่นของ/ค่าตอบแทนตามที่บรรยากาศบอก...")
+        notes.extend(pay_hire(player, costs, fraction=1.0))
+
+    chance = consent_chance(
+        template, aff, bond_peak=bond_peak, known=known_reinvite
+    )
+    if rng.random() > chance:
+        # soft fail — keep cost (already paid) as tax for hard tiers
+        notes.append("…มันลังเล แล้วถอย — ยังไม่ยอมรับการร่วมทีม")
+        notes.append(" (บางอย่างยังไม่พอ — ไม่บอกว่าอะไร)")
+        return False, notes
+
+    mem = member_from_template(template, reg, rng)
+    msg = add_member(player, mem, reg)
+    notes.append(msg)
+    if known_reinvite:
+        notes.append("  มันจำเส้นทางเก่าได้ — กลับมาร่วมทางอีกครั้ง")
+    try:
+        from game.domain.equipment import recompute_stats  # may not exist path
+    except Exception:
+        pass
+    return True, notes
+
+
+def list_known_companions(player: Mapping[str, Any], reg: DataRegistry) -> List[Dict[str, Any]]:
+    """UI list for re-invite menu."""
+    ensure_party(player)  # type: ignore
+    out: List[Dict[str, Any]] = []
+    meta = player.get("party_known_meta") or {}
+    for mid in player.get("party_known") or []:
+        m = dict(meta.get(mid) or {})
+        m["id"] = mid
+        m["name"] = m.get("name") or mid
+        m["kind"] = m.get("kind") or "other"
+        m["kind_label"] = kind_label(reg, str(m["kind"]))
+        m["in_party"] = _already_in(player, str(mid))
+        m["bond_peak"] = int(m.get("bond_peak") or 0)
+        out.append(m)
+    return out
+
+
+def reinvite_known_companion(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    companion_id: str,
+    rng: random.Random,
+) -> Tuple[bool, List[str]]:
+    """Re-invite a previously joined companion by id."""
+    ensure_party(player)
+    cid = str(companion_id)
+    if cid not in (player.get("party_known") or []):
+        return False, ["…ไม่พบเงาที่คุ้นในความจำ"]
+    if _already_in(player, cid):
+        return False, ["ร่วมทางอยู่แล้ว"]
+    if not _has_slot(player, reg):
+        return False, ["ทีมเต็มแล้ว (สูงสุด 3) — ปลดใครก่อน"]
+    # player echoes cannot re-pull from template
+    if cid.startswith("player:"):
+        return False, ["เงาผู้เล่นอื่นต้องพบใหม่ในโลก — เรียกซ้ำจากบัญชีนี้ไม่ได้"]
+    tpl = template_by_id(reg, cid)
+    if not tpl:
+        # fallback meta-only soft block
+        return False, ["เงานั้นจางเกินจะเรียกกลับทางนี้"]
+    return attempt_join_template(
+        player, reg, tpl, rng, known_reinvite=True
+    )
+
+
+def roll_companion_sight(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+    rng: random.Random,
+) -> Optional[Dict[str, Any]]:
+    """
+    Soft sight entry for a possible companion (P1).
+    Does not guarantee recruit success — only discovery.
+    """
+    if not roll_recruit_sight(player, reg, rng):
+        return None
+    if not _has_slot(player, reg):
+        return None
+    offer = try_recruit_template_offer(player, reg, rng)
+    if not offer:
+        return None
+    soft_labels = {
+        "spirit": "เงาบางเบา",
+        "beast": "ร่างสัตว์เงียบ",
+        "heaven_beast": "เงาสว่างปีก",
+        "hell_beast": "เงาแดงต่ำ",
+        "heaven_god": "รัศมีเลือน",
+        "hell_god": "เงาโลหิตนิ่ง",
+        "other": "รูปไม่ชัด",
+    }
+    kind = str(offer.get("kind") or "other")
+    return {
+        "kind": "companion",
+        "label": soft_labels.get(kind, "เงาไม่คุ้น"),
+        "hint": rng.choice(
+            ["จ้องคุณ", "ไม่หนี", "รออะไรบางอย่าง", "อากาศเปลี่ยนรอบตัว"]
+        ),
+        "risk": "?",
+        "known": False,
+        "companion_template_id": offer.get("id"),
+        "companion_template": dict(offer),
+    }
+
+
+def soft_party_discovery_lines() -> List[str]:
+    """Static soft tips for menus — no formulas."""
+    return [
+        " สหายไม่ใช่ซื้อจากร้าน — เงาในโลกอาจยอมร่วมทาง",
+        " ลองสำรวจ/เข้าหาเมื่อรู้สึกว่าถูกจ้อง… ยื่นมือแล้วรอการยอมรับ",
+        " ในทีม: ซุ่มช่วยโจมตีอัตโน — ยิ่งสัมพันธ์สูง ยิ่งบ่อย/แรง (ไม่เสียมานา)",
+        " สร้างสัมพันธ์: ให้ของขวัญ/เงินมีค่า (Y) — แต่ละตนชอบต่างกัน ต้องสังเกต",
+        " ไม่อยู่ในทีม: สัมพันธ์ลดช้ามาก · เชิญกลับได้จากรายชื่อรู้จัก",
+    ]
 
 
 def roll_recruit_sight(player: Mapping[str, Any], reg: DataRegistry, rng: random.Random) -> bool:

@@ -135,6 +135,13 @@ projects/openworld-fantasy/
 | แดชบอร์ดประเมินระบบ | `admin/dashboard.py` · `data/meta/system_dashboard.yaml` | IMPROVEMENT_PLAN | `python3 -m game.admin.dashboard` · admin **8** |
 | สถานการณ์ขอแรง (H0–H4) | `situation.py` · `help_service.py` · ดัน **6** · **G** | HELP_SITUATION_VISION | consent · escrow · friends · rep · log |
 | Needs T0+N1–N4 | `domain/needs.py` · combat/atb/consumables | NEEDS_COMBAT_FOOD_VISION | แถบ− · combat · อาหาร |
+| Soft Alert Bus | `domain/alerts.py` · `relic.*` / needs / alias | SOFT_ALERT_VISION · RELIC_ALERT_PLAN | soft text · throttle · God log |
+| Stat 3-layer | `domain/stat_arch.py` · needs · progression | STAT_ARCHITECTURE | Needs · Core · anima · soft P |
+| World Relations | `domain/world_relations.py` · Soft Alert | STAT_ARCHITECTURE | divine/infernal/echo soft |
+| Faction Moments | `domain/faction_moments.py` · sights | STAT_ARCHITECTURE §0.8/0.11/0.13 | Mini soft · 9 moments ครบ 8 พื้นที่ |
+| Soft Foresight | `domain/soft_foresight.py` | STAT_ARCHITECTURE §0.13 | dungeon prep · world gaze · moment hint |
+| Anima × Relic | `domain/relic_anima.py` · Soft Alert | STAT_ARCHITECTURE §0.9–0.15 | lean · Bonds · Chorus · Cap · **area synergy** · auto |
+| Divine Burden | `domain/divine_burden.py` · chamber · aura | DIVINE_BURDEN_VISION | ใส่เรลิก · ขวัญ soft · G ห้อง |
 | Rank soft (W0) | `world_social.py` · เมนู **3** | WORLD_SERVER_VISION | soft band · rank_board.json |
 | ภาษี→ภารกิจ | `mission_board.py`, `mission_service.py` | MISSION_BOARD | กระเป๋า **J** |
 | เควสโลก | `quests.py` | (ใน quests.yaml) | **9** |
@@ -203,6 +210,7 @@ projects/openworld-fantasy/
 | พฤติกรรมละเอียดที่รันได้ | **โค้ด domain + pytest** |
 | ตัวเลขคอนเทนต์ | **`data/**/*.yaml`** (ห้าม copy ตารางยาวลง md) |
 | คิวงานค้าง | **`IMPROVEMENT_PLAN.md`** |
+| Work Order (WO) backlog | **`WO_BACKLOG.md`** |
 | แผนพัฒนาหลัก (Wave) | **`ROADMAP.md`** |
 | แผนเฟสอัปเดตไอเทม (IC0–IC6) | **`ITEM_CONTENT_PLAN.md`** — อัปครบแต่แบ่งเฟส |
 | แผนเฟสเพิ่มมอน (MC0–MC6) | **`MONSTER_CONTENT_PLAN.md`** — เติมครบแต่แบ่งเฟส · ไม่ dump RO |

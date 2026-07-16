@@ -514,33 +514,34 @@ def resolve_victory(
     except Exception:
         pass
 
-    amt = rng.randint(10, 40) + int(monster.get("level", 1))
-    money_m = float((player.get("world_modifiers") or {}).get("money_mult", 1.0))
-    amt = max(1, int(round(amt * money_m)))
-    kind = rng.choice(["world", "heaven", "hell"])
-    if kind == "world":
+    # WO-021: always world money + optional heaven/hell bonus (shared helper)
+    try:
+        from game.domain.balance import grant_combat_money
+
+        for ml in grant_combat_money(player, monster, rng, auto=False):
+            lines.append(ml)
+    except Exception:
+        # fallback minimal world grant
+        amt = rng.randint(10, 40) + int(monster.get("level", 1))
         player["money_world"] = int(player.get("money_world", 0)) + amt
         lines.append(f"เงินโลก +{amt}")
-        try:
-            from game.domain.stats import bump_stat
-
-            bump_stat(player, "money_gained_total", amt)
-        except Exception:
-            pass
-    elif kind == "heaven":
-        g = max(1, amt // 6)
-        player["money_heaven"] = int(player.get("money_heaven", 0)) + g
-        lines.append(f"เงินสวรรค์ +{g}")
-    else:
-        g = max(1, amt // 4)
-        player["money_hell"] = int(player.get("money_hell", 0)) + g
-        lines.append(f"เงินนรก +{g}")
 
     gain = 3 + int(player.get("mastery_gain_bonus", 0))
     am = dict(player.get("area_mastery") or {})
     am[area_id] = min(100, int(am.get(area_id, 0)) + gain)
     player["area_mastery"] = am
     player["pressure"] = min(100, int(player.get("pressure", 0)) + rng.randint(3, 10))
+    # WO-002: soft open-skill emergence (theme / skill_chance_bonus)
+    try:
+        from game.domain.world_creation import try_open_skill_emergence
+
+        mon_tags = list(monster.get("elements") or []) + list(monster.get("tags") or [])
+        for n in try_open_skill_emergence(
+            player, reg, rng, context_tags=[str(x) for x in mon_tags]
+        ):
+            lines.append(n)
+    except Exception:
+        pass
 
     know = dict(player.get("knowledge") or {})
     mons = dict(know.get("monsters") or {})

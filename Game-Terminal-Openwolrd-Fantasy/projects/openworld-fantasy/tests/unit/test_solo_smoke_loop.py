@@ -87,9 +87,9 @@ def test_solo_smoke_occupation_gear_upgrade_tree():
     up_msg = upgrade_equipped_opaque(p, "main_hand", reg, rng=Ok())  # type: ignore
     assert "สำเร็จ" in up_msg or "ไม่พอ" in up_msg
 
-    # allocate soft
+    # allocate soft (WO-035+: soft feel text, not raw 「เพิ่ม」)
     msg_a = allocate_stat(p, reg, "atk", 1)
-    assert "เพิ่ม" in msg_a
+    assert "เพิ่ม" in msg_a or "หนาขึ้น" in msg_a or "โจมตี" in msg_a
 
     # skill tree learn if root present
     occ = str(p.get("occupation_id") or "")

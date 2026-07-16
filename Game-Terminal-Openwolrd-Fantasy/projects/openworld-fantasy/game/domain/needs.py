@@ -145,6 +145,14 @@ def apply_needs_event(
     if not deltas:
         return []
     resist = _resist_factors(player)
+    # WO-035: Core facets soft mult (Physical→fatigue, Anima→morale drain)
+    core_m: Dict[str, float] = {}
+    try:
+        from game.domain.stat_arch import core_needs_soft_mults
+
+        core_m = core_needs_soft_mults(player)
+    except Exception:
+        core_m = {}
     needs = dict(player["needs"])
     before = dict(needs)
     for k, d in deltas.items():
@@ -153,10 +161,43 @@ def apply_needs_event(
         dd = int(d)
         if k == "fatigue" and dd > 0:
             dd = int(round(dd * resist["fatigue_gain"]))
+            if core_m.get("fatigue_gain_mult"):
+                dd = int(round(dd * float(core_m["fatigue_gain_mult"])))
         elif k == "hunger" and dd > 0:
             dd = int(round(dd * resist["hunger_gain"]))
+            if core_m.get("hunger_gain_mult"):
+                dd = int(round(dd * float(core_m["hunger_gain_mult"])))
         elif k == "morale" and dd < 0:
             dd = int(round(dd * resist["morale_loss"]))  # dd negative, loss factor <1 softens
+            if core_m.get("morale_drain_mult"):
+                dd = int(round(dd * float(core_m["morale_drain_mult"])))
+            # WO-037: Anima presence — high spirit slows morale drain further
+            try:
+                from game.domain.stat_arch import anima_morale_drain_factor
+
+                dd = int(round(dd * anima_morale_drain_factor(player)))
+            except Exception:
+                pass
+            # WO-038: world relations soft (divine warm / infernal cold)
+            try:
+                from game.domain.world_relations import world_relation_needs_mults
+
+                wr = world_relation_needs_mults(player)
+                dd = int(round(dd * float(wr.get("morale_drain_mult") or 1.0)))
+            except Exception:
+                pass
+            # WO-040: equipped relic lean (if reg available via player cache)
+            try:
+                from game.data_load.registry import get_registry
+                from game.domain.relic_anima import relic_equipped_morale_mult
+
+                reg = get_registry()
+                if reg is not None:
+                    dd = int(
+                        round(dd * float(relic_equipped_morale_mult(player, reg)))
+                    )
+            except Exception:
+                pass
         needs[k] = int(needs[k]) + dd
     _clamp_needs(needs)
     player["needs"] = needs
@@ -214,7 +255,7 @@ def _soft_change_notes(
 def format_needs_soft_lines(player: Mapping[str, Any]) -> List[str]:
     n = get_needs(player)
     lines = ["〔สถานะกายใจ · soft〕"]
-    for key, label in (("hunger", "ท้อง"), ("fatigue", "ล้า"), ("morale", "ขวัญ")):
+    for key, label in (("hunger", "หิว"), ("fatigue", "ล้า"), ("morale", "ขวัญ")):
         mark = _mark_for(key, n[key])
         m = f"{mark} " if mark else ""
         lines.append(f" {label}  {m}{soft_label(key, n[key])}")
@@ -222,12 +263,13 @@ def format_needs_soft_lines(player: Mapping[str, Any]) -> List[str]:
 
 
 def format_needs_bar_line(player: Mapping[str, Any], width: int = 8) -> str:
+    """One-line needs (field legacy). Labels: หิว · ล้า · ขวัญ (WO-006 standard)."""
     from game.domain.bars import ratio_bar
 
     n = get_needs(player)
     parts = []
     for key, label, invert in (
-        ("hunger", "ท้อง", True),
+        ("hunger", "หิว", True),
         ("fatigue", "ล้า", True),
         ("morale", "ขวัญ", False),
     ):
@@ -240,21 +282,199 @@ def format_needs_bar_line(player: Mapping[str, Any], width: int = 8) -> str:
     return " ".join(parts)
 
 
-def needs_pressure_hint(player: Mapping[str, Any]) -> Optional[str]:
+def format_field_needs_block(
+    player: Mapping[str, Any],
+    *,
+    width: int = 8,
+    show_values: bool = True,
+) -> List[str]:
+    """
+    WO-006: scannable needs block for exploration header.
+    【สถานะกายใจ】 then one line per axis + soft warnings.
+    """
+    from game.domain.bars import ratio_bar
+
+    ensure_needs(player)  # type: ignore[arg-type]
+    n = get_needs(player)
+    lines: List[str] = [" 【สถานะกายใจ】"]
+    # one compact row: หิว bar  ล้า bar  ขวัญ bar
+    parts: List[str] = []
+    for key, label, invert in (
+        ("hunger", "หิว", True),
+        ("fatigue", "ล้า", True),
+        ("morale", "ขวัญ", False),
+    ):
+        v = int(n[key])
+        fill = (100 - v) if invert else v
+        mark = _mark_for(key, v)
+        bar = ratio_bar(fill, 100, width)
+        if show_values:
+            cell = f"{label} {bar} {v}"
+        else:
+            cell = f"{label} {bar}"
+        if mark:
+            cell = f"{label}{mark}{bar} {v}" if show_values else f"{label}{mark}{bar}"
+        parts.append(cell)
+    lines.append(" " + "   ".join(parts))
+    # soft labels row
+    labs = [
+        f"{lab} {soft_label(k, int(n[k]))}"
+        for k, lab in (("hunger", "หิว"), ("fatigue", "ล้า"), ("morale", "ขวัญ"))
+    ]
+    lines.append(" " + "  ·  ".join(labs))
+    for w in combat_needs_soft_warnings(player):
+        lines.append(w if str(w).startswith(" ") else f" {w}")
+    hint = needs_pressure_hint(player)
+    # avoid duplicate if soft_warnings already covered
+    if hint and not any(hint.strip() in (x or "") for x in lines):
+        # only add if no soft warning lines
+        if len(lines) <= 3:
+            lines.append(hint if str(hint).startswith(" ") else f" {hint}")
+    return lines
+
+
+def _needs_band_alert_codes(player: Mapping[str, Any]) -> List[str]:
+    """Active Soft Alert codes for current hunger/fatigue/morale bands."""
+    n = get_needs(player)
+    codes: List[str] = []
+    hb = band("hunger", n["hunger"])
+    fb = band("fatigue", n["fatigue"])
+    mb = band("morale", n["morale"])
+    if hb == "crit":
+        codes.append("needs.hunger.crit")
+    elif hb == "bad":
+        codes.append("needs.hunger.bad")
+    if fb == "crit":
+        codes.append("needs.fatigue.crit")
+    elif fb == "bad":
+        codes.append("needs.fatigue.bad")
+    if mb == "crit":
+        codes.append("needs.morale.crit")
+    elif mb == "low":
+        codes.append("needs.morale.low")
+    return codes
+
+
+def _pressure_alert_code(player: Mapping[str, Any]) -> Optional[str]:
+    """Single priority pressure code (crit > bad/low, hunger > fatigue > morale)."""
     n = get_needs(player)
     if band("hunger", n["hunger"]) == "crit":
-        return " …ท้องร้อง −− ควรกินเสบียง — เสี่ยงสลบ"
+        return "needs.pressure.hunger_crit"
     if band("fatigue", n["fatigue"]) == "crit":
-        return " …ร่างหนัก −− ควรพัก — แท่งต่อสู้จะช้า"
+        return "needs.pressure.fatigue_crit"
     if band("morale", n["morale"]) == "crit":
-        return " …ขวัญย่ำแย่ −− สกิลอาจพลาด · บอสกดดัน"
+        return "needs.pressure.morale_crit"
     if band("hunger", n["hunger"]) == "bad":
-        return " …หิว − โจมตี/ป้องกัน/หลบอ่อนลง"
+        return "needs.pressure.hunger_bad"
     if band("fatigue", n["fatigue"]) == "bad":
-        return " …ล้า − จังหวะ ATB ช้าลง"
+        return "needs.pressure.fatigue_bad"
     if band("morale", n["morale"]) == "low":
-        return " …ขวัญหด − มืออาจสั่นตอนใช้สกิล"
+        return "needs.pressure.morale_low"
     return None
+
+
+def needs_pressure_hint(player: Mapping[str, Any]) -> Optional[str]:
+    """One soft line — same vocabulary as auto care (หิว/ล้า/ขวัญ). Via Soft Alert catalog."""
+    code = _pressure_alert_code(player)
+    if not code:
+        return None
+    try:
+        from game.domain.alerts import build_alert, format_alert_inline
+
+        return format_alert_inline(build_alert(code)).rstrip()
+    except Exception:
+        # fallback hardcode if bus missing
+        n = get_needs(player)
+        if band("hunger", n["hunger"]) == "crit":
+            return " …หิววิกฤต −− ควรกินเสบียง — เสี่ยงสลบ"
+        if band("fatigue", n["fatigue"]) == "crit":
+            return " …ล้าวิกฤต −− ควรพัก — จังหวะต่อสู้ช้า"
+        if band("morale", n["morale"]) == "crit":
+            return " …ขวัญย่ำแย่ −− ท่าอาจพลาด · ลดความก้าวร้าว"
+        return None
+
+
+def format_combat_needs_compact(player: Mapping[str, Any]) -> str:
+    """
+    WO-005 / P1.5: one short line for combat vitals.
+    Labels: หิว · ล้า · ขวัญ (aligned with auto). Soft marks − / −− only when stressed.
+    """
+    n = get_needs(player)
+    bits: List[str] = []
+    # hunger/fatigue: high bad; morale: low bad
+    for key, label in (("hunger", "หิว"), ("fatigue", "ล้า"), ("morale", "ขวัญ")):
+        v = int(n.get(key) or 0)
+        mark = _mark_for(key, v)
+        lab = soft_label(key, v)
+        if mark:
+            bits.append(f"{label}{mark}{lab}")
+        else:
+            bits.append(f"{label} {lab}")
+    return " · ".join(bits)
+
+
+def combat_needs_soft_warnings(player: Mapping[str, Any]) -> List[str]:
+    """
+    WO-005 + WO-033.4: short combat feedback from Soft Alert catalog.
+    Always live (no throttle) — vitals panels need current state every frame.
+    Only when bad/low/crit — keep combat UI light.
+    """
+    codes = _needs_band_alert_codes(player)[:3]
+    if not codes:
+        return []
+    try:
+        from game.domain.alerts import build_alert, format_alert_inline
+
+        out: List[str] = []
+        for code in codes:
+            line = format_alert_inline(build_alert(code))
+            out.append(line if str(line).startswith(" ") else f" {line}")
+        return out
+    except Exception:
+        # last-resort fallback (catalog unavailable)
+        n = get_needs(player)
+        out = []
+        hb = band("hunger", n["hunger"])
+        fb = band("fatigue", n["fatigue"])
+        mb = band("morale", n["morale"])
+        if hb == "crit":
+            out.append(" …หิววิกฤต — ดาเมจ/รับดาเมจแย่ · ควรกิน (เมนู 3)")
+        elif hb == "bad":
+            out.append(" …หิว — ร่างกายไม่เต็มแรง")
+        if fb == "crit":
+            out.append(" …ล้าวิกฤต — จังหวะเติมช้า · ควรพักหลังไฟต์")
+        elif fb == "bad":
+            out.append(" …ล้า — แท่งจังหวะหนักขึ้น")
+        if mb == "crit":
+            out.append(" …ขวัญย่ำแย่ — ท่าโฟกัส/สกิลเสี่ยงพลาด")
+        elif mb == "low":
+            out.append(" …ขวัญหด — มืออาจสั่นตอนใช้สกิล")
+        return out[:3]
+
+
+def record_needs_soft_alerts(
+    player: MutableMapping[str, Any],
+    *,
+    force: bool = False,
+    max_codes: int = 2,
+) -> List[str]:
+    """
+    WO-033.4: write needs soft alerts into bus history (throttled).
+    Use on combat enter / notable care — not every vitals refresh.
+    Returns display lines that passed throttle (may be empty).
+    """
+    codes = _needs_band_alert_codes(player)[: max(0, int(max_codes))]
+    if not codes:
+        return []
+    out: List[str] = []
+    try:
+        from game.domain.alerts import collect_alert
+
+        for code in codes:
+            out.extend(collect_alert(player, code, force=force))
+    except Exception:
+        return combat_needs_soft_warnings(player)[:max_codes]
+    return out
 
 
 # ── N2 combat / ATB modifiers ─────────────────────────────────────────────
@@ -579,7 +799,7 @@ def apply_load_delta(
     if band("hunger", needs["hunger"]) in ("bad", "crit") or band(
         "fatigue", needs["fatigue"]
     ) in ("bad", "crit"):
-        lines.append(" …ลองพักหรือกินเสบียง (ตัวละคร · R พัก / E กิน)")
+        lines.append(" …ลองพักหรือกินเสบียง (ตัวละคร · R พัก / E กิน / H เลือด / M มานา)")
     return [ln for ln in lines if ln]
 
 
@@ -831,6 +1051,254 @@ def personal_rest_care(player: MutableMapping[str, Any]) -> List[str]:
     except Exception:
         pass
     return lines
+
+
+# ── WO-004: Auto care decisions (Phase 1) ─────────────────────────────────
+
+
+def append_auto_care_note(player: MutableMapping[str, Any], note: str, *, limit: int = 24) -> None:
+    """Session ring of soft auto care reasons."""
+    note = str(note or "").strip()
+    if not note:
+        return
+    buf = list(player.get("auto_care_notes") or [])
+    buf.append(note)
+    player["auto_care_notes"] = buf[-max(4, int(limit)) :]
+
+
+def morale_band_label(morale: int) -> str:
+    """high | mid | low | crit — same bands as soft UI."""
+    return band("morale", int(morale))
+
+
+def resolve_morale_auto_policy(
+    player: Mapping[str, Any],
+    *,
+    morale_th: int = 35,
+    low_morale_policy: str = "caution",
+) -> Dict[str, Any]:
+    """
+    P1.3: map morale band → auto behavior flags (hidden numbers).
+    policy: ignore | caution | retreat (user preference when low/crit).
+    """
+    n = get_needs(player)
+    mor = int(n.get("morale") or 0)
+    mb = morale_band_label(mor)
+    policy = str(low_morale_policy or "caution").lower()
+    if policy not in ("ignore", "caution", "retreat"):
+        policy = "caution"
+
+    # defaults: high morale → aggressive ok
+    profile: Dict[str, Any] = {
+        "morale": mor,
+        "band": mb,
+        "policy": policy,
+        "below_threshold": mor <= int(morale_th),
+        "eat_for_morale": False,
+        "prefer_rest": False,
+        "rest_long": False,  # crit: longer rest (double rest soft)
+        "avoid_fight": False,
+        "stop_retreat": False,
+        "aggression": "normal",  # high | normal | low | passive
+        "boss_auto_ok": True,
+    }
+
+    if policy == "ignore":
+        profile["aggression"] = "high" if mb == "high" else "normal"
+        return profile
+
+    if mb == "high":
+        profile["aggression"] = "high"
+        return profile
+
+    if mb == "mid":
+        # WO-017 R2: mid never auto-eats for morale (R1 burned food on mild caution)
+        profile["aggression"] = "normal"
+        if mor <= int(morale_th) + 8:
+            profile["aggression"] = "normal"  # mild — avoid_fight stays False
+        return profile
+
+    if mb == "low":
+        profile["below_threshold"] = True
+        # eat for morale only when actually low (not mid) — R2
+        profile["eat_for_morale"] = True
+        profile["prefer_rest"] = True
+        profile["avoid_fight"] = True
+        profile["aggression"] = "low"
+        profile["boss_auto_ok"] = False
+        if policy == "retreat" and mor <= int(morale_th):
+            profile["stop_retreat"] = True
+        return profile
+
+    # crit
+    profile["below_threshold"] = True
+    profile["eat_for_morale"] = True
+    profile["prefer_rest"] = True
+    profile["rest_long"] = True
+    profile["avoid_fight"] = True
+    profile["aggression"] = "passive"
+    profile["boss_auto_ok"] = False
+    if policy == "retreat":
+        profile["stop_retreat"] = True
+    else:
+        if mor <= int(morale_th):
+            profile["avoid_fight"] = True
+    return profile
+
+
+def decide_auto_needs_care(
+    player: Mapping[str, Any],
+    *,
+    hunger_th: int,
+    fatigue_th: int,
+    morale_th: int,
+    low_morale_policy: str = "caution",
+    food_available: bool = True,
+) -> List[Dict[str, str]]:
+    """
+    Ordered care intents for auto agent (Phase 1 / P1.3 morale bands).
+    Actions: eat | eat_morale | rest | rest_long | avoid_fight | stop_retreat | crit_warn
+    Does not mutate player.
+    """
+    n = get_needs(player)
+    hun = int(n.get("hunger") or 0)
+    fat = int(n.get("fatigue") or 0)
+    mor = int(n.get("morale") or 0)
+    mprof = resolve_morale_auto_policy(
+        player, morale_th=int(morale_th), low_morale_policy=low_morale_policy
+    )
+    policy = str(mprof.get("policy") or "caution")
+
+    out: List[Dict[str, str]] = []
+    mb = str(mprof.get("band") or morale_band_label(mor))
+
+    # Critical soft visibility
+    if band("hunger", hun) == "crit":
+        out.append(
+            {
+                "action": "crit_warn",
+                "reason": "ออโต้: ท้องวิกฤต — ควรกินหรือหยุด",
+            }
+        )
+    if band("fatigue", fat) == "crit":
+        out.append(
+            {
+                "action": "crit_warn",
+                "reason": "ออโต้: ล้าวิกฤต — ควรพัก",
+            }
+        )
+    if mb == "crit":
+        out.append(
+            {
+                "action": "crit_warn",
+                "reason": "ออโต้: ขวัญย่ำแย่ — มืออาจสั่น · ลดความก้าวร้าว",
+            }
+        )
+    elif mb == "low":
+        out.append(
+            {
+                "action": "crit_warn",
+                "reason": "ออโต้: ขวัญหด — เลี่ยงไฟต์ เพิ่มการพัก",
+            }
+        )
+
+    # Eat for hunger first
+    if hun >= int(hunger_th):
+        if food_available:
+            out.append(
+                {
+                    "action": "eat",
+                    "reason": f"ออโต้: กินเพราะท้องถึงเกณฑ์ (หิว {hun})",
+                }
+            )
+        else:
+            out.append(
+                {
+                    "action": "crit_warn",
+                    "reason": "ออโต้: หิวถึงเกณฑ์ แต่ไม่มีอาหาร",
+                }
+            )
+
+    # Eat to lift morale — WO-017 R2: only low/crit band, and not every tick when
+    # already eating for hunger. Prefer saving food if only mildly low.
+    if mprof.get("eat_for_morale") and food_available and hun < int(hunger_th):
+        if not any(i.get("action") == "eat" for i in out):
+            # skip morale-eat when hunger already mid-low (save food for real hunger)
+            if mb == "crit" or (mb == "low" and hun <= int(hunger_th) - 8):
+                out.append(
+                    {
+                        "action": "eat_morale",
+                        "reason": f"ออโต้: กินประทังขวัญ (ขวัญ {mor} · {mb})",
+                    }
+                )
+
+    # Rest: fatigue threshold OR morale-driven (R3: field rest spam → higher thr + tighter window)
+    need_rest = fat >= int(fatigue_th)
+    if mprof.get("prefer_rest") and fat >= max(32, int(fatigue_th) - 12):
+        need_rest = True
+    # rest_long only if actually tired enough
+    if mprof.get("rest_long") and fat >= max(40, int(fatigue_th) - 15):
+        need_rest = True
+    elif mprof.get("rest_long") and mb == "crit":
+        need_rest = fat >= 30
+
+    if need_rest:
+        if mprof.get("rest_long") and mb == "crit" and fat >= max(35, int(fatigue_th) - 20):
+            out.append(
+                {
+                    "action": "rest_long",
+                    "reason": f"ออโต้: พักนาน — ขวัญวิกฤต+ล้า (ขวัญ {mor} · ล้า {fat})",
+                }
+            )
+        elif fat >= int(fatigue_th):
+            out.append(
+                {
+                    "action": "rest",
+                    "reason": f"ออโต้: พักเพราะล้า (ล้า {fat} ≥ {fatigue_th})",
+                }
+            )
+        else:
+            out.append(
+                {
+                    "action": "rest",
+                    "reason": f"ออโต้: พักเบา — ขวัญ{mb} (ขวัญ {mor} · ล้า {fat})",
+                }
+            )
+
+    # Fight avoidance / retreat by band + policy
+    if mprof.get("stop_retreat"):
+        out.append(
+            {
+                "action": "stop_retreat",
+                "reason": f"ออโต้หยุด: ขวัญต่ำเกินนโยบาย {policy} (ขวัญ {mor} · {mb})",
+            }
+        )
+    elif mprof.get("avoid_fight"):
+        out.append(
+            {
+                "action": "avoid_fight",
+                "reason": f"ออโต้: ขวัญไม่นิ่ง — เลี่ยงเงา / ลดความก้าวร้าว (ขวัญ {mor} · {mb})",
+            }
+        )
+
+    # Stash aggression hint for auto_fight / tick (caller may copy to player)
+    out.append(
+        {
+            "action": "set_aggression",
+            "reason": str(mprof.get("aggression") or "normal"),
+        }
+    )
+    if not mprof.get("boss_auto_ok"):
+        out.append({"action": "block_boss_auto", "reason": "1"})
+
+    return out
+
+
+def apply_auto_rest(player: MutableMapping[str, Any]) -> List[str]:
+    """
+    Auto rest = same needs event as manual rest (+ light HP/MP like personal_rest).
+    """
+    return list(personal_rest_care(player))
 
 
 def personal_eat_first_food(

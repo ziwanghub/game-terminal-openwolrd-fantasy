@@ -72,19 +72,30 @@ def test_l1_box_and_bars():
     assert "MP" in text
     assert "shadow_strike" in text
     assert "╔" in text or "+" in text
+    # sectioned full status — proportional scan labels
+    assert "ตัวตน" in text
+    assert "ชีพ" in text
+    assert "ลงทุน" in text
+    assert "ที่ · เงิน · สกิล" in text or "สกิล" in text
+    assert text.count("╠") >= 3 or text.count("+") >= 3
 
 
 def test_l1c_compact_no_skill_list():
-    text = render_status_l1c(_sample_player(), "ถ้ำเงา")
+    p = _sample_player()
+    p["needs"] = {"hunger": 42, "fatigue": 71, "morale": 28}
+    text = render_status_l1c(p, "ถ้ำเงา")
     assert "pep-test" in text
     assert "ถ้ำเงา" in text
     assert "72/90" in text
     assert "ชำนาญ" in text
     # compact: full skill dump is L1 only
     assert "shadow_strike" not in text
-    # sectioned layout may use more lines; keep bounded
-    assert text.count("\n") <= 16
+    # WO-006: needs block prominent
+    assert "สถานะกายใจ" in text or "หิว" in text
+    assert "หิว" in text and "ล้า" in text and "ขวัญ" in text
     assert "พื้นที่" in text or "เงิน" in text
+    # allow more lines for needs block
+    assert text.count("\n") <= 28
 
 
 def test_mode_chrome_and_field_actions():
@@ -141,6 +152,28 @@ def test_combat_vitals_known_and_unknown():
     assert "จังหวะ" in known
     unk = render_combat_vitals(p, mon, known=False, situation="ระวัง")
     assert "???" in unk
+
+
+def test_combat_vitals_shows_needs_compact():
+    """WO-005 P1.5: หิว · ล้า · ขวัญ on combat vitals."""
+    p = _sample_player()
+    p["needs"] = {"hunger": 20, "fatigue": 15, "morale": 70}
+    mon = {"name": "มอน", "hp": 10, "max_hp": 10, "statuses": [], "boss": False}
+    text = render_combat_vitals(p, mon, known=True, round_no=1)
+    assert "กายใจ" in text
+    assert "หิว" in text
+    assert "ล้า" in text
+    assert "ขวัญ" in text
+
+
+def test_combat_vitals_soft_warnings_when_stressed():
+    p = _sample_player()
+    p["needs"] = {"hunger": 90, "fatigue": 80, "morale": 15}
+    mon = {"name": "มอน", "hp": 10, "max_hp": 10, "statuses": [], "boss": False}
+    text = render_combat_vitals(p, mon, known=True, round_no=1)
+    assert "หิว" in text
+    # at least one soft warning line
+    assert "วิกฤต" in text or "ขวัญ" in text or "ล้า" in text
 
 
 def test_emit_narrative_max_lines():

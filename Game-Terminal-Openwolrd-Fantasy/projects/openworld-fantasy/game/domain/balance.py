@@ -1,7 +1,7 @@
 """Central balance helpers — death penalty, shop prices, drops."""
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, MutableMapping, Optional, Tuple  # Dict used in sell_breakdown
+from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple  # Dict used in sell_breakdown
 
 from game.data_load.registry import DataRegistry
 
@@ -14,20 +14,90 @@ def death_penalties(reg: DataRegistry) -> Tuple[float, float]:
     )
 
 
+def grant_combat_money(
+    player: MutableMapping[str, Any],
+    monster: Mapping[str, Any],
+    rng: Any,
+    *,
+    auto: bool = False,
+    money_factor: float = 1.0,
+) -> List[str]:
+    """
+    WO-021: combat loot money — always grant money_world, optional heaven/hell bonus.
+
+    Manual (auto=False): world base ~10–40+Lv; ~40% chance extra special currency.
+    Auto (auto=True): world base closer to manual (~10–32+Lv/2); same bonus chance
+    (slightly lower). money_factor scales world only (field auto XP penalty soft).
+    """
+    import random as _random
+
+    if rng is None:
+        rng = _random
+    mon_lv = int(monster.get("level") or 1)
+    if auto:
+        # closer to manual: was randint(3,12) only-world
+        world = int(rng.randint(10, 32) + max(0, mon_lv // 2))
+    else:
+        world = int(rng.randint(10, 40) + mon_lv)
+    money_m = float((player.get("world_modifiers") or {}).get("money_mult", 1.0))
+    mf = max(0.55, min(1.25, float(money_factor or 1.0)))
+    # WO-027/030: soft economy dampen while carrying divine burden
+    ba = str(player.get("_burden_active") or "")
+    if ba == "crush":
+        mf *= 0.87  # playtest: keep ~12% softer than free
+    elif ba == "strain":
+        mf *= 0.93
+    world = max(1, int(round(world * money_m * mf)))
+
+    player["money_world"] = int(player.get("money_world") or 0) + world
+    lines: List[str] = [f"เงินโลก +{world}"]
+    if ba in ("crush", "strain") and world > 0:
+        try:
+            if rng.random() < 0.20:
+                lines.append("  (เรลิกกด — เงินโลกได้แผ่วลงเล็กน้อย)")
+        except Exception:
+            pass
+    try:
+        from game.domain.stats import bump_stat
+
+        bump_stat(player, "money_gained_total", world)
+    except Exception:
+        pass
+
+    # Bonus special currency ON TOP of world (not instead-of)
+    bonus_p = 0.42 if not auto else 0.32
+    if monster.get("boss") or monster.get("dungeon_boss"):
+        bonus_p = min(0.85, bonus_p + 0.25)
+    if rng.random() < bonus_p:
+        if rng.random() < 0.5:
+            g = max(1, world // 7)
+            player["money_heaven"] = int(player.get("money_heaven") or 0) + g
+            lines.append(f"เงินสวรรค์ +{g}")
+        else:
+            g = max(1, world // 5)
+            player["money_hell"] = int(player.get("money_hell") or 0) + g
+            lines.append(f"เงินนรก +{g}")
+    return lines
+
+
 def apply_soft_death(player: MutableMapping[str, Any], reg: DataRegistry) -> str:
-    """Soft death: half HP + lose % money_world + lose % of current XP bar."""
+    """
+    Soft death (WO-012): half HP + % money_world + % current XP bar.
+    Same function for manual combat_session and auto_fight — keep symmetric.
+    """
     money_pct, xp_pct = death_penalties(reg)
     notes = []
     money = int(player.get("money_world", 0))
     loss_m = int(money * money_pct)
     if loss_m > 0:
         player["money_world"] = money - loss_m
-        notes.append(f"เสียเงินโลก {loss_m}")
+        notes.append(f"เสียเงินโลก {loss_m} (~{int(money_pct * 100)}%)")
     xp = int(player.get("xp", 0))
     loss_x = int(xp * xp_pct)
     if loss_x > 0:
         player["xp"] = max(0, xp - loss_x)
-        notes.append(f"เสีย XP แถบปัจจุบัน {loss_x}")
+        notes.append(f"เสีย XP แถบปัจจุบัน {loss_x} (~{int(xp_pct * 100)}%)")
+    # Symmetric floor with combat_session path (half max, at least 10)
     player["hp"] = max(10, int(player.get("max_hp", 20)) // 2)
     player["pressure"] = max(0, int(player.get("pressure", 0)) - 5)
     try:
@@ -64,7 +134,19 @@ def scaled_price(
     rarity: Optional[str] = None,
 ) -> int:
     loc = str(player.get("location") or "dark_forest")
-    mult = area_price_mult(reg, loc)
+    # dungeon shadow shop / in-dungeon pricing
+    if str(loc).startswith("dungeon:") or player.get("dungeon_run"):
+        try:
+            from game.domain.dungeon import dungeon_shop_price_mult
+
+            mult = float(dungeon_shop_price_mult(player))
+        except Exception:
+            mult = 1.45
+    else:
+        mult = area_price_mult(reg, loc)
+    # explicit override (session flag)
+    if player.get("_dungeon_shop_mult"):
+        mult = float(player.get("_dungeon_shop_mult") or mult)
     # slight level scaling so late game money sinks
     lv = int(player.get("level", 1))
     mult *= 1.0 + min(0.5, (lv - 1) * 0.01)

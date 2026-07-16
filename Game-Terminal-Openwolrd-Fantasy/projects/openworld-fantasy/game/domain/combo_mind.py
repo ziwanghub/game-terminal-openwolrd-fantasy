@@ -251,7 +251,7 @@ def soft_combo_mind_hint(player: Mapping[str, Any], reg: Optional[DataRegistry] 
     """One line for combat meta — no numbers of latent."""
     fl = soft_focus_label(player, reg)
     il = soft_intellect_label(player, reg)
-    return f"จิต〔{fl}〕· ฉลาด〔{il}〕"
+    return f"จิต〔{fl}〕 · ฉลาด〔{il}〕"
 
 
 def adjust_focus_latent(

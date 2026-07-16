@@ -32,3 +32,7 @@ monster_pools:
 
 boss_id: boss_forest_king
 boss_unlock_level: 5
+# WO-029 soft loop copy (UI/help — not formulas)
+loop_soft:
+  - "ป่ามืด: สำรวจ·ล่า · เควสเสียงในพุ่ม/เฝ้าทางราก · บอสเมื่อพร้อม"
+  - "เรลิก: น้ำหนักวายุหลังแชมป์ป่า — ลองห้อง G ก่อนใส่จริง"

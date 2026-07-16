@@ -240,6 +240,15 @@ def complete_quest(
             bump_stat(player, "money_gained_total", money)
         except Exception:
             pass
+    # WO-021: optional special currency from quests (not combat RNG only)
+    mh = int(q.get("reward_money_heaven") or q.get("reward_heaven") or 0)
+    if mh > 0:
+        player["money_heaven"] = int(player.get("money_heaven") or 0) + mh
+        lines.append(f"  เงินสวรรค์ +{mh}")
+    ml = int(q.get("reward_money_hell") or q.get("reward_hell") or 0)
+    if ml > 0:
+        player["money_hell"] = int(player.get("money_hell") or 0) + ml
+        lines.append(f"  เงินนรก +{ml}")
     for iid in q.get("reward_items") or []:
         name = add_item(player, str(iid), reg)
         lines.append(f"  ได้ {name}")
@@ -280,9 +289,13 @@ def list_quest_lines(player: Mapping[str, Any], reg: DataRegistry) -> List[str]:
             if kills > 0 and prog < target:
                 left = max(0, target - prog)
                 hint = f" · เหลืออีก ~{left} ครั้ง"
+        soft = str(q.get("soft_hint") or "").strip()
+        soft_bit = f"  〔{soft}〕" if soft else ""
         lines.append(
             f" · {q.get('name')}: {prog}/{target} — {q.get('description')}{chain}{hint}"
         )
+        if soft_bit:
+            lines.append(f"   {soft_bit}")
     # show locked chain hints
     done = set(player.get("quests_done") or [])
     lv = int(player.get("level", 1))

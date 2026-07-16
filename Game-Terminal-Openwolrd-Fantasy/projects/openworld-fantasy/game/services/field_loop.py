@@ -360,10 +360,11 @@ def run_field(
         if in_dungeon(player):
             io.write_line()
             run = get_run(player) or {}
+            depth = int(run.get("depth") or run.get("floor") or 1)
             io.write_line(
                 render_mode_chrome(
                     "ดันเจียน",
-                    f"{run.get('name')} · ชั้น {run.get('floor')}/{run.get('floors')}",
+                    f"{run.get('name')} · ลงมาชั้นที่ {depth}",
                 )
             )
             io.write_line(
@@ -385,6 +386,12 @@ def run_field(
             player["location"] = player.get("location_before_dungeon") or "dark_forest"
             area_id = str(player["location"])
         player["time_units"] = int(player.get("time_units", 0)) + 1
+        try:
+            from game.domain.party import tick_relationship_decay
+
+            tick_relationship_decay(player, ticks=1)
+        except Exception:
+            pass
         try:
             from game.domain.intelligence import tick_intel_recovery
 
@@ -456,9 +463,13 @@ def run_field(
                 stat_points=int(player.get("stat_points") or 0),
                 personality_points=int(player.get("personality_points") or 0),
                 boss_line=boss_line,
+                player=player,
+                reg=reg,
             )
         )
-        ch = io.read_line("\n  เลือก (เลขเมนู / เลขเป้า / 0 ออก): ").strip()
+        ch = io.read_line(
+            "\n  เลือก (R/E/H/M/O ดูแล · เลขเมนู / เลขเป้า / 0 ออก): "
+        ).strip()
 
         # verb + target commands (f_mn02, upgrade_sw001, …)
         try:
@@ -616,6 +627,33 @@ def run_field(
                         io.write_line("ไม่พบบอสใน data")
                 else:
                     io.write_line("ถอย")
+        elif ch in ("r", "R"):
+            # Care band — rest (personal-style light care)
+            from game.domain.needs import personal_rest_care
+
+            for line in personal_rest_care(player):
+                io.write_line(line)
+        elif ch in ("e", "E"):
+            from game.domain.needs import personal_eat_first_food
+
+            for line in personal_eat_first_food(player, reg):
+                io.write_line(line)
+        elif ch in ("h", "H"):
+            # Care band — HP potion (help moved to ?)
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="hp"):
+                io.write_line(line)
+        elif ch in ("m", "M"):
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="mp"):
+                io.write_line(line)
+        elif ch in ("o", "O"):
+            # Field Auto Policy (A stays rank / personal uses A)
+            from game.services.auto_policy_hub import run_auto_policy_hub
+
+            run_auto_policy_hub(player, reg, io)
         elif ch in ("s", "S", "p", "P", "n", "N", "c", "C", "k", "K", "y", "Y", "u", "U", "l", "L"):
             # Hotkey aliases → PERSONAL (Mode Shell Phase A compatibility)
             from game.services.personal_hub import run_personal_hub
@@ -633,6 +671,7 @@ def run_field(
                 io.write_line()
                 io.write_line(render_mode_chrome("สถานะเต็ม", reg.area_name(area_id)))
                 io.write_line(render_status_l1(player, reg.area_name(area_id)))
+                io.write_line("\n── สถิติการเล่น ──")
                 for line in format_stats_lines(player):
                     io.write_line(line)
                 io.read_line("Enter...")
@@ -661,7 +700,7 @@ def run_field(
                 for line in try_unit_unlock(player, reg):
                     io.write_line(line)
                 io.read_line("Enter...")
-        elif ch in ("h", "H"):
+        elif ch in ("?", "help"):
             show_help(io)
         elif ch in ("t", "T"):
             show_tutorial(io, force=True)

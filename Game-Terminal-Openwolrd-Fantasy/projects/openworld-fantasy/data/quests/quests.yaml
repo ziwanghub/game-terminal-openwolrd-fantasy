@@ -5,6 +5,7 @@
   target: 3
   reward_xp: 80
   reward_money: 60
+  reward_money_heaven: 1  # WO-021: special currency from quests
   reward_items: [potion_hp]
   unlock_level: 1
 
@@ -19,6 +20,34 @@
   reward_items: [card_vitality]
   unlock_level: 1
 
+# WO-029: dark_forest loop polish — reason to return
+- id: forest_echoes_hunt
+  name: เสียงในพุ่ม
+  description: ชนะมอนในป่ามืด 6 ตัว — ฟังเสียงป่าให้ชิน
+  type: kill_area
+  area: dark_forest
+  target: 6
+  reward_xp: 155
+  reward_money: 65
+  reward_items: [hunter_ration, herb_bundle, upgrade_mat, potion_hp_small]
+  unlock_level: 2
+  depends_on: [forest_walker]
+  soft_hint: ป่าจำรอยเท้า — กลับมาบ่อย ชำนาญขึ้น · รางวัลเสบียงคุ้ม
+
+- id: forest_night_watch
+  name: เฝ้าทางราก
+  description: สำรวจป่ามืดอีก 4 ครั้งหลังรู้จักทาง
+  type: explore_area
+  area: dark_forest
+  target: 4
+  reward_xp: 135
+  reward_money: 55
+  reward_money_heaven: 1
+  reward_items: [traveler_ration, balm_nature, city_bread]
+  unlock_level: 3
+  depends_on: [forest_echoes_hunt]
+  soft_hint: ทางรากเปิดเมื่อคุณไม่รีบ · กลับสำรวจซ้ำได้
+
 - id: path_to_five
   name: เส้นทางสู่เลเวลที่บอสเปิด
   description: ชนะมอนรวม 8 ตัว — เตรียมพร้อมท้าบอสป่า (Lv.5)
@@ -26,6 +55,7 @@
   target: 8
   reward_xp: 180
   reward_money: 80
+  reward_money_hell: 1
   reward_items: [potion_hp, antidote, balm_regen]
   unlock_level: 1
   depends_on: [first_blood]
@@ -37,6 +67,7 @@
   target: 1
   reward_xp: 200
   reward_money: 100
+  reward_money_heaven: 2
   reward_items: [panacea, upgrade_mat]
   unlock_level: 3
   depends_on: [first_blood]
@@ -81,9 +112,39 @@
   target: 1
   reward_xp: 350
   reward_money: 200
+  reward_money_heaven: 2
   reward_items: [upgrade_mat, upgrade_mat, rare_mat]
   unlock_level: 5
   depends_on: [forest_walker, first_blood]
+
+# WO-025: relic quest line (Divine Burden content — not shop)
+- id: weight_of_storm
+  name: น้ำหนักวายุ
+  description: เอาชนะราชันย์เถื่อนอีกครั้ง — รับเรลิกเขี้ยววายุ (ภาระแห่งเรลิก)
+  type: kill_boss
+  boss_id: boss_forest_king
+  target: 1
+  reward_xp: 220
+  reward_money: 80
+  reward_money_heaven: 1
+  reward_items: [relic_storm_fang]
+  unlock_level: 6
+  depends_on: [forest_champion]
+  soft_hint: ของเทพใส่ได้ แต่ขวัญอาจสั่น
+
+- id: whisper_of_void_ring
+  name: กระซิบจากสุญญะ
+  description: เอาชนะราชินีเงา — ได้แหวนเรลิกสุญญะ
+  type: kill_boss
+  boss_id: boss_shadow_queen
+  target: 1
+  reward_xp: 280
+  reward_money: 100
+  reward_money_hell: 2
+  reward_items: [relic_void_whisper_ring]
+  unlock_level: 9
+  depends_on: [shadow_slayer]
+  soft_hint: เรลิกเงียบ — จิตสั่นเมื่อสวม
 
 - id: cave_delver
   name: นักสำรวจถ้ำ
@@ -93,9 +154,38 @@
   target: 4
   reward_xp: 160
   reward_money: 90
+  reward_money_hell: 1
   reward_items: [upgrade_mat, card_shadow]
   unlock_level: 3
   depends_on: [world_traveler]
+
+# WO-031: cave_shadow area loop
+- id: cave_bat_cull
+  name: ล่าค้างคาวในเงา
+  description: ชนะมอนในถ้ำเงา 5 ตัว — ทางเดินใต้ดินโล่งขึ้น
+  type: kill_area
+  area: cave_shadow
+  target: 5
+  reward_xp: 150
+  reward_money: 70
+  reward_items: [potion_hp_small, upgrade_mat, antidote]
+  unlock_level: 4
+  depends_on: [cave_delver]
+  soft_hint: ถ้ำจำเสียงปีก — กลับล่าซ้ำได้ · รางวัลยาคุ้ม
+
+- id: cave_lantern_path
+  name: ทางตะเกียง
+  description: สำรวจถ้ำเงา 4 ครั้ง — หาจุดติดตะเกียง
+  type: explore_area
+  area: cave_shadow
+  target: 4
+  reward_xp: 140
+  reward_money: 60
+  reward_money_hell: 1
+  reward_items: [tea_focus, traveler_ration, balm_regen]
+  unlock_level: 5
+  depends_on: [cave_bat_cull]
+  soft_hint: ทางตะเกียงเปิดเมื่อกลับมา · เตรียมราชินีเงา
 
 - id: shadow_slayer
   name: เพชฌฆาตเงา
@@ -105,9 +195,11 @@
   target: 1
   reward_xp: 500
   reward_money: 280
+  reward_money_hell: 3
   reward_items: [shadow_dagger, rare_mat]
   unlock_level: 8
-  depends_on: [cave_delver]
+  depends_on: [cave_delver, cave_lantern_path]
+  soft_hint: ผ่านทางตะเกียงแล้วค่อยท้าบอส
 
 - id: high_hunter
   name: นักล่าขั้นสูง
@@ -116,6 +208,8 @@
   target: 15
   reward_xp: 400
   reward_money: 200
+  reward_money_heaven: 1
+  reward_money_hell: 1
   reward_items: [steel_blade, rare_mat]
   unlock_level: 5
   depends_on: [first_blood]
@@ -131,6 +225,47 @@
   unlock_level: 2
   depends_on: [gear_up]
 
+# WO-032: mountain_rock area loop
+- id: mountain_ridge_walk
+  name: เดินสันเขา
+  description: สำรวจภูเขาหิน 4 ครั้ง — ชินลมผา
+  type: explore_area
+  area: mountain_rock
+  target: 4
+  reward_xp: 150
+  reward_money: 70
+  reward_items: [hunter_ration, upgrade_mat, city_bread]
+  unlock_level: 4
+  depends_on: [world_traveler]
+  soft_hint: ลมเขาจำฝีเท้า — กลับสำรวจซ้ำได้
+
+- id: mountain_golem_cull
+  name: ล่าโกเล็มหิน
+  description: ชนะมอนในภูเขาหิน 5 ตัว — ทางสันโล่งขึ้น
+  type: kill_area
+  area: mountain_rock
+  target: 5
+  reward_xp: 170
+  reward_money: 80
+  reward_items: [potion_hp_small, upgrade_mat, iron_arrowhead]
+  unlock_level: 5
+  depends_on: [mountain_ridge_walk]
+  soft_hint: หินจำแรงกระแทก — กลับล่าได้ · รางวัลยาคุ้ม
+
+- id: mountain_titan_ready
+  name: เงาใต้ยอดผา
+  description: สำรวจภูเขาหินอีก 3 ครั้ง — หาที่ตั้งค่ายก่อนไททัน
+  type: explore_area
+  area: mountain_rock
+  target: 3
+  reward_xp: 140
+  reward_money: 65
+  reward_money_heaven: 1
+  reward_items: [trail_stew, balm_regen]
+  unlock_level: 7
+  depends_on: [mountain_golem_cull]
+  soft_hint: พร้อมแล้วค่อยท้าไททันหิน
+
 - id: titan_fall
   name: ล้มไททัน
   description: เอาชนะไททันหิน
@@ -141,7 +276,50 @@
   reward_money: 320
   reward_items: [iron_plate, rare_mat, rare_mat]
   unlock_level: 10
-  depends_on: [high_hunter]
+  depends_on: [high_hunter, mountain_titan_ready]
+  soft_hint: ผ่านสันเขาและค่ายผาก่อนท้าบอส
+
+# WO-031: desert_heat area loop
+- id: desert_dune_walk
+  name: เดินเนินทราย
+  description: สำรวจทะเลทรายร้อน 4 ครั้ง — ชินกับความร้อน
+  type: explore_area
+  area: desert_heat
+  target: 4
+  reward_xp: 170
+  reward_money: 85
+  reward_items: [city_bread, traveler_ration, upgrade_mat]
+  unlock_level: 8
+  depends_on: [world_traveler, high_hunter]
+  soft_hint: ทรายกลืนรอยเท้า — กลับสำรวจซ้ำ ชำนาญขึ้น
+
+- id: desert_scorpion_cull
+  name: ล่าแมงป่องทราย
+  description: ชนะมอนในทะเลทราย 6 ตัว — ลดภัยริมโอเอซิส
+  type: kill_area
+  area: desert_heat
+  target: 6
+  reward_xp: 190
+  reward_money: 95
+  reward_money_hell: 1
+  reward_items: [antidote, hunter_ration, potion_hp, upgrade_mat]
+  unlock_level: 9
+  depends_on: [desert_dune_walk]
+  soft_hint: ความร้อนจำกลิ่นเลือด — กลับล่าได้ · รางวัลยาคุ้ม
+
+- id: desert_sun_ready
+  name: เงาใต้ดวงอาทิตย์
+  description: สำรวจทะเลทรายอีก 3 ครั้ง — หาที่หลบแดดก่อนบอส
+  type: explore_area
+  area: desert_heat
+  target: 3
+  reward_xp: 160
+  reward_money: 75
+  reward_money_heaven: 1
+  reward_items: [trail_stew, balm_regen, oil_ward]
+  unlock_level: 10
+  depends_on: [desert_scorpion_cull]
+  soft_hint: พร้อมแล้วค่อยท้าภัยพิบัติอาทิตย์
 
 - id: sun_end
   name: สิ้นแสง
@@ -153,7 +331,107 @@
   reward_money: 500
   reward_items: [card_lightning, rare_mat, steel_blade]
   unlock_level: 14
-  depends_on: [titan_fall, shadow_slayer]
+  depends_on: [titan_fall, shadow_slayer, desert_sun_ready]
+  soft_hint: ผ่านเนินทรายและทางเงาก่อนท้าบอส
+
+# WO-027: mid-game relic depth (not shop)
+- id: embers_of_hell_relic
+  name: เถ้าจากโลกันตร์
+  description: เอาชนะภัยพิบัติอาทิตย์ — รับดาบเถ้าโลกันตร์ (เรลิกภาระ)
+  type: kill_boss
+  boss_id: boss_sun_scourge
+  target: 1
+  reward_xp: 320
+  reward_money: 120
+  reward_money_hell: 3
+  reward_items: [relic_hell_ember_blade]
+  unlock_level: 14
+  depends_on: [sun_end]
+  soft_hint: เรลิกนรก — ร้อนมือและแผ่ออร่า
+
+# WO-042: soft relic content (not shop · enable Infernal/Echo Bond)
+- id: brand_of_hell_charm
+  name: ตรานรกคู่เถ้า
+  description: เอาชนะภัยพิบัติอาทิตย์อีกครั้ง — รับเครื่องรางตรานรก (คู่ดาบเถ้า → Infernal Bond)
+  type: kill_boss
+  boss_id: boss_sun_scourge
+  target: 1
+  reward_xp: 200
+  reward_money: 90
+  reward_money_hell: 2
+  reward_items: [relic_hell_brand_charm]
+  unlock_level: 15
+  depends_on: [embers_of_hell_relic]
+  soft_hint: เครื่องรางร้อน — ใส่คู่ดาบเถ้าแล้วรู้สึกเรโซแนนซ์มาร
+
+- id: echo_shroud_burden
+  name: ผ้าคลุมเสียงสะท้อน
+  description: เอาชนะราชินีเงา — รับผ้าคลุมเงาโบราณ (คู่แหวนสุญญะ → Echo Bond)
+  type: kill_boss
+  boss_id: boss_shadow_queen
+  target: 1
+  reward_xp: 220
+  reward_money: 100
+  reward_items: [relic_echo_shroud]
+  unlock_level: 10
+  depends_on: [shadow_slayer]
+  soft_hint: ผ้าคลุมสั่น — ใส่คู่แหวนสุญญะแล้วเงาก้อง
+
+# WO-032: crystal_peak area loop (หลัง crystal_path)
+- id: crystal_shard_cull
+  name: เก็บเศษผลึกมีชีวิต
+  description: ชนะมอนที่ยอดผลึก 5 ตัว — ลดภัยริมทางผลึก
+  type: kill_area
+  area: crystal_peak
+  target: 5
+  reward_xp: 200
+  reward_money: 100
+  reward_items: [crystal_dust, potion_mana, upgrade_mat]
+  unlock_level: 10
+  depends_on: [crystal_path]
+  soft_hint: ผลึกจำแสง — กลับล่าได้ · รางวัลมานาคุ้ม
+
+- id: crystal_peak_watch
+  name: เฝ้ายอดแสง
+  description: สำรวจยอดผลึกอีก 3 ครั้ง — ชินแสงหักเห
+  type: explore_area
+  area: crystal_peak
+  target: 3
+  reward_xp: 180
+  reward_money: 90
+  reward_money_heaven: 1
+  reward_items: [focus_tea, traveler_ration, balm_regen]
+  unlock_level: 11
+  depends_on: [crystal_shard_cull]
+  soft_hint: พร้อมแล้วค่อยท้าเจ้าแห่งปริซึม
+
+- id: prism_sovereign_fall
+  name: หักปริซึม
+  description: เอาชนะเจ้าแห่งปริซึม
+  type: kill_boss
+  boss_id: boss_prism_sovereign
+  target: 1
+  reward_xp: 700
+  reward_money: 380
+  reward_money_heaven: 2
+  reward_items: [rare_mat, focus_crystal]
+  unlock_level: 12
+  depends_on: [crystal_path, high_hunter, crystal_peak_watch]
+  soft_hint: ผ่านเฝ้ายอดแสงก่อนท้าบอส
+
+- id: sky_aegis_burden
+  name: เกราะท้องฟ้าแรก
+  description: เอาชนะเจ้าแห่งปริซึม — รับเกราะเรลิกสวรรค์ (ภาระ)
+  type: kill_boss
+  boss_id: boss_prism_sovereign
+  target: 1
+  reward_xp: 300
+  reward_money: 100
+  reward_money_heaven: 2
+  reward_items: [relic_aegis_sky]
+  unlock_level: 13
+  depends_on: [prism_sovereign_fall]
+  soft_hint: เกราะหนัก — คุ้มครองแต่กดขวัญ
 
 - id: mist_walker
   name: คนเดินหมอก
@@ -167,6 +445,34 @@
   unlock_level: 6
   depends_on: [world_traveler]
 
+# WO-029: mist_marsh loop polish
+- id: marsh_leech_cull
+  name: ลดปลิงในหมอก
+  description: ชนะมอนในหนองหมอก 5 ตัว — ทางเดินโคลนปลอดภัยขึ้น
+  type: kill_area
+  area: mist_marsh
+  target: 5
+  reward_xp: 175
+  reward_money: 80
+  reward_items: [antidote, hunter_ration, upgrade_mat, potion_mana]
+  unlock_level: 6
+  depends_on: [mist_walker]
+  soft_hint: หมอกจำกลิ่นเลือด — กลับล่าซ้ำได้ · รางวัลยาคุ้ม
+
+- id: marsh_reed_path
+  name: ทางกออ้อ
+  description: สำรวจหนองหมอกอีก 3 ครั้ง — หาทางกกที่แห้ง
+  type: explore_area
+  area: mist_marsh
+  target: 3
+  reward_xp: 145
+  reward_money: 70
+  reward_money_hell: 1
+  reward_items: [trail_stew, balm_regen, traveler_ration]
+  unlock_level: 7
+  depends_on: [marsh_leech_cull]
+  soft_hint: ทางกออ้อเปิดเมื่อกลับมา · เตรียมล่าไฮดรา
+
 - id: hydra_slayer
   name: ล่าไฮดรา
   description: เอาชนะไฮดราหมอก
@@ -177,7 +483,7 @@
   reward_money: 220
   reward_items: [rare_mat, card_water]
   unlock_level: 9
-  depends_on: [mist_walker]
+  depends_on: [mist_walker, marsh_reed_path]
 
 - id: void_initiate
   name: ผู้ก้าวสู่รอยแยก
@@ -190,6 +496,34 @@
   reward_items: [rare_mat]
   unlock_level: 14
   depends_on: [high_hunter]
+
+# WO-032: void_rift soft loop
+- id: void_edge_walk
+  name: เดินขอบรอยแยก
+  description: สำรวจรอยแยกสุญญะ 3 ครั้ง — อย่าก้าวพลาด
+  type: explore_area
+  area: void_rift
+  target: 3
+  reward_xp: 220
+  reward_money: 110
+  reward_money_hell: 1
+  reward_items: [potion_mana, upgrade_mat, traveler_ration]
+  unlock_level: 14
+  depends_on: [void_initiate]
+  soft_hint: รอยแยกจำเงา — กลับสำรวจสั้น ๆ ได้
+
+- id: void_whisper_cull
+  name: ลดเสียงจากเหว
+  description: ชนะมอนในรอยแยกอีก 4 ตัว
+  type: kill_area
+  area: void_rift
+  target: 4
+  reward_xp: 240
+  reward_money: 120
+  reward_items: [rare_mat, antidote, potion_hp]
+  unlock_level: 15
+  depends_on: [void_edge_walk]
+  soft_hint: เหวจำกลิ่น — รางวัลยาคุ้มก่อนลึกลง
 
 # ── สายรอบโลก (campaign soft) ──
 - id: city_roots
@@ -204,6 +538,34 @@
   unlock_level: 1
   campaign: true
   chapter: roots
+
+# WO-032: ancient_city soft return (ไม่ล็อกบอสหนัก)
+- id: city_alley_patrol
+  name: ลาดตระเวนซอย
+  description: ชนะมอนในเมืองโบราณ 5 ตัว — ซอยเงียบขึ้น
+  type: kill_area
+  area: ancient_city
+  target: 5
+  reward_xp: 120
+  reward_money: 55
+  reward_items: [city_bread, potion_hp_small, upgrade_mat]
+  unlock_level: 2
+  depends_on: [city_roots]
+  soft_hint: เมืองจำรอยเท้า — กลับลาดตระเวนได้ · เสบียงคุ้ม
+
+- id: city_market_echo
+  name: เสียงตลาดจาง
+  description: สำรวจเมืองโบราณอีก 3 ครั้ง — ฟังเสียงตลาดเก่า
+  type: explore_area
+  area: ancient_city
+  target: 3
+  reward_xp: 100
+  reward_money: 50
+  reward_money_heaven: 1
+  reward_items: [traveler_ration, herb_bundle, bronze_charm]
+  unlock_level: 3
+  depends_on: [city_alley_patrol]
+  soft_hint: ซากตลาดยังมีลม — กลับสำรวจซ้ำได้
 
 - id: crystal_path
   name: เส้นทางผลึก

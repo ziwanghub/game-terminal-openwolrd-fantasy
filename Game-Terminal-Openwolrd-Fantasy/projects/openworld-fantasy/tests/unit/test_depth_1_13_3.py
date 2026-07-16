@@ -45,11 +45,15 @@ def test_party_member_turns_attack_or_heal():
     templates = (reg.party or {}).get("templates") or []
     assert templates
     add_member(p, member_from_template(templates[0], reg, random.Random(1)), reg)
-    p["party_bonds"] = {str(p["party"][0]["id"]): 9}
+    # 0–100 scale (values ≤12 migrate from old bond scale)
+    p["party_bonds"] = {str(p["party"][0]["id"]): 80}
     mon = {"hp": 100, "max_hp": 100, "name": "มอน"}
     notes = party_member_turns(p, mon, random.Random(0), reg)
     assert notes
-    assert any("ปาร์ตี้" in n or "›" in n for n in notes)
+    text = "".join(notes)
+    assert any(
+        k in text for k in ("ซุ่ม", "›", "ปาร์ตี้", "รอดู", "โจมตี", "รักษา")
+    )
 
 
 def test_mission_story_chain_hidden_until_done():

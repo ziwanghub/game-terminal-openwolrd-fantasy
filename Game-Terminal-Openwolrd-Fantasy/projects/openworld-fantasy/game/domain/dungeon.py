@@ -1,6 +1,6 @@
 """
-Dungeon runs — hidden difficulty, lock until clear or rare escape item.
-Player discovers danger by play / incomplete hints.
+Dungeon runs v2 — depth scaling, floor bosses, free exit, boss-only shard escape.
+Hidden difficulty / max depth; soft anti-spoiler labels only.
 """
 from __future__ import annotations
 
@@ -148,22 +148,74 @@ def _scan_escape_items(
     return out
 
 
+def roll_max_depth(reg: DataRegistry, dungeon: Mapping[str, Any], rng: random.Random) -> int:
+    """
+    Hidden ceiling for this run — never shown as /N in UI.
+    v2.1: longer runs — heart is late so players can gear/loot first.
+    """
+    depth_cfg = dict(dungeon.get("depth") or {})
+    floors_legacy = int(dungeon.get("floors") or 2)
+    diff = int(dungeon.get("difficulty") or 2)
+    # default: soft dungeons 4–7 floors, hard 6–10 (was ~2–4)
+    default_min = max(4, floors_legacy + 1 + diff // 2)
+    default_max = max(default_min + 2, floors_legacy + 3 + diff)
+    default_cap = max(default_max + 2, 8 + diff)
+    base_min = int(depth_cfg.get("base_min") or default_min)
+    base_max = int(depth_cfg.get("base_max") or default_max)
+    hard_cap = int(depth_cfg.get("hard_cap") or default_cap)
+    if base_max < base_min:
+        base_max = base_min
+    rolled = rng.randint(base_min, base_max)
+    return max(4, min(hard_cap, rolled))
+
+
+def current_depth(run: Mapping[str, Any]) -> int:
+    return int(run.get("depth") or run.get("floor") or 1)
+
+
+def max_depth_hidden(run: Mapping[str, Any]) -> int:
+    return int(run.get("max_depth_hidden") or run.get("floors") or 2)
+
+
+def is_boss_encounter_active(player: Mapping[str, Any]) -> bool:
+    run = get_run(player)
+    return bool(run and run.get("boss_encounter_active"))
+
+
+def set_boss_encounter(player: MutableMapping[str, Any], active: bool) -> None:
+    run = player.get("dungeon_run")
+    if not isinstance(run, dict):
+        return
+    run = dict(run)
+    run["boss_encounter_active"] = bool(active)
+    player["dungeon_run"] = run
+
+
+def count_escape_shards(player: Mapping[str, Any], reg: DataRegistry) -> List[Tuple[str, float, str]]:
+    """(id, chance, display_name) for escape items currently in bag."""
+    rows = _scan_escape_items(player, reg)
+    out: List[Tuple[str, float, str]] = []
+    for iid, chance in rows:
+        nm = str((reg.items.get(iid) or {}).get("name") or iid)
+        out.append((iid, chance, nm))
+    return out
+
+
 def begin_dungeon(
     player: MutableMapping[str, Any],
     reg: DataRegistry,
     dungeon_id: str,
     rng: random.Random,
 ) -> List[str]:
-    """Enter dungeon — lock exit until clear or escape item works."""
+    """Enter dungeon — free walk-out; floor bosses gate depth; max depth hidden."""
     ensure_dungeon_state(player)
     if in_dungeon(player):
         return ["คุณอยู่ในดันเจียนอยู่แล้ว"]
     d = dungeon_by_id(reg, dungeon_id)
     if not d:
         return ["ไม่พบทางเข้า"]
-    notes = []
+    notes: List[str] = []
     escape_tokens = _scan_escape_items(player, reg)
-    # snapshot for drain messaging (not full restore)
     snap = {
         "money_world": int(player.get("money_world") or 0),
         "money_heaven": int(player.get("money_heaven") or 0),
@@ -171,18 +223,26 @@ def begin_dungeon(
         "inv_count": len(player.get("inventory_ids") or []),
     }
     diff = int(d.get("difficulty") or 2)
-    floors = int(d.get("floors") or 2)
-    turns_max = compute_time_limit(reg, d)
+    max_d = roll_max_depth(reg, d, rng)
+    # v2: time collapse off by default (free exit design)
+    tl = _cfg(reg).get("time_limit") or {}
+    time_on = bool(tl.get("enabled", False))
+    turns_max = compute_time_limit(reg, d) if time_on else 999
     layout = generate_floor_layout(reg, d, 1, rng)
     player["dungeon_run"] = {
         "dungeon_id": dungeon_id,
         "name": d.get("name"),
         "area_id": d.get("area_id"),
         "floor": 1,
-        "floors": floors,
+        "floors": max_d,  # legacy alias = hidden max
+        "depth": 1,
+        "max_depth_hidden": max_d,
         "boss_id": d.get("boss_id"),
-        "locked": True,
+        "locked": False,  # v2 free exit
         "boss_defeated": False,
+        "floor_boss_cleared": False,
+        "boss_encounter_active": False,
+        "auto_boss_depths": [],  # depths where boss was beaten → auto rematch ok
         "rewards_granted": False,
         "escape_ready": bool(escape_tokens),
         "escape_items": [t[0] for t in escape_tokens],
@@ -192,29 +252,35 @@ def begin_dungeon(
         "enemy_atk_mult": float(d.get("enemy_atk_mult") or 1.15),
         "difficulty_hidden": diff,
         "fights_this_floor": 0,
+        "path_progress": 0,
+        "empty_streak": 0,
+        "time_collapse_enabled": time_on,
         "turns_left": turns_max,
         "turns_max": turns_max,
         "floor_layout": layout,
         "floor_layouts": {1: layout},
+        "ruleset": "v2",
     }
-    # mark location feel
     player["location_before_dungeon"] = player.get("location")
     player["location"] = f"dungeon:{dungeon_id}"
     _bump_knowledge(player, dungeon_id, visits=1)
-    notes.append(f"คุณก้าวเข้า「{d.get('name')}」— ทางกลับมืดลง")
+    notes.append(f"คุณก้าวเข้า「{d.get('name')}」— โพรงมืดไม่รู้จบ")
     notes.append(" (ยังไม่รู้ว่าอันตรายแค่ไหน — ต้องสังเกตเอง)")
     notes.append(f" ภูมิชั้นนี้: {layout.get('label')} — {layout.get('desc')}")
-    notes.append(" …เวลากดดันจากภายใน (ไม่บอกว่าเหลือกี่หน่วย)")
+    notes.append(" เดินออกได้ทุกเมื่อ · ยกเว้นตอนท้าทายผู้เฝ้าชั้น")
+    notes.append(" ต้องกำจัดผู้เฝ้าชั้น ถึงจะลงลึกกว่านี้ได้")
+    notes.append(" โพรงลึก — หัวใจดันอยู่ไกล เก็บของ/พัก/ร้านเงาก่อนท้าได้")
+    notes.append(" (7 กระเป๋า · 8 ร้านเงา · 9 พัก — นอนอาจถูกซุ่มถ้าไม่มีของกลืนเงา)")
     if escape_tokens:
-        notes.append(" …มีบางอย่างในกระเป๋าร้อนวูบ ราวกับดึงกลับได้")
+        notes.append(" …มีเศษ/ของในกระเป๋า — อาจใช้หนีตอนไฟต์บอสได้")
     else:
-        notes.append(" ไม่มีสิ่งใดรับประกันทางออก — ต้องเคลียร์หรือหาทางรอดเอง")
-    notes.append(f" ชั้น 1/{floors} · ปาร์ตี้ {len(player.get('party') or [])}/3")
+        notes.append(" …ไม่มีเศษหนี — ท้าบอสเมื่อมั่นใจว่าชนะได้")
+    notes.append(f" ลงมาชั้นที่ 1 · ปาร์ตี้ {len(player.get('party') or [])}/3")
     try:
         from game.domain.situation import sync_situation_from_dungeon
 
         sync_situation_from_dungeon(player, preserve_help=False)
-        notes.append(" …ถ้าตึงเครียด อาจเปิดสัญญาณขอแรงได้ (ยินยอมให้ช่วย — ระบบช่วยเต็มทีหลัง)")
+        notes.append(" …ถ้าตึงเครียด อาจเปิดสัญญาณขอแรงได้")
     except Exception:
         pass
     return notes
@@ -279,6 +345,31 @@ def generate_floor_layout(
     }
 
 
+def _bump_path_progress(player: MutableMapping[str, Any], amount: int = 1) -> int:
+    """Track floor path knowledge; returns new total."""
+    run = player.get("dungeon_run")
+    if not isinstance(run, dict):
+        return 0
+    run = dict(run)
+    total = int(run.get("path_progress") or 0) + max(0, int(amount))
+    run["path_progress"] = total
+    player["dungeon_run"] = run
+    return total
+
+
+def _bump_area_mastery_for_run(player: MutableMapping[str, Any], run: Mapping[str, Any], amount: int = 1) -> int:
+    """Raise mastery on host area (+ dungeon key) so status UI can show progress."""
+    am = dict(player.get("area_mastery") or {})
+    aid = str(run.get("area_id") or "dark_forest")
+    am[aid] = min(100, int(am.get(aid, 0) or 0) + amount)
+    did = str(run.get("dungeon_id") or "")
+    if did:
+        dkey = f"dungeon:{did}"
+        am[dkey] = min(100, int(am.get(dkey, 0) or 0) + amount)
+    player["area_mastery"] = am
+    return int(am.get(aid, 0))
+
+
 def explore_floor_event(
     player: MutableMapping[str, Any],
     reg: DataRegistry,
@@ -287,6 +378,7 @@ def explore_floor_event(
     """
     Resolve one explore action inside dungeon.
     Returns {kind, flavor, notes, trigger_combat, loot, rest_hp, trap_dmg}
+    Always advances path_progress so floor is not soft-locked on empty rolls.
     """
     run = get_run(player)
     if not run:
@@ -296,6 +388,10 @@ def explore_floor_event(
         events = [{"id": "ambush", "weight": 1, "kind": "combat", "flavor": "ศัตรู!"}]
     # layout biases event weights slightly
     layout_id = str((run.get("floor_layout") or {}).get("id") or "")
+    fights = int(run.get("fights_this_floor") or 0)
+    empty_streak = int(run.get("empty_streak") or 0)
+    # pity: after 2 non-combat explores with 0 fights, force a combat so floors advance
+    force_combat = empty_streak >= 2 and fights <= 0
     weights = []
     for e in events:
         w = int(e.get("weight") or 1)
@@ -310,19 +406,33 @@ def explore_floor_event(
             w += 6
         if layout_id == "void" and kind == "combat":
             w += 5
+        # bias toward combat when floor has no fights yet
+        if fights == 0 and kind == "combat":
+            w += 12
+        if force_combat:
+            w = 100 if kind == "combat" else 0
         weights.append(w)
     total = sum(weights)
-    r = rng.randint(1, max(1, total))
-    acc = 0
-    chosen = events[0]
-    for e, w in zip(events, weights):
-        acc += w
-        if r <= acc:
-            chosen = e
-            break
+    if total <= 0:
+        # fallback combat event
+        chosen = next(
+            (e for e in events if str(e.get("kind")) == "combat"),
+            events[0],
+        )
+    else:
+        r = rng.randint(1, max(1, total))
+        acc = 0
+        chosen = events[0]
+        for e, w in zip(events, weights):
+            acc += w
+            if r <= acc:
+                chosen = e
+                break
     kind = str(chosen.get("kind") or "empty")
     flavor = str(chosen.get("flavor") or "")
     notes: List[str] = [flavor]
+    if force_combat and kind == "combat":
+        notes.insert(0, "เงาที่ขวางทางพุ่งเข้าใส่ — หลีกไม่พ้น!")
     result: Dict[str, Any] = {
         "kind": kind,
         "flavor": flavor,
@@ -332,11 +442,12 @@ def explore_floor_event(
         "rest_hp": 0,
         "trap_dmg": 0,
     }
+    # every explore teaches the floor a bit
+    path_total = _bump_path_progress(player, 1)
+    run = get_run(player) or run
+
     if kind == "empty":
-        am = dict(player.get("area_mastery") or {})
-        aid = str(run.get("area_id") or "dark_forest")
-        am[aid] = min(100, int(am.get(aid, 0)) + 1)
-        player["area_mastery"] = am
+        _bump_area_mastery_for_run(player, run, 1)
         notes.append(" ชำนาญเส้นทาง +1")
     elif kind == "loot":
         # small cache — not full clear reward
@@ -354,6 +465,7 @@ def explore_floor_event(
                 result["loot"].append(iid)
         if not result["loot"]:
             notes.append("  หีบว่าง — เหลือแต่ฝุ่น")
+        _bump_area_mastery_for_run(player, run, 1)
     elif kind == "rest":
         heal = 12 + rng.randint(0, 10)
         player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + heal)
@@ -380,6 +492,24 @@ def explore_floor_event(
         # knowledge tick without combat
         notes.append("  คุณจำความรู้สึกอันตรายนี้ได้ชัดขึ้น")
         _bump_knowledge(player, str(run.get("dungeon_id")), visits=0)
+        _bump_area_mastery_for_run(player, run, 1)
+    elif kind == "combat":
+        _bump_area_mastery_for_run(player, run, 1)
+
+    # track non-combat streak for pity combat
+    run = dict(get_run(player) or {})
+    if kind == "combat":
+        run["empty_streak"] = 0
+    else:
+        run["empty_streak"] = int(run.get("empty_streak") or 0) + 1
+    player["dungeon_run"] = run
+
+    # soft hint if still blocked after this explore
+    ok, why = can_advance_floor(player)
+    if not ok and kind != "combat":
+        notes.append(f"  …{why}")
+    elif ok and path_total > 0:
+        notes.append("  ทางลึกดูเหมือนจะเปิดแล้ว — ลอง (3) ลงลึก")
     return result
 
 
@@ -390,9 +520,11 @@ def tick_dungeon_time(
     *,
     cost: int = 1,
 ) -> List[str]:
-    """Spend dungeon turns; at 0 collapse and eject with drain."""
+    """Optional time pressure. v2 default: disabled (free-exit design)."""
     run = get_run(player)
     if not run:
+        return []
+    if not run.get("time_collapse_enabled"):
         return []
     notes: List[str] = []
     left = int(run.get("turns_left") or 0) - max(1, cost)
@@ -402,7 +534,6 @@ def tick_dungeon_time(
     tl = _cfg(reg).get("time_limit") or {}
     warn = int(tl.get("warn_at") or 5)
     crit = int(tl.get("critical_at") or 2)
-    # soft messages only — no numbers
     if left <= 0:
         notes.append("มิติดันเจียนยุบตัว! คุณถูกบีบออกมา...")
         notes.extend(drain_dungeon_resources(player, reg, rng, reason="time_out"))
@@ -411,7 +542,6 @@ def tick_dungeon_time(
         return notes
     if left <= crit:
         notes.append("⚠ แรงกดจากผนัง/เงารุนแรง — เวลาราวจะหมด (ไม่รู้ว่าเหลือเท่าไหร่)")
-        # pressure spike
         mon_mult = float(run.get("enemy_atk_mult") or 1.15) * 1.05
         run["enemy_atk_mult"] = mon_mult
         player["dungeon_run"] = run
@@ -485,19 +615,30 @@ def grant_dungeon_clear_rewards(
 
 
 def apply_dungeon_enemy_mods(mon: MutableMapping[str, Any], player: Mapping[str, Any]) -> Dict[str, Any]:
+    """Scale monster by dungeon bias + depth (hidden formulas)."""
     run = get_run(player)
     if not run:
         return dict(mon)
     mon = dict(mon)
+    depth = current_depth(run)
     hp_m = float(run.get("enemy_hp_mult") or 1.2)
     atk_m = float(run.get("enemy_atk_mult") or 1.15)
-    # deeper floors slightly harder
-    floor = int(run.get("floor") or 1)
-    hp_m *= 1.0 + 0.08 * (floor - 1)
-    atk_m *= 1.0 + 0.06 * (floor - 1)
+    # depth curves (v2)
+    hp_m *= 1.0 + 0.10 * (depth - 1)
+    atk_m *= 1.0 + 0.08 * (depth - 1)
+    if mon.get("dungeon_floor_boss") or mon.get("dungeon_boss"):
+        hp_m *= 1.55 + 0.12 * (depth - 1)
+        atk_m *= 1.28 + 0.08 * (depth - 1)
     mon["hp"] = max(1, int(round(int(mon.get("hp") or 1) * hp_m)))
     mon["max_hp"] = max(1, int(round(int(mon.get("max_hp") or mon["hp"]) * hp_m)))
     mon["atk"] = max(1, int(round(int(mon.get("atk") or 1) * atk_m)))
+    # level soft scale
+    base_lv = int(mon.get("level") or 1)
+    mon["level"] = max(1, base_lv + (depth - 1))
+    xp_m = float(mon.get("xp_mult") or 1.0) * (1.0 + 0.12 * (depth - 1))
+    if mon.get("dungeon_floor_boss") or mon.get("dungeon_boss"):
+        xp_m *= 1.35
+    mon["xp_mult"] = xp_m
     profiles = []
     for p in mon.get("attack_profiles") or []:
         p = dict(p)
@@ -507,6 +648,7 @@ def apply_dungeon_enemy_mods(mon: MutableMapping[str, Any], player: Mapping[str,
     if profiles:
         mon["attack_profiles"] = profiles
     mon["dungeon_modded"] = True
+    mon["dungeon_depth"] = depth
     return mon
 
 
@@ -519,15 +661,34 @@ def note_dungeon_fight(player: MutableMapping[str, Any]) -> None:
     player["dungeon_run"] = run
 
 
+def floor_clear_need(run: Mapping[str, Any]) -> int:
+    """Legacy explore score threshold (kept for tests / soft progress)."""
+    diff = int(run.get("difficulty_hidden") or 2)
+    return max(2, 1 + (diff + 1) // 2)
+
+
+def floor_clear_score(run: Mapping[str, Any]) -> int:
+    fights = int(run.get("fights_this_floor") or 0)
+    path = int(run.get("path_progress") or 0)
+    return fights * 2 + path
+
+
 def can_advance_floor(player: Mapping[str, Any]) -> Tuple[bool, str]:
+    """v2: must clear floor boss (ผู้เฝ้าชั้น) to go deeper."""
     run = get_run(player)
     if not run:
         return False, "ไม่ได้อยู่ในดันเจียน"
-    need = 2 + int(run.get("difficulty_hidden") or 2) // 2
-    fights = int(run.get("fights_this_floor") or 0)
-    if fights < need:
-        return False, "ทางลึกยังไม่เปิด — ยังมีเงาขัดขวาง (สู้เพิ่ม?)"
-    return True, "ok"
+    if run.get("boss_encounter_active"):
+        return False, "ยังติดวงบอส — จบไฟต์ก่อน"
+    if run.get("floor_boss_cleared") or run.get("boss_defeated"):
+        depth = current_depth(run)
+        mx = max_depth_hidden(run)
+        if depth >= mx:
+            return False, "มิติดันจบที่นี่ — ทางลงปิด (เดินออกได้)"
+        return True, "ok"
+    if int(run.get("path_progress") or 0) == 0 and int(run.get("fights_this_floor") or 0) == 0:
+        return False, "ทางลึกยังมืด — สำรวจชั้น แล้วท้าทายผู้เฝ้าชั้น"
+    return False, "ผู้เฝ้าชั้นยังขวางทาง — ต้องกำจัดก่อนลงลึก"
 
 
 def advance_floor(
@@ -541,25 +702,184 @@ def advance_floor(
     ok, why = can_advance_floor(player)
     if not ok:
         return [why]
-    floor = int(run["floor"]) + 1
-    floors = int(run["floors"])
+    depth = current_depth(run) + 1
+    mx = max_depth_hidden(run)
     run = dict(run)
-    if floor > floors:
-        return ["ถึงชั้นในสุดแล้ว — ต้องเผชิญบอส"]
+    if depth > mx:
+        return ["มิติดันจบที่นี่ — ไม่มีทางลงอีก (เดินออกได้)"]
     rng = rng or random.Random()
     d = dungeon_by_id(reg, str(run.get("dungeon_id"))) or {}
-    layout = generate_floor_layout(reg, d, floor, rng)
-    run["floor"] = floor
+    layout = generate_floor_layout(reg, d, depth, rng)
+    run["floor"] = depth
+    run["depth"] = depth
     run["fights_this_floor"] = 0
+    run["path_progress"] = 0
+    run["empty_streak"] = 0
+    run["floor_boss_cleared"] = False
+    run["boss_encounter_active"] = False
     run["floor_layout"] = layout
     layouts = dict(run.get("floor_layouts") or {})
-    layouts[floor] = layout
+    layouts[depth] = layout
     run["floor_layouts"] = layouts
     player["dungeon_run"] = run
-    return [
-        f"คุณลงลึกสู่ชั้น {floor}/{floors}... อากาศเปลี่ยน",
+    notes = [
+        f"คุณลงลึกกว่าเดิม... อากาศเปลี่ยน (ลงมาชั้นที่ {depth})",
         f" ภูมิชั้นใหม่: {layout.get('label')} — {layout.get('desc')}",
+        " ผู้เฝ้าชั้นใหม่ขวางทาง — ต้องกำจัดก่อนลงต่อ",
     ]
+    if depth >= mx:
+        notes.append(" …รู้สึกว่าใกล้จุดจบของโพรงนี้")
+    return notes
+
+
+def spawn_floor_boss(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+    rng: random.Random,
+) -> Optional[Dict[str, Any]]:
+    """
+    Floor warden or heart boss at hidden max depth.
+    Sets flags for combat (caller should set boss_encounter_active).
+    """
+    run = get_run(player)
+    if not run:
+        return None
+    d = dungeon_by_id(reg, str(run.get("dungeon_id"))) or {}
+    depth = current_depth(run)
+    mx = max_depth_hidden(run)
+    area_id = str(run.get("area_id") or "dark_forest")
+    is_heart = depth >= mx
+    boss: Optional[Dict[str, Any]] = None
+
+    if is_heart:
+        from game.domain.boss import spawn_boss
+
+        boss_id = str(run.get("boss_id") or d.get("boss_id") or "")
+        boss = spawn_boss(reg, area_id, rng)
+        if not boss and boss_id and boss_id in (reg.monsters or {}):
+            base = reg.monsters[boss_id]
+            boss = {
+                "id": boss_id,
+                "name": base.get("name") or boss_id,
+                "level": int(base.get("level_min") or 10),
+                "hp": int(base.get("hp_base") or 200),
+                "max_hp": int(base.get("hp_base") or 200),
+                "atk": int(base.get("atk_base") or 20),
+                "elements": list(base.get("elements") or ["physical"]),
+                "xp_mult": float(base.get("xp_mult") or 3),
+                "attack_profiles": [],
+                "statuses": [],
+                "boss": True,
+            }
+        if boss:
+            boss["dungeon_boss"] = True
+            boss["dungeon_heart_boss"] = True
+            boss["dungeon_floor_boss"] = True
+            boss["boss"] = True
+            boss["never_flee"] = True
+    else:
+        from game.domain.combat import pick_monster
+
+        mon = pick_monster(reg, area_id, rng)
+        mon = dict(mon)
+        mon["boss"] = True
+        mon["dungeon_floor_boss"] = True
+        mon["never_flee"] = True
+        mon["intel_tier"] = max(2, int(mon.get("intel_tier") or 1) + 1)
+        # soft name — not full spoiler
+        base_name = str(mon.get("name") or "เงา")
+        mon["base_name"] = base_name
+        mon["name"] = f"ผู้เฝ้าชั้น · {base_name}"
+        mon["xp_mult"] = float(mon.get("xp_mult") or 1.0) * 1.8
+        mon["hp"] = int(int(mon.get("hp") or 50) * 1.45)
+        mon["max_hp"] = mon["hp"]
+        mon["atk"] = int(int(mon.get("atk") or 8) * 1.25)
+        boss = mon
+
+    if not boss:
+        return None
+    # mods applied once in combat_session.apply_dungeon_enemy_mods
+    boss["boss"] = True
+    boss["never_flee"] = True
+    boss["dungeon_floor_boss"] = True
+    return boss
+
+
+def on_floor_boss_defeated(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    rng: Optional[random.Random] = None,
+    mon: Optional[Mapping[str, Any]] = None,
+) -> List[str]:
+    """Clear floor gate; if heart boss, full dungeon clear rewards."""
+    run = get_run(player)
+    if not run:
+        return []
+    rng = rng or random.Random(int(player.get("latent_seed", 1)))
+    mon = mon or {}
+    set_boss_encounter(player, False)
+    run = dict(get_run(player) or {})
+    depth = current_depth(run)
+    mx = max_depth_hidden(run)
+    is_heart = bool(
+        mon.get("dungeon_heart_boss")
+        or mon.get("dungeon_boss")
+        or depth >= mx
+    )
+    run["floor_boss_cleared"] = True
+    run["boss_encounter_active"] = False
+    player["dungeon_run"] = run
+
+    notes: List[str] = []
+    # enable auto-farm boss rematch on this depth
+    won = list(run.get("auto_boss_depths") or [])
+    if depth not in won:
+        won.append(depth)
+    run["auto_boss_depths"] = won
+    player["dungeon_run"] = run
+
+    if is_heart:
+        notes.extend(on_dungeon_boss_defeated(player, reg, rng))
+        notes.append(" ออโต้ชั้นนี้: เคยพิชิตหัวใจแล้ว — วนซ้ำชั้นนี้ได้อัตโนมัติ")
+        return notes
+
+    notes.append("✦ ผู้เฝ้าชั้นล้ม — ทางลงเปิดแล้ว")
+    notes.append(" ลงลึกได้ (3) · หรือเดินออก (4) ได้ทุกเมื่อ")
+    notes.append(" ออโต้ (A): ชั้นนี้สู้บอสซ้ำได้อัตโนมัติแล้ว")
+    # small floor reward
+    from game.domain.equipment import add_item
+    from game.domain.leveling import grant_xp
+
+    gold = 8 + depth * 6 + rng.randint(0, 10)
+    player["money_world"] = int(player.get("money_world") or 0) + gold
+    notes.append(f"  +{gold} เงินโลก (ของชั้น)")
+    # WO-021: light guaranteed special currency on floor clear (not combat RNG only)
+    if depth <= 2 and rng.random() < 0.55:
+        if rng.random() < 0.5:
+            player["money_heaven"] = int(player.get("money_heaven") or 0) + 1
+            notes.append("  +1 เงินสวรรค์ (ของชั้น)")
+        else:
+            player["money_hell"] = int(player.get("money_hell") or 0) + 1
+            notes.append("  +1 เงินนรก (ของชั้น)")
+    elif depth >= 3 and rng.random() < 0.7:
+        amt = 1 + (1 if depth >= 4 else 0)
+        if rng.random() < 0.5:
+            player["money_heaven"] = int(player.get("money_heaven") or 0) + amt
+            notes.append(f"  +{amt} เงินสวรรค์ (ของชั้น)")
+        else:
+            player["money_hell"] = int(player.get("money_hell") or 0) + amt
+            notes.append(f"  +{amt} เงินนรก (ของชั้น)")
+    xp = 10 + depth * 8
+    summary = grant_xp(player, xp, reg.levels)
+    notes.append(f"  XP +{summary.get('gained', xp)}")
+    if rng.random() < 0.18 + min(0.25, depth * 0.03):
+        if "dungeon_thread" in (reg.items or {}):
+            nm = add_item(player, "dungeon_thread", reg, rarity="rare")
+            notes.append(f"  ได้ {nm}")
+        elif "escape_shard" in (reg.items or {}):
+            nm = add_item(player, "escape_shard", reg, rarity="uncommon")
+            notes.append(f"  ได้ {nm}")
+    return notes
 
 
 def on_dungeon_boss_defeated(
@@ -572,7 +892,14 @@ def on_dungeon_boss_defeated(
         return []
     run = dict(run)
     run["boss_defeated"] = True
+    run["floor_boss_cleared"] = True
     run["locked"] = False
+    run["boss_encounter_active"] = False
+    depth = current_depth(run)
+    won = list(run.get("auto_boss_depths") or [])
+    if depth not in won:
+        won.append(depth)
+    run["auto_boss_depths"] = won
     player["dungeon_run"] = run
     did = str(run.get("dungeon_id"))
     _bump_knowledge(player, did, clears=1)
@@ -581,8 +908,8 @@ def on_dungeon_boss_defeated(
         cleared.append(did)
         player["dungeons_cleared"] = cleared
     notes = [
-        f"✦ บอสดันเจียนล้ม — ทางออก「{run.get('name')}」เปิดแล้ว",
-        " คุณอาจเดินออกได้โดยปลอดภัย (หรือสำรวจต่อ)",
+        f"✦ หัวใจดัน「{run.get('name')}」สงบ — โพรงนี้จบลงแล้ว",
+        " เดินออกได้ทุกเมื่อ · ไม่มีทางลงอีก",
     ]
     rng = rng or random.Random(int(player.get("latent_seed", 1)))
     notes.extend(grant_dungeon_clear_rewards(player, reg, rng))
@@ -601,57 +928,60 @@ def try_escape(
     rng: random.Random,
 ) -> List[str]:
     """
-    Attempt to leave while locked.
-    - If boss defeated: free exit
-    - If escape item was present at entry: roll chance, consume item on try
-    - Else: fail, drain resources, stay locked
+    v2: free walk-out when not in boss fight.
+    Escape items are for boss combat (see try_boss_combat_escape).
     """
     run = get_run(player)
     if not run:
         return ["ไม่ได้อยู่ในดันเจียน"]
-    notes: List[str] = []
-    if not run.get("locked") or run.get("boss_defeated"):
-        notes.extend(exit_dungeon(player, reg, success=True))
-        return notes
+    if run.get("boss_encounter_active"):
+        return [
+            "ติดวงบอส — ออกดันตรงๆ ไม่ได้",
+            " ในไฟต์: ใช้เศษหนี (เมนูหนี) หรือสู้ให้จบ",
+        ]
+    # free exit
+    notes = list(exit_dungeon(player, reg, success=bool(run.get("boss_defeated")), escaped=False))
+    return notes
 
-    # locked — need escape token from entry bag
-    chances = dict(run.get("escape_chances") or {})
-    items = list(run.get("escape_items") or [])
-    # only items still in bag count
-    bag = set(player.get("inventory_ids") or [])
-    usable = [(i, chances.get(i, 0.4)) for i in items if i in bag]
+
+def try_boss_combat_escape(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    rng: random.Random,
+) -> Tuple[bool, List[str]]:
+    """
+    Use shard/item during floor/heart boss fight.
+    Success: leave combat, stay in dungeon, boss not cleared.
+    Returns (left_combat, notes).
+    """
+    run = get_run(player)
+    if not run:
+        return False, ["ไม่ได้อยู่ในดันเจียน"]
+    if not run.get("boss_encounter_active"):
+        return False, ["ไม่ได้อยู่ในวงบอส"]
+    usable = count_escape_shards(player, reg)
     if not usable:
-        notes.append("ทางออกปิดสนิท — ไม่มีอะไรดึงคุณกลับได้")
-        notes.append(" ต้องเคลียร์บอส หรือ… มีของพิเศษตั้งแต่ตอนเข้า (คุณไม่รู้วิธีได้)")
-        notes.extend(drain_dungeon_resources(player, reg, rng, reason="fail_escape"))
-        _bump_knowledge(player, str(run.get("dungeon_id")), fails=1)
-        return notes
-
-    # use best chance item
+        return False, [
+            "วงบอสขังคุณ — หนีธรรมดาไม่ได้",
+            " ไม่มีเศษหนีในมือ — ต้องสู้ให้จบ",
+        ]
     usable.sort(key=lambda x: -x[1])
-    iid, chance = usable[0]
+    iid, chance, name = usable[0]
     from game.domain.equipment import remove_inventory_id
 
     remove_inventory_id(player, iid, reg)
-    name = (reg.items.get(iid) or {}).get("name") or iid
-    notes.append(f"คุณบีบ「{name}」— บางอย่างตอบสนอง...")
+    notes = [f"คุณบีบ「{name}」กลางวงบอส — บางอย่างตอบสนอง..."]
     if rng.random() <= chance:
-        notes.append("✦ เส้นทางฉีกเปิดครู่หนึ่ง — คุณถูกลากออกมา!")
+        notes.append("✦ เงาฉีกเปิด — คุณถอยจากวงบอสกลับชั้นนี้!")
+        notes.append(" ผู้เฝ้ายังอยู่ — ทางลงยังไม่เปิด")
+        set_boss_encounter(player, False)
         _bump_knowledge(player, str(run.get("dungeon_id")), escapes=1)
-        notes.extend(exit_dungeon(player, reg, success=False, escaped=True))
-        # light drain even on escape
-        notes.extend(drain_dungeon_resources(player, reg, rng, reason="escape_success", mild=True))
-    else:
-        notes.append("…แรงดึงไม่พอ ทางปิดอีกครั้ง ของชิ้นนั้นสลาย")
-        notes.extend(drain_dungeon_resources(player, reg, rng, reason="fail_escape"))
-        _bump_knowledge(player, str(run.get("dungeon_id")), fails=1)
-        # remove from run tokens
-        run = dict(player.get("dungeon_run") or {})
-        left = [x for x in (run.get("escape_items") or []) if x != iid and x in set(player.get("inventory_ids") or [])]
-        run["escape_items"] = left
-        run["escape_ready"] = bool(left)
-        player["dungeon_run"] = run
-    return notes
+        # mild cost
+        notes.extend(drain_dungeon_resources(player, reg, rng, reason="boss_shard_ok", mild=True))
+        return True, notes
+    notes.append("…แรงดึงไม่พอ ของสลาย — วงบอสยังขัง")
+    notes.extend(drain_dungeon_resources(player, reg, rng, reason="boss_shard_fail", mild=True))
+    return False, notes
 
 
 def drain_dungeon_resources(
@@ -718,8 +1048,13 @@ def exit_dungeon(
     run = get_run(player)
     if not run:
         return ["ไม่ได้อยู่ในดันเจียน"]
-    if run.get("locked") and not run.get("boss_defeated") and not escaped:
-        return ["ทางออกยังล็อก — เคลียร์บอสหรือใช้ของพิเศษ"]
+    # v2: block only during active boss encounter (unless forced eject)
+    if run.get("boss_encounter_active") and not escaped:
+        return ["ติดวงบอส — ออกดันไม่ได้จนกว่าจะจบไฟต์ (สู้หรือใช้เศษหนี)"]
+    # legacy locked runs (old saves): still allow free exit in v2 ruleset or if not locked
+    if run.get("locked") and not run.get("boss_defeated") and not escaped and run.get("ruleset") != "v2":
+        # migrate soft: treat as free exit for playability
+        pass
     back = player.get("location_before_dungeon") or run.get("area_id") or "dark_forest"
     player["location"] = back
     player["dungeon_run"] = None
@@ -758,34 +1093,76 @@ def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[s
     d = dungeon_by_id(reg, str(run.get("dungeon_id"))) or {}
     soft = soft_difficulty_text(player, reg, d) if d else "???"
     layout = run.get("floor_layout") or {}
-    exit_open = not run.get("locked") or run.get("boss_defeated")
+    depth = current_depth(run)
+    shards = count_escape_shards(player, reg)
     lines = [
         f" ดันเจียน · {run.get('name')}",
         "---",
-        f" ชั้น      {run.get('floor')}/{run.get('floors')}",
+        f" ความลึก   ลงมาชั้นที่ {depth}",
         f" ภูมิชั้น   {layout.get('label', '?')} — {layout.get('desc', '')}",
         f" สัญญาณ   {soft}",
         "---",
-        f" ทางออก   {'เปิด' if exit_open else 'ล็อก'}",
-        f" บอส      {'ล้มแล้ว' if run.get('boss_defeated') else 'ยังอยู่ลึกภายใน'}",
-        f" สู้ชั้นนี้  {run.get('fights_this_floor', 0)} ครั้ง",
-        "---",
+        " ทางออก   เปิด (สำรวจ) · ปิดเฉพาะตอนไฟต์บอส",
     ]
-    left = int(run.get("turns_left") or 0)
-    tmax = max(1, int(run.get("turns_max") or 1))
-    ratio = left / tmax
-    if ratio > 0.5:
-        lines.append(" แรงกดเวลา  ยังไหว")
-    elif ratio > 0.25:
-        lines.append(" แรงกดเวลา  เริ่มแน่น")
-    elif left > 0:
-        lines.append(" แรงกดเวลา  วิกฤต — รีบตัดสินใจ")
+    if run.get("boss_defeated"):
+        lines.append(" ผู้เฝ้า    หัวใจดันสงบแล้ว")
+        lines.append(" ทางลึก   ปิด — โพรงนี้จบแล้ว")
+    elif run.get("floor_boss_cleared"):
+        lines.append(" ผู้เฝ้า    ล้มแล้ว — ทางลงเปิด")
+        ok_adv, why_adv = can_advance_floor(player)
+        if ok_adv:
+            lines.append(" ทางลึก   เปิดแล้ว — เลือก (3) ลงลึกได้")
+        else:
+            lines.append(f" ทางลึก   {why_adv}")
     else:
-        lines.append(" แรงกดเวลา  ยุบ!")
-    if run.get("escape_ready"):
-        lines.append(" …มีของตอนเข้า — อาจดึงกลับได้")
+        lines.append(" ผู้เฝ้า    ยังขวางทาง")
+        lines.append(" ทางลึก   ยังปิด — ท้าทายผู้เฝ้าชั้น (2)")
+    lines.append(
+        f" สู้ชั้นนี้  {run.get('fights_this_floor', 0)} ครั้ง"
+        f"  ·  เส้นทาง {run.get('path_progress', 0)}"
+    )
+    try:
+        from game.runtime.dungeon_auto import count_food, format_dungeon_auto_hud
+
+        # compact resource line for dungeon panel
+        ensure_needs_line = format_dungeon_auto_hud(player, reg)
+        # strip trailing money bit for panel space — show food focus
+        food_n = count_food(player, reg)
+        from game.domain.needs import ensure_needs, get_needs
+
+        ensure_needs(player)  # type: ignore
+        hun = int(get_needs(player).get("hunger") or 0)  # type: ignore
+        lines.append(
+            f" ทรัพยากร  อาหาร {food_n}  ·  หิว {hun}"
+            f"  ·  HP {int(player.get('hp') or 0)}/{int(player.get('max_hp') or 1)}"
+            f"  ·  MP {int(player.get('mana') or 0)}/{int(player.get('max_mana') or 1)}"
+        )
+        if food_n <= 2:
+            lines.append(" ⚠ อาหารใกล้หมด — ร้านเงา (8) หรือออกซื้อ")
+        auto_depths = list(run.get("auto_boss_depths") or [])
+        if current_depth(run) in auto_depths:
+            lines.append(" ออโต้บอส  ชั้นนี้เคยชนะแล้ว — A ฟาร์มซ้ำผู้เฝ้าได้")
+        else:
+            lines.append(" ออโต้บอส  ยังต้องสู้เอง 1 ครั้ง (เมนู 2) ก่อนฟาร์มบอส")
+    except Exception:
+        pass
+    lines.append("---")
+    if shards:
+        lines.append(f" เศษหนี    มี {len(shards)} ชิ้นในมือ (ใช้ตอนไฟต์บอส)")
     else:
-        lines.append(" ไม่มีหลักประกันทางออก (นอกจากเคลียร์)")
+        lines.append(" เศษหนี    ไม่มี — ท้าบอสเมื่อมั่นใจ")
+    if run.get("time_collapse_enabled"):
+        left = int(run.get("turns_left") or 0)
+        tmax = max(1, int(run.get("turns_max") or 1))
+        ratio = left / tmax
+        if ratio > 0.5:
+            lines.append(" แรงกดเวลา  ยังไหว")
+        elif ratio > 0.25:
+            lines.append(" แรงกดเวลา  เริ่มแน่น")
+        elif left > 0:
+            lines.append(" แรงกดเวลา  วิกฤต")
+        else:
+            lines.append(" แรงกดเวลา  ยุบ!")
     try:
         from game.domain.situation import (
             format_help_status_lines,
@@ -800,8 +1177,81 @@ def format_dungeon_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[s
     except Exception:
         pass
     lines.append("---")
-    lines.append(" (ความยาก · เวลา · สูตร — ซ่อน)")
+    lines.append(" (ความยาก · เพดานชั้น · สูตร — ซ่อน)")
     return lines
+
+
+
+
+def has_dungeon_stealth(player: Mapping[str, Any]) -> bool:
+    """Item that soft-hides from common monsters while resting."""
+    bag = set(player.get("inventory_ids") or [])
+    stealth_ids = {
+        "shadow_cloak",
+        "dust_veil",
+        "dungeon_thread",
+        "escape_shard",
+        "blessed_charm",
+        "void_key_shard",
+    }
+    return bool(bag & stealth_ids)
+
+
+def dungeon_rest(
+    player: MutableMapping[str, Any],
+    reg: DataRegistry,
+    rng: random.Random,
+) -> Dict[str, Any]:
+    """
+    Rest inside dungeon: heal HP/MP, risk ambush unless stealth item.
+    Returns {notes, trigger_combat, ambush}.
+    """
+    notes: List[str] = []
+    if not in_dungeon(player):
+        return {"notes": ["ไม่ได้อยู่ในดันเจียน"], "trigger_combat": False, "ambush": False}
+    if is_boss_encounter_active(player):
+        return {
+            "notes": ["ติดวงบอส — พักไม่ได้"],
+            "trigger_combat": False,
+            "ambush": False,
+        }
+    # heal
+    mhp = max(1, int(player.get("max_hp") or 1))
+    mmp = max(1, int(player.get("max_mana") or 1))
+    heal = max(12, int(mhp * 0.28) + rng.randint(0, 10))
+    mana = max(8, int(mmp * 0.22) + rng.randint(0, 6))
+    player["hp"] = min(mhp, int(player.get("hp") or 0) + heal)
+    player["mana"] = min(mmp, int(player.get("mana") or 0) + mana)
+    notes.append(f"คุณหลับตาพักในมุมมืด… ฟื้น HP+{heal} MP+{mana}")
+    try:
+        from game.domain.needs import apply_needs_event
+
+        for line in apply_needs_event(player, "rest"):
+            notes.append(line)
+    except Exception:
+        pass
+    # ambush risk
+    stealthed = has_dungeon_stealth(player)
+    if stealthed:
+        notes.append(" …มีของที่กลืนกลิ่น/เงา — มอนทั่วไปมองไม่ค่อยเห็น")
+        ambush_chance = 0.08
+    else:
+        ambush_chance = 0.38
+        depth = current_depth(get_run(player) or {})
+        ambush_chance = min(0.62, ambush_chance + 0.03 * max(0, depth - 1))
+    if rng.random() < ambush_chance:
+        notes.append(" ⚠ ตื่นขึ้นมากลางวง — มีเงาพุ่งเข้าใส่!")
+        return {"notes": notes, "trigger_combat": True, "ambush": True}
+    notes.append(" ตื่นขึ้นมาโดยไม่มีใครรบกวน… ครั้งนี้")
+    return {"notes": notes, "trigger_combat": False, "ambush": False}
+
+
+def dungeon_shop_price_mult(player: Mapping[str, Any]) -> float:
+    """Soft markup for shadow shop inside dungeon."""
+    run = get_run(player) or {}
+    depth = current_depth(run)
+    return 1.35 + 0.06 * max(0, depth - 1)
+
 
 
 def dungeon_menu_actions(player: Mapping[str, Any]) -> List[str]:
@@ -818,15 +1268,33 @@ def dungeon_menu_actions(player: Mapping[str, Any]) -> List[str]:
         )
     except Exception:
         help_line = "  6  สัญญาณขอแรง"
+    ok_adv, _why = can_advance_floor(player)
+    if run.get("boss_defeated"):
+        deep_line = "  3  ลงลึกกว่านี้  (โพรงจบแล้ว)"
+        boss_line = "  2  ท้าทายผู้เฝ้าชั้น  (เคลียร์แล้ว)"
+    elif run.get("floor_boss_cleared"):
+        boss_line = "  2  ท้าทายผู้เฝ้าชั้น  (ล้มแล้ว)"
+        deep_line = (
+            "  3  ลงลึกกว่านี้  ← ทางเปิด"
+            if ok_adv
+            else "  3  ลงลึกกว่านี้  (ปิด)"
+        )
+    else:
+        boss_line = "  2  ท้าทายผู้เฝ้าชั้น  (หนีปกติไม่ได้)"
+        deep_line = "  3  ลงลึกกว่านี้  (ต้องกำจัดผู้เฝ้าก่อน)"
     return [
         " ทำอะไรในดัน",
         "---",
-        "  1  สำรวจชั้นนี้",
-        "  2  ลงลึกกว่านี้",
-        "  3  ท้าทายบอส",
-        "  4  พยายามออก / ของหนี",
+        "  1  สำรวจชั้นนี้  (มอนทั่วไป — หนีได้)",
+        boss_line,
+        deep_line,
+        "  4  เดินออกจากดัน  (ฟรี · ยกเว้นตอนไฟต์บอส)",
         "  5  ดูสถานะดัน",
         help_line,
+        "  7  กระเป๋า / ใช้ยา",
+        "  8  ร้านเงาในดัน  (ของจำกัด · ราคาสูง soft)",
+        "  9  พัก/นอนในดัน  (ฟื้น — อาจถูกซุ่ม)",
+        "  A  ออโต้ฟาร์มชั้นนี้  (กิน/สู้/เก็บของ · บอสต้องชนะเองก่อน 1 ครั้ง)",
         "---",
-        "  Y  ปาร์ตี้     0  ออก (ถ้าทางเปิด)",
+        "  Y  ปาร์ตี้     0  ออก (ฟรี)",
     ]

@@ -489,6 +489,9 @@
   - item: sealed_chest_s
     rate: uncommon
     note: หีบ
+  - item: relic_storm_fang
+    rate: very_rare
+    note: WO-024 เรลิกภาระ · หายาก
 - id: boss_shadow_queen
   rarity: legendary
   name: ราชินีเงา — Umbra Queen
@@ -529,6 +532,15 @@
   - item: umbra_steps
     rate: rare
     note: ของบอสเฉพาะ
+  - item: relic_void_whisper_ring
+    rate: very_rare
+    note: WO-024 เรลิกภาระ · หายาก
+  - item: relic_echo_shroud
+    rate: very_rare
+    note: WO-042 เรลิกเงา · Echo Bond
+  - item: relic_echo_sandals
+    rate: very_rare
+    note: WO-043 Soft Chorus ชิ้นที่ 3 · เงา
 - id: boss_stone_titan
   rarity: sacred
   name: ไททันหิน — Stone Titan
@@ -649,6 +661,15 @@
   - item: sunscourge_wrap
     rate: rare
     note: ของบอสเฉพาะ
+  - item: relic_hell_ember_blade
+    rate: rare
+    note: WO-027 เรลิกภาระ · บอสสุริยะ
+  - item: relic_hell_brand_charm
+    rate: very_rare
+    note: WO-042 เรลิกนรก · Infernal Bond
+  - item: relic_hell_ash_greaves
+    rate: very_rare
+    note: WO-043 Soft Chorus ชิ้นที่ 3 · มาร
 - id: marsh_leech
   name: ปลิงหนอง
   level_min: 5
@@ -1015,6 +1036,12 @@
   - item: prism_ring
     rate: rare
     note: ของบอสเฉพาะ
+  - item: relic_aegis_sky
+    rate: very_rare
+    note: WO-027 เรลิกภาระ · หายาก
+  - item: relic_divine_laurel
+    rate: very_rare
+    note: WO-043 Soft Chorus ชิ้นที่ 3 · เทพ
 - id: boss_void_herald
   rarity: divine
   name: ผู้ประกาศสุญญะ — Void Herald
@@ -1054,6 +1081,12 @@
   - item: void_sigil
     rate: rare
     note: ของบอสเฉพาะ
+  - item: relic_void_whisper_ring
+    rate: rare
+    note: WO-024 เรลิกภาระ
+  - item: relic_hell_ember_blade
+    rate: very_rare
+    note: WO-024 เรลิกภาระ · หายาก
 - id: city_rat
   name: หนูเมือง
   level_min: 1

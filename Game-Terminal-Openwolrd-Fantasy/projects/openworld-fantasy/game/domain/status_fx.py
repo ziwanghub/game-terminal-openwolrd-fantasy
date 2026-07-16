@@ -300,6 +300,17 @@ def resist_chance(
     except Exception:
         pass
 
+    # WO-037: Anima resists mental / control / fear-like statuses (player only soft)
+    try:
+        cat = str(defn.get("category") or "").lower()
+        mental_ids = ("stun", "fear", "charm", "confuse", "sleep", "horror")
+        if sid in mental_ids or cat in ("control", "mental", "mind"):
+            from game.domain.stat_arch import anima_mental_resist_bonus
+
+            r += anima_mental_resist_bonus(entity)  # type: ignore[arg-type]
+    except Exception:
+        pass
+
     # familiarity stacks (hidden)
     fam = entity.get("status_familiarity") or {}
     if isinstance(fam, dict):

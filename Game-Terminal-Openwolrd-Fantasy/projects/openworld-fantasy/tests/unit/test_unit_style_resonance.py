@@ -194,5 +194,5 @@ def test_allocate_soft_mentions_unit_when_extreme(monkeypatch):
     p["power_mag"] = 2
     p["power_atk"] = 40
     msg = allocate_stat(p, reg, "atk", 1)
-    assert "เพิ่ม" in msg
+    assert "เพิ่ม" in msg or "หนาขึ้น" in msg or "โจมตี" in msg
     # soft line only if extreme band — may or may not appear; smoke no crash

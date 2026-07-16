@@ -1,0 +1,130 @@
+# World origin themes — soft flavor + area mastery + open-skill bias
+# Used by catalog worlds (via theme_id / starting_area) and "สร้างโลกของฉัน"
+
+themes:
+  - id: forest_whisper
+    name: ป่ากระซิบ
+    starting_area: dark_forest
+    climate_affinity: [temperate, dark, wet]
+    soft_flavor:
+      - "ลมผ่านใบไม้มืด — เงาเรียนจากพื้นป่า"
+      - "รากไม้จำทาง — ชำนาญป่าเริ่มต้นอุ่นขึ้น"
+    soft_skill_hint: "สายธรรมชาติ / เงา อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 10
+    affinity_mastery_bonus: 4
+    skill_chance_bonus: 6
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [nature, physical, shadow, forest]
+
+  - id: cave_echo
+    name: ถ้ำสะท้อน
+    starting_area: cave_shadow
+    climate_affinity: [dark, cold]
+    soft_flavor:
+      - "เสียงสะท้อนในโพรง — ความลับซ่อนในความมืด"
+      - "หินเย็นสอนให้ระวังก้าว"
+    soft_skill_hint: "สายเงา / เวทมืด อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 9
+    affinity_mastery_bonus: 4
+    skill_chance_bonus: 7
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [shadow, magic, dark, cave]
+
+  - id: ridge_wind
+    name: สายลมสันผา
+    starting_area: mountain_rock
+    climate_affinity: [cold, windy]
+    soft_flavor:
+      - "ลมเขาตัดผิว — ร่างกายจำความสูง"
+      - "หินและทางแคบ ฝึกก้าวมั่น"
+    soft_skill_hint: "สายกายภาพ / ป้องกัน อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 9
+    affinity_mastery_bonus: 3
+    skill_chance_bonus: 5
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [physical, earth, defense, mountain]
+
+  - id: dune_heat
+    name: เนินทรายร้อน
+    starting_area: desert_heat
+    climate_affinity: [hot, dry]
+    soft_flavor:
+      - "แสงแดดไร้เงา — โลกทดสอบความอดทน"
+      - "ทรายจำรอยเท้า ชำนาญทะเลทรายเริ่มต้น"
+    soft_skill_hint: "สายไฟ / ความเร็ว อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 8
+    affinity_mastery_bonus: 3
+    skill_chance_bonus: 6
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [fire, speed, physical, desert]
+
+  - id: marsh_mist
+    name: หมอกราบ
+    starting_area: mist_marsh
+    climate_affinity: [wet, dark]
+    soft_flavor:
+      - "หมอกกลืนขอบทาง — จังหวะและลมหายใจสำคัญ"
+      - "ดินนุ่มสอนให้ก้าวเบา"
+    soft_skill_hint: "สายพิษ / เวท อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 8
+    affinity_mastery_bonus: 4
+    skill_chance_bonus: 7
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [poison, magic, water, marsh]
+
+  - id: crystal_song
+    name: ยอดผลึก
+    starting_area: crystal_peak
+    climate_affinity: [cold, arcane]
+    soft_flavor:
+      - "แสงในผลึก — จิตสงบและคม"
+      - "ยอดเขาเรียกผู้พร้อมเรียนรู้"
+    soft_skill_hint: "สายเวท / จิต อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 7
+    affinity_mastery_bonus: 3
+    skill_chance_bonus: 9
+    learn_points_seed: 2
+    mastery_gain_bonus: 0
+    open_skill_tags: [magic, arcane, mind, crystal]
+
+  - id: city_dust
+    name: ฝุ่นนครเก่า
+    starting_area: ancient_city
+    climate_affinity: [temperate, urban]
+    soft_flavor:
+      - "ถนนหินเก่า — เรื่องราวและอาชีพรออยู่"
+      - "นครจำชื่อคนเดิน"
+    soft_skill_hint: "สายสนับสนุน / สังคม อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 8
+    affinity_mastery_bonus: 3
+    skill_chance_bonus: 5
+    learn_points_seed: 1
+    mastery_gain_bonus: 1
+    open_skill_tags: [support, social, physical, city]
+
+  - id: void_fringe
+    name: ขอบสุญญะ
+    starting_area: void_rift
+    climate_affinity: [void, dark]
+    soft_flavor:
+      - "ขอบโลกฉีก — ไม่แนะนำมือใหม่"
+      - "ความว่างกดทับ แต่สอนเร็วถ้าทนได้"
+    soft_skill_hint: "สายนรก / เงาลึก อาจโผล่ง่ายกว่าเล็กน้อย"
+    mastery_start_bonus: 5
+    affinity_mastery_bonus: 2
+    skill_chance_bonus: 10
+    learn_points_seed: 2
+    mastery_gain_bonus: 1
+    open_skill_tags: [void, dark, hell, rare]
+    difficulty_hint: 2
+
+# Map catalog world ids → default theme (soft display + create defaults)
+catalog_theme:
+  default: forest_whisper
+  hardcore: cave_echo
+  nightmare: dune_heat

@@ -5,11 +5,13 @@ import random
 from typing import Any, Dict, Optional
 
 from game.data_load.registry import DataRegistry
-from game.domain.combat import pick_monster
+from game.domain.combat import apply_world_enemy_mods, pick_monster
 from game.domain.encounters import mark_monster_seen, resolve_approach
+from game.domain.equipment import recompute_stats
 from game.domain.narrative import emit_narrative, narrate_field
 from game.domain.party import (
     add_member,
+    apply_party_passives_to_player,
     member_from_player_echo,
     member_from_template,
     try_consent_player_hire,
@@ -148,6 +150,62 @@ def _handle_player_echo(
     if other.get("soft_titles"):
         io.write_line(f"  ฉายาเลือน: {other['soft_titles'][0]}")
     io.write_line("  (echo จากบันทึกโลก — ไม่แสดงเลเวล/ค่าพลัง · ไม่ทำร้ายเซฟเจ้าของ)")
+
+    # WO-024: Relic Aura soft gate before normal approach
+    try:
+        from game.domain.divine_burden import (
+            apply_echo_relic_reaction,
+            should_prompt_relic_aura,
+            soft_echo_relic_menu_hint,
+        )
+
+        show_aura, aura_why = should_prompt_relic_aura(player, other, reg)
+        if show_aura:
+            io.write_line(f"  〔ออร่าเรลิก〕 {aura_why}")
+            for ln in soft_echo_relic_menu_hint(player, reg):
+                if ln.strip():
+                    io.write_line(ln if ln.startswith(" ") else f" {ln}")
+            io.write_line("  R ถอยห่าง   H นอบน้อม   A ก้าวร้าว   Enter เข้าหาตามปกติ")
+            aura_ch = io.read_line("  ออร่า> ").strip().lower()
+            if aura_ch in ("r", "retreat", "ถอย"):
+                for ln in apply_echo_relic_reaction(player, "retreat", rng=rng):
+                    io.write_line(ln)
+                try:
+                    from game.domain.world_relations import on_echo_approach
+
+                    for ln in on_echo_approach(player, choice="retreat"):
+                        io.write_line(ln)
+                except Exception:
+                    pass
+                io.write_line("คุณถอยห่างจากเงา...")
+                return
+            if aura_ch in ("h", "humble", "นอบน้อม", "bow"):
+                for ln in apply_echo_relic_reaction(player, "humble", rng=rng):
+                    io.write_line(ln)
+                # humble → bias next social toward polite
+                player["_echo_approach_bias"] = "polite"
+                try:
+                    from game.domain.world_relations import on_echo_approach
+
+                    for ln in on_echo_approach(player, choice="humble"):
+                        io.write_line(ln)
+                except Exception:
+                    pass
+            elif aura_ch in ("a", "aggro", "ก้าวร้าว", "fight"):
+                for ln in apply_echo_relic_reaction(player, "aggro", rng=rng):
+                    io.write_line(ln)
+                player["_echo_approach_bias"] = "hostile"
+                try:
+                    from game.domain.world_relations import on_echo_approach
+
+                    for ln in on_echo_approach(player, choice="aggro"):
+                        io.write_line(ln)
+                except Exception:
+                    pass
+            # else continue into normal approach
+    except Exception:
+        pass
+
     io.write_line("เข้าหาอย่างไร?")
     for i, a in enumerate(approaches, 1):
         io.write_line(f"  {i}. {a.get('label')}")
@@ -163,6 +221,14 @@ def _handle_player_echo(
         io.write_line("ยกเลิก")
         return
     aid = str(approach.get("id") or "polite")
+    # WO-024: soft bias from aura menu
+    bias = str(player.pop("_echo_approach_bias", "") or "")
+    if bias == "polite" and aid in ("hostile", "threat", "challenge"):
+        aid = "polite"
+        io.write_line("  (ท่าทางผ่อนลงหลังนอบน้อม)")
+    elif bias == "hostile" and aid in ("polite", "gift", "friendly"):
+        # keep player choice but mark foeish later via affinity noise
+        player["_relic_aura_hostile"] = True
     cost = int(approach.get("cost_world") or 0)
     if cost > 0:
         if int(player.get("money_world", 0)) < cost:
@@ -254,6 +320,47 @@ def _handle_sight(
         did = str(sight.get("dungeon_id") or "")
         _enter_dungeon_flow(player, reg, io, rng, did)
         return
+
+    # WO-039: Faction Mini-Moments
+    if kind == "faction_moment":
+        try:
+            from game.domain.faction_moments import run_moment_menu
+
+            io.write_line()
+            io.write_line(f"── {sight.get('label') or 'สายตาโลก'} ──")
+            run_moment_menu(player, sight, io, reg=reg)
+        except Exception as e:
+            io.write_line(f"  …สายตาโลกจาง ({e})")
+        return
+
+    if kind == "companion":
+        emit_narrative(io, narrate_field(reg, "party_recruit", rng, name=sight.get("label")))
+        io.write_line(f"\nเข้าหา: {sight.get('label')} ({sight.get('hint')})")
+        io.write_line("  เงาจ้องคุณ — ยื่นมือรับร่วมทาง? (ต้องได้รับการยอมรับ · อาจมีราคา)")
+        if io.read_line("1=ยื่นมือ  อื่น=เดินจาก: ").strip() != "1":
+            emit_narrative(io, narrate_field(reg, "party_reject", rng, name=sight.get("label")))
+            return
+        tpl = sight.get("companion_template")
+        if not isinstance(tpl, dict):
+            tid = str(sight.get("companion_template_id") or "")
+            from game.domain.party import template_by_id
+            tpl = template_by_id(reg, tid) or {}
+        if not tpl:
+            io.write_line("  เงาจางหาย...")
+            return
+        from game.domain.party import attempt_join_template, apply_party_passives_to_player
+        from game.domain.equipment import recompute_stats
+        ok, notes = attempt_join_template(player, reg, tpl, rng)
+        for n in notes:
+            io.write_line(n if str(n).startswith(" ") or "✦" in str(n) else f"  {n}")
+        if ok:
+            emit_narrative(io, narrate_field(reg, "party_join", rng, name=tpl.get("name")))
+            apply_party_passives_to_player(player, reg)
+            recompute_stats(player, reg)
+        else:
+            emit_narrative(io, narrate_field(reg, "party_reject", rng, name=tpl.get("name") or sight.get("label")))
+        return
+
     if kind == "player":
         emit_narrative(io, narrate_field(reg, "approach_player", rng))
         other = sight.get("player_echo")
@@ -365,11 +472,25 @@ def _handle_sight(
         if roll > 0.5 and arch == "merchant":
             outcome = "shop"
 
+        # WO-038: world relations soft from NPC outcome
+        def _wr_npc(oc: str) -> None:
+            try:
+                from game.domain.world_relations import on_npc_outcome
+
+                aid = str(player.get("location") or "")
+                for ln in on_npc_outcome(
+                    player, outcome=oc, archetype=str(arch or ""), area_id=aid
+                ):
+                    io.write_line(ln)
+            except Exception:
+                pass
+
         if outcome == "hostile" or outcome == "trap_disguise":
             emit_narrative(io, narrate_field(reg, "npc_outcome_hostile", rng))
             io.write_line("เป็นศัตรู!" if outcome == "hostile" else "หน้ากากหลุด — มอนปลอมคน!")
             io.write_line(approach_outcome_line("npc", str(outcome)))
             personality_event(player, "npc_hostile", reg)
+            _wr_npc("hostile")
             _run_combat(player, reg, io, rng, ambush=True)
         elif outcome == "shop":
             emit_narrative(io, narrate_field(reg, "npc_outcome_shop", rng))
@@ -377,6 +498,7 @@ def _handle_sight(
             io.write_line("พบพ่อค้า!")
             io.write_line(approach_outcome_line("npc", "shop"))
             personality_event(player, "npc_shop", reg)
+            _wr_npc("shop")
             disc = float(mod.get("shop_discount") or 0)
             sur = float(mod.get("shop_surcharge") or 0)
             if disc > 0:
@@ -396,6 +518,7 @@ def _handle_sight(
             emit_narrative(io, narrate_field(reg, "npc_outcome_friend", rng))
             io.write_line("ได้เพื่อนเดินทาง! (ความเข้ากันส่งผลซ่อน)")
             io.write_line(approach_outcome_line("npc", "friend"))
+            _wr_npc("friend")
             atk_b = 2 + (1 if float(mod.get("compatibility") or 0) > 0.4 else 0)
             player["bonus_atk"] = int(player.get("bonus_atk", 0)) + atk_b
             player["blessings"] = list(player.get("blessings") or []) + ["เพื่อนเดินทาง"]
@@ -405,6 +528,7 @@ def _handle_sight(
             emit_narrative(io, narrate_field(reg, "npc_outcome_master", rng))
             io.write_line("✨ พบอาจารย์!")
             io.write_line(approach_outcome_line("npc", "master"))
+            _wr_npc("master")
             mid = pick_random_master_id(reg, rng)
             if mid:
                 _master_teach_menu_lazy(player, reg, io, mid)
@@ -421,8 +545,6 @@ def _handle_sight(
                     player["skills"] = skills
                     io.write_line("ได้สกิล: กระสุนน้ำ" + (" (สอนพิเศษ)" if teach else ""))
             if mod.get("library_hint"):
-                from game.domain.progression import grant_library_key
-
                 io.write_line(grant_library_key(player))
             player["blessings"] = list(player.get("blessings") or []) + ["พรอาจารย์"]
             player["blessing_turns"] = max(int(player.get("blessing_turns", 0)), 8)
@@ -431,6 +553,7 @@ def _handle_sight(
             emit_narrative(io, narrate_field(reg, "npc_outcome_ignore", rng))
             io.write_line("เขาไม่สนใจคุณ...")
             io.write_line(approach_outcome_line("npc", "ignore"))
+            _wr_npc("ignore")
     elif kind == "chest":
         outcome = resolve_approach("chest", reg, rng)
         emit_narrative(io, narrate_field(reg, "approach_chest", rng))
@@ -456,6 +579,8 @@ def _handle_sight(
                 rare_loot_banner(name, f"เงินโลก +{gold} · วัสดุหายากเข้าคลัง")
             )
             io.write_line(approach_outcome_line("chest", "rare_relic"))
+            # module-level import only — local import made grant_library_key
+            # UnboundLocalError on this branch (rare_relic before master branch)
             if rng.random() < 0.4:
                 io.write_line(grant_library_key(player))
         elif outcome == "loot_weak":

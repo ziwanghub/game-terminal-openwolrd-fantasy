@@ -3,6 +3,7 @@ name: โลกท้าทาย — เงานิรันดร์
 difficulty: 2
 difficulty_label: ท้าทาย
 starting_area: cave_shadow
+theme_id: cave_echo
 description: ศัตรูแข็งขึ้น — รางวัลพอประมาณ
 independent: true
 modifiers:

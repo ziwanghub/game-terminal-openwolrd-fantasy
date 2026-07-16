@@ -146,6 +146,26 @@ def build_sights(
     except Exception:
         pass
 
+    # soft companion shadow (P1) — approach may offer join
+    try:
+        from game.domain.party import roll_companion_sight
+
+        cs = roll_companion_sight(player, reg, rng)
+        if cs:
+            sights.append(cs)
+    except Exception:
+        pass
+
+    # WO-039: Faction Mini-Moments (soft world gaze)
+    try:
+        from game.domain.faction_moments import roll_faction_moment_sight
+
+        fm = roll_faction_moment_sight(player, rng, area_id=area_id)
+        if fm:
+            sights.append(fm)
+    except Exception:
+        pass
+
     rng.shuffle(sights)
     sights = sights[: max(1, count)]
     assign_sight_handles(sights)
@@ -163,8 +183,10 @@ def assign_sight_handles(sights: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         "chest": "ch",
         "npc": "np",
         "dungeon": "dg",
+        "companion": "rc",
         "player": "pl",
         "echo": "pl",
+        "faction_moment": "fm",
     }
     for s in sights:
         kind = str(s.get("kind") or "x")

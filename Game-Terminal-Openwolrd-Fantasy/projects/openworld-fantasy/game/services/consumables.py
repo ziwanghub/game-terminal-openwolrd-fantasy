@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from game.data_load.registry import DataRegistry, get_registry
 from game.domain.narrative import status_display_name
@@ -270,5 +270,146 @@ def _use_potion(
     except Exception:
         pass
     return True
+
+
+def _find_consumable_index(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+    *,
+    kind: str,
+) -> int:
+    """
+    Index of first bag item for quick care.
+    kind: 'hp' | 'mp'
+    Prefers dedicated potions; skips pure food for H/M (use E for food).
+    """
+    from game.domain.needs import is_food_item
+
+    ids = list(player.get("inventory_ids") or [])
+    inv = list(player.get("inventory") or [])
+    n = max(len(ids), len(inv))
+    best = -1
+    best_score = -1
+    for i in range(n):
+        iid = str(ids[i] if i < len(ids) else "") or ""
+        label = str(inv[i] if i < len(inv) else iid)
+        it = dict((reg.items or {}).get(iid) or {})
+        if not it and not iid:
+            # try match by label
+            for kid, defn in (reg.items or {}).items():
+                if str(defn.get("name")) == label:
+                    iid = str(kid)
+                    it = dict(defn)
+                    break
+        if is_food_item(it):
+            continue
+        s = (iid + " " + label + " " + str(it.get("name") or "")).lower()
+        heal_hp = int(it.get("heal_hp") or 0)
+        heal_mp = int(it.get("heal_mana") or 0)
+        score = -1
+        if kind == "hp":
+            if heal_hp <= 0 and not any(k in s for k in ("potion_hp", "ยาฟื้น", "hp", "เลือด")):
+                continue
+            if heal_mp > 0 and heal_hp <= 0:
+                continue  # pure mana
+            if "potion_hp" in s or "potion_hp" in iid:
+                score = 100 + heal_hp
+            elif heal_hp > 0:
+                score = 50 + heal_hp
+            elif any(k in s for k in ("ยา", "hp", "เลือด", "ฟื้น")) and "mana" not in s and "มานา" not in s:
+                score = 20
+        else:  # mp
+            if heal_mp <= 0 and not any(k in s for k in ("potion_mana", "มานา", "mana", "mp")):
+                continue
+            if heal_hp > 0 and heal_mp <= 0:
+                continue  # pure hp
+            if "potion_mana" in s or "potion_mana" in iid:
+                score = 100 + heal_mp
+            elif heal_mp > 0:
+                score = 50 + heal_mp
+            elif any(k in s for k in ("มานา", "mana", "mp")):
+                score = 20
+        if score > best_score:
+            best_score = score
+            best = i
+    return best
+
+
+def quick_use_care_potion(
+    player: Dict[str, Any],
+    reg: DataRegistry,
+    *,
+    kind: str,
+) -> List[str]:
+    """
+    PERSONAL care hotkey: auto-use one HP (h) or MP (m) potion from bag.
+    Does not open a pick list. Returns soft lines for the hub.
+    """
+    kind = "mp" if kind in ("mp", "mana", "m") else "hp"
+    hp = int(player.get("hp") or 0)
+    mhp = max(1, int(player.get("max_hp") or 1))
+    mp = int(player.get("mana") or 0)
+    mmp = max(0, int(player.get("max_mana") or 0))
+
+    if kind == "hp" and hp >= mhp:
+        return ["  HP เต็มแล้ว — ไม่ต้องใช้ยา"]
+    if kind == "mp" and (mmp <= 0 or mp >= mmp):
+        return ["  MP เต็มแล้ว — ไม่ต้องใช้ยา"] if mmp > 0 else ["  ไม่มีมานาสูงสุด — ไม่ใช้ยา"]
+
+    idx = _find_consumable_index(player, reg, kind=kind)
+    if idx < 0:
+        if kind == "hp":
+            return ["  ไม่มียาเพิ่มเลือดในกระเป๋า — ซื้อร้าน / ดรอป"]
+        return ["  ไม่มียาเพิ่มมานาในกระเป๋า — ซื้อร้าน / ดรอป"]
+
+    inv = list(player.get("inventory") or [])
+    ids = list(player.get("inventory_ids") or [])
+    rar = list(player.get("inventory_rarities") or [])
+    while len(ids) < max(len(inv), idx + 1):
+        ids.append("")
+    while len(rar) < max(len(inv), idx + 1):
+        rar.append("common")
+
+    iid = str(ids[idx] or "")
+    label = str(inv[idx] if idx < len(inv) else iid)
+    it = dict((reg.items or {}).get(iid) or {})
+    name = str(it.get("name") or label or iid)
+
+    # consume
+    if idx < len(inv):
+        inv.pop(idx)
+    if idx < len(ids):
+        ids.pop(idx)
+    if idx < len(rar):
+        rar.pop(idx)
+    player["inventory"] = inv
+    player["inventory_ids"] = ids
+    player["inventory_rarities"] = rar
+
+    notes: List[str] = []
+    if kind == "hp":
+        heal = int(it.get("heal_hp") or 40)
+        if heal <= 0:
+            heal = 40
+        before = int(player.get("hp") or 0)
+        player["hp"] = min(mhp, before + heal)
+        gained = int(player["hp"]) - before
+        notes.append(f"  ใช้「{name}」→ HP +{gained}  ({player['hp']}/{mhp})")
+        # tiny soft hunger ease like full potion path
+        try:
+            from game.domain.needs import apply_food_relief
+
+            apply_food_relief(player, hunger_relief=4, fatigue_relief=0, morale_boost=1)
+        except Exception:
+            pass
+    else:
+        heal = int(it.get("heal_mana") or 35)
+        if heal <= 0:
+            heal = 35
+        before = int(player.get("mana") or 0)
+        player["mana"] = min(mmp, before + heal)
+        gained = int(player["mana"]) - before
+        notes.append(f"  ใช้「{name}」→ MP +{gained}  ({player['mana']}/{mmp})")
+    return notes
 
 

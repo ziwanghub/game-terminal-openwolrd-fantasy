@@ -325,8 +325,26 @@ def build_echo_snapshot(player: Mapping[str, Any]) -> Dict[str, Any]:
         "acc_1": equip.get("acc_1") or equip.get("accessory"),
         "head": equip.get("head"),
     }
+    # WO-024: rarity summary for Relic Aura soft (no full inventory dump)
+    er = dict(player.get("equip_rarities") or {})
+    equip_rarity_summary = {
+        k: str(er.get(k) or "")
+        for k in equip_summary
+        if er.get(k)
+    }
     skills = [str(s) for s in (player.get("skills") or []) if s][:24]
     soft_titles = list(player.get("soft_titles") or [])[:5]
+    # soft flag if any legendary+
+    relic_presence = False
+    try:
+        from game.domain.divine_burden import rarity_rank, BURDEN_MIN_RANK
+
+        for rid in equip_rarity_summary.values():
+            if rarity_rank(None, str(rid)) >= BURDEN_MIN_RANK:
+                relic_presence = True
+                break
+    except Exception:
+        pass
     snap: Dict[str, Any] = {
         "schema": ECHO_SCHEMA_VERSION,
         "id": str(player.get("id") or ""),
@@ -349,6 +367,8 @@ def build_echo_snapshot(player: Mapping[str, Any]) -> Dict[str, Any]:
         "skills": skills,
         "gear_tags": [str(t) for t in (player.get("gear_tags") or [])][:12],
         "equip_summary": equip_summary,
+        "equip_rarity_summary": equip_rarity_summary,
+        "relic_presence": relic_presence,
         "unit_class_id": player.get("unit_class_id"),
         "soft_titles": soft_titles,
         "help_rep": _cap_int(player.get("help_rep"), 0, 9999, 0),

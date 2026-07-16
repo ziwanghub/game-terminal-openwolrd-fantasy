@@ -24,8 +24,11 @@ def test_explore_actions_short_and_personal_entry():
     assert "1" in text and "พัก" in text
     assert "ร้าน" in text  # Phase B: 6 shop
     assert "ทำอะไรต่อ" in text
-    # sectioned box — keep reasonably compact
-    assert text.count("\n") <= 20
+    # care band after หลัก (field H/M potions · O=Auto Policy · A stays rank)
+    assert "ดูแล" in text or "【ดูแล" in text
+    assert "O" in text and "Auto Policy" in text
+    # sectioned box — หลัก + care + ระบบ
+    assert text.count("\n") <= 28
 
 
 def test_field_actions_delegates_to_explore():
@@ -45,12 +48,44 @@ def test_personal_actions_menu():
     assert "ภารกิจ" in t
     # money lives on hub frame now — menu is actions-only
     assert "เมนูตัวละคร" in t or "1" in t
+    assert "H" in t and ("เลือด" in t or "ยา" in t)
+    assert "M" in t and ("มานา" in t or "ยา" in t)
+
+
+def test_personal_care_hotkeys_h_m():
+    from game.services.consumables import quick_use_care_potion
+
+    reg = DataRegistry.load(DATA_DIR)
+    p = create_player(reg, "CareHot", "vagabond", "เมษ")
+    p["hp"] = 20
+    p["max_hp"] = 100
+    p["mana"] = 5
+    p["max_mana"] = 50
+    p["inventory_ids"] = ["potion_hp_small", "potion_mana"]
+    p["inventory"] = ["ยาเล็ก", "ยามานา"]
+    p["inventory_rarities"] = ["common", "common"]
+    notes_h = quick_use_care_potion(p, reg, kind="hp")
+    assert any("HP" in n for n in notes_h)
+    assert int(p["hp"]) > 20
+    assert "potion_hp_small" not in (p.get("inventory_ids") or [])
+    notes_m = quick_use_care_potion(p, reg, kind="mp")
+    assert any("MP" in n for n in notes_m)
+    assert int(p["mana"]) > 5
+    # full → no consume
+    p["mana"] = int(p["max_mana"])
+    p["inventory_ids"] = ["potion_mana"]
+    before = list(p["inventory_ids"])
+    notes_full = quick_use_care_potion(p, reg, kind="mp")
+    assert any("เต็ม" in n for n in notes_full)
+    assert p["inventory_ids"] == before
 
 
 def test_combat_actions_no_travel():
     t = render_mode_actions(MODE_COMBAT)
     assert "โจมตี" in t
     assert "เดินทาง" not in t
+    assert "Auto Play" in t
+    assert "8" in t
 
 
 def test_personal_hub_status_and_exit():
@@ -58,8 +93,8 @@ def test_personal_hub_status_and_exit():
     p = create_player(reg, "ModeHero", "vagabond", "เมษ")
     p["stat_points"] = 2
     p["money_world"] = 99
-    # 1 = full status (Enter), 5 = money (Enter), 0 = back
-    io = ScriptedIO(["1", "", "5", "", "0"])
+    # WO-007: 1 overview (Enter), 9 money (Enter), 0 back
+    io = ScriptedIO(["1", "", "9", "", "0"])
     run_personal_hub(p, reg, io, area_name="เมืองโบราณ")
     out = io.joined()
     assert "ตัวละคร" in out or "PERSONAL" in out or "สถานะ" in out
@@ -70,8 +105,8 @@ def test_personal_hub_points_alias():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "Pts", "vagabond", "เมษ")
     p["stat_points"] = 1
-    # 6 → 1 allocate → atk → 1 pt → Enter (no pts left) → 0 personal
-    io = ScriptedIO(["6", "1", "1", "1", "", "0"])
+    # WO-007: 4 นิสัย/แต้ม → 1 สถานะ → allocate atk 1 → Enter → 0 hub
+    io = ScriptedIO(["4", "1", "1", "1", "", "0"])
     run_personal_hub(p, reg, io, area_name="x")
     assert int(p.get("stat_points") or 0) == 0
 

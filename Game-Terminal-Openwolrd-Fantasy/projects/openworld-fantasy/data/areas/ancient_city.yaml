@@ -30,3 +30,7 @@ monster_pools:
 
 boss_id: boss_ruin_oracle
 boss_unlock_level: 12
+# WO-032 soft return loop (ไม่บังคับบอส)
+loop_soft:
+  - "เมืองโบราณ: ลาดตระเวนซอย·เสียงตลาดจาง — กลับฐานได้เสมอ"
+  - "ร้าน/คราฟครบ · ใช้เมืองพักก่อนออกป่า-ทะเลทราย"

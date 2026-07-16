@@ -132,6 +132,7 @@ def create_player(
         "bonus_atk": int(occ.get("atk", 5)) + int(z.get("atk", 0)),
         "deceive_bonus": int(z.get("deceive", 0)),
         "mastery_gain_bonus": int(z.get("mastery_gain", 0)),
+        "skill_chance_bonus": int(z.get("skill_chance", 0)),
         "money_world": 150 + int(z.get("money_world", 0)),
         "money_heaven": 8,
         "money_hell": 3,

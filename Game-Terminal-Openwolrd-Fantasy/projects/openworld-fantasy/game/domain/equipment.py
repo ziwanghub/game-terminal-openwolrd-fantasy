@@ -983,6 +983,17 @@ def equip_item(
     # capture rarity + instance of the piece being equipped
     idx = list(player.get("inventory_ids") or []).index(item_id)
     new_rarity = rarity_of_inventory_index(player, idx)
+    # fall back to item YAML rarity (relics often define rarity: legendary)
+    try:
+        from game.domain.rarity import item_default_rarity, rarity_rank as _rr
+
+        yaml_r = item_default_rarity(it, reg)
+        # if bag list misaligned and gave common but item is legendary+, prefer yaml
+        if _rr(reg, str(yaml_r)) > _rr(reg, str(new_rarity or "common")):
+            new_rarity = yaml_r
+    except Exception:
+        if it.get("rarity") and (not new_rarity or new_rarity in ("common", "None", None)):
+            new_rarity = str(it.get("rarity"))
     moved_inst = None
     try:
         from game.domain.item_instances import ensure_item_instances, pop_instance_at
@@ -1057,6 +1068,29 @@ def equip_item(
             msg += f"\n  {feel}"
     except Exception:
         pass
+    # WO-023/030: Divine Burden soft note on equip + first-time tip
+    try:
+        from game.domain.divine_burden import on_equip_burden_note, rarity_rank, BURDEN_MIN_RANK
+
+        for bn in on_equip_burden_note(
+            player,
+            reg,
+            rarity_id=str(new_rarity),
+            item_name=str(it.get("name") or item_id),
+            item_id=str(item_id),
+        ):
+            msg += f"\n{bn}"
+        if (
+            rarity_rank(reg, str(new_rarity)) >= BURDEN_MIN_RANK
+            and not player.get("_first_relic_tip_done")
+        ):
+            player["_first_relic_tip_done"] = True
+            msg += (
+                "\n  〔ครั้งแรก〕เรลิกตำนาน+: ขวัญจะค่อยหนัก · "
+                "ถอดได้ · ห้อง G ลองก่อน · Policy B ถอดอัตโนมัติ"
+            )
+    except Exception:
+        pass
     return msg
 
 
@@ -1064,6 +1098,8 @@ def unequip_slot(
     player: MutableMapping[str, Any],
     slot: str,
     reg: DataRegistry,
+    *,
+    skip_relic_alert: bool = False,
 ) -> str:
     """Move equipped piece back to inventory; cards in sockets return to card_bag."""
     from game.domain.rarity import (
@@ -1083,6 +1119,7 @@ def unequip_slot(
         return f"ไม่มี{_slot_label(slot)}สวมอยู่"
     rid = equip_rarity_for_slot(player, slot)
     it = reg.items.get(eid) or {}
+    item_name = str(it.get("name") or eid)
     # return socketed cards
     for cid in (player.get("sockets") or {}).get(slot) or []:
         if cid:
@@ -1125,7 +1162,19 @@ def unequip_slot(
 
     code = item_code(str(eid), reg)
     shown = display_item_name(str(it.get("name") or eid), rid or "common", reg)
-    return f"ถอด {code} {shown} กลับเข้ากระเป๋าแล้ว"
+    msg = f"ถอด {code} {shown} กลับเข้ากระเป๋าแล้ว"
+    # WO-034.2: Soft Alert on manual unequip of legendary+ (auto uses skip)
+    if not skip_relic_alert:
+        try:
+            from game.domain.divine_burden import on_unequip_burden_note
+
+            for bn in on_unequip_burden_note(
+                player, reg, rarity_id=str(rid or "common"), item_name=item_name
+            ):
+                msg += f"\n{bn}"
+        except Exception:
+            pass
+    return msg
 
 
 def sell_equipped_slot(

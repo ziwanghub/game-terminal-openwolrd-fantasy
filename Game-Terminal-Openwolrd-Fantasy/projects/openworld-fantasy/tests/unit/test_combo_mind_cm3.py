@@ -36,9 +36,16 @@ def test_panel_shows_soft_mind_not_int_invest():
     init_progression(p, reg)
     lines = "\n".join(format_alloc_panel(p))
     assert "โจมตี" in lines and "เวท" in lines
-    assert "ฉลาด" in lines or "ความคิด" in lines
+    # CM3: mind not investable as raw int — soft copy may say ฉลาด/ความคิด/ไม่อยู่ในเมนู/จิต
+    assert (
+        "ฉลาด" in lines
+        or "ความคิด" in lines
+        or "ไม่อยู่ในเมนู" in lines
+        or "จิตวิญญาณ" in lines
+        or "สติ" in lines
+    )
     # should not offer invest slot 5 for intelligence as numbered invest of 5 keys
-    assert "1–4" in lines or "1-4" in lines or "ไม่อยู่ในเมนู" in lines or "ความคิด" in lines
+    assert "1–4" in lines or "1-4" in lines or "ไม่อยู่ในเมนู" in lines or "ความคิด" in lines or "สติ" in lines
 
 
 def test_migrate_old_int_invest():

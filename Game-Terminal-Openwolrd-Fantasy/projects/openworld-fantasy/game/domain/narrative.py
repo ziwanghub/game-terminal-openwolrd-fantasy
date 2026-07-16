@@ -309,6 +309,23 @@ def situation_strip(
         bits.append("บัฟ:" + ",".join(str(x) for x in (player.get("blessings") or [])[:2]))
     if player.get("party_call_active"):
         bits.append("ปาร์ตี้ถูกเรียก")
+    # WO-005: soft needs tag on situation strip (ขวัญ/หิว/ล้า vocabulary)
+    try:
+        from game.domain.needs import band, get_needs
+
+        n = get_needs(player)
+        if band("morale", n["morale"]) in ("low", "crit"):
+            bits.append("ขวัญสั่น" if band("morale", n["morale"]) == "low" else "ขวัญย่ำแย่")
+        if band("hunger", n["hunger"]) in ("bad", "crit"):
+            bits.append("หิว" if band("hunger", n["hunger"]) == "bad" else "หิววิกฤต")
+        if band("fatigue", n["fatigue"]) in ("bad", "crit"):
+            bits.append("ล้า" if band("fatigue", n["fatigue"]) == "bad" else "ล้าวิกฤต")
+    except Exception:
+        pass
+    party = list(player.get("party") or [])
+    if party:
+        names = [str(m.get("name") or "?") for m in party[:3]]
+        bits.append("ทีม:" + "/".join(names))
     # MI polish: soft mind read (no %)
     try:
         from game.domain.monster_ai import resolve_monster_intel_tier, talk_eligible

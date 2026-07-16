@@ -446,6 +446,19 @@ def _bag_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
 
 
 def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
+    import random
+
+    from game.domain.party import (
+        get_relationship,
+        give_item_gift,
+        give_money_gift,
+        list_known_companions,
+        reinvite_known_companion,
+        relationship_bar,
+        soft_party_discovery_lines,
+        soft_relationship_label,
+    )
+
     ensure_party(player)
     apply_party_passives_to_player(player, reg)
     recompute_stats(player, reg)
@@ -453,7 +466,12 @@ def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
         io.write_line()
         for line in format_party_panel(player, reg):
             io.write_line(line)
-        io.write_line(" 1.ปลดสมาชิก  0.กลับ  (รับสมาชิกใหม่: เจอในโลก/สำรวจ)")
+        io.write_line(" 1. ปลดสมาชิก")
+        io.write_line(" 2. สหายที่รู้จัก — เชิญกลับ")
+        io.write_line(" 3. ให้ของขวัญจากกระเป๋า  (เพิ่มสัมพันธ์ · ชอบอะไรสังเกตเอง)")
+        io.write_line(" 4. มอบของมีค่า (เงินโลก/สวรรค์/นรก)")
+        io.write_line(" 5. ใบ้: หาสหาย / สัมพันธ์ (soft)")
+        io.write_line(" 0. กลับ")
         ch = io.read_line("เลือก: ").strip()
         if ch in ("0", ""):
             return
@@ -474,6 +492,107 @@ def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
             )
             apply_party_passives_to_player(player, reg)
             recompute_stats(player, reg)
+        elif ch == "2":
+            known = list_known_companions(player, reg)
+            if not known:
+                io.write_line(" ยังไม่มีสหายในความจำ — ต้องเคยร่วมทางก่อน")
+                io.write_line(" เงาใหม่อาจมาเมื่อสำรวจ/เข้าหาในโลก…")
+                continue
+            io.write_line("\n── สหายที่รู้จัก ──")
+            for i, k in enumerate(known, 1):
+                st = "อยู่ทีม" if k.get("in_party") else "นอกทีม"
+                rel = get_relationship(player, str(k.get("id")))
+                io.write_line(
+                    f"  {i}. {k.get('name')} · {k.get('kind_label')} · {st} · "
+                    f"[{relationship_bar(rel)}] {soft_relationship_label(rel)}"
+                )
+            io.write_line("  0. กลับ")
+            pick = io.read_line("เชิญหมายเลข: ").strip()
+            if pick in ("0", ""):
+                continue
+            try:
+                ki = int(pick) - 1
+                entry = known[ki]
+            except Exception:
+                io.write_line("เลือกไม่ถูกต้อง")
+                continue
+            if entry.get("in_party"):
+                io.write_line(" อยู่ร่วมทางอยู่แล้ว")
+                continue
+            conf = io.read_line(
+                f" เชิญ「{entry.get('name')}」กลับ? อาจใช้ทรัพยากร (1=ใช่): "
+            ).strip()
+            if conf != "1":
+                io.write_line(" ยกเลิก")
+                continue
+            ok, notes = reinvite_known_companion(
+                player, reg, str(entry.get("id")), random.Random()
+            )
+            for n in notes:
+                io.write_line(n if str(n).startswith(" ") or "✦" in str(n) else f"  {n}")
+            if ok:
+                apply_party_passives_to_player(player, reg)
+                recompute_stats(player, reg)
+        elif ch == "3":
+            if party_size(player) <= 0:
+                io.write_line("ไม่มีใครในทีม")
+                continue
+            party = list(player.get("party") or [])
+            for i, m in enumerate(party, 1):
+                io.write_line(f"  {i}. {m.get('name')}")
+            try:
+                mi = int(io.read_line("ให้ใคร (หมายเลข): ").strip()) - 1
+            except Exception:
+                continue
+            ids = list(player.get("inventory_ids") or [])
+            if not ids:
+                io.write_line("กระเป๋าว่าง")
+                continue
+            io.write_line(" ของในกระเป๋า (ชิ้นแรกๆ):")
+            for i, iid in enumerate(ids[:12], 1):
+                it = (reg.items or {}).get(str(iid)) or {}
+                io.write_line(f"  {i}. {it.get('name') or iid}")
+            if len(ids) > 12:
+                io.write_line(f"  …อีก {len(ids) - 12} ชิ้น")
+            try:
+                ii = int(io.read_line("ยื่นชิ้นที่: ").strip()) - 1
+            except Exception:
+                continue
+            for n in give_item_gift(player, reg, mi, ii):
+                io.write_line(n)
+            io.read_line("Enter...")
+        elif ch == "4":
+            if party_size(player) <= 0:
+                io.write_line("ไม่มีใครในทีม")
+                continue
+            party = list(player.get("party") or [])
+            for i, m in enumerate(party, 1):
+                io.write_line(f"  {i}. {m.get('name')}")
+            try:
+                mi = int(io.read_line("มอบให้ใคร: ").strip()) - 1
+            except Exception:
+                continue
+            io.write_line(" 1 เงินโลก  2 เงินสวรรค์  3 เงินนรก")
+            cur = io.read_line("ชนิด: ").strip()
+            cmap = {"1": "world", "2": "heaven", "3": "hell"}
+            currency = cmap.get(cur, "world")
+            try:
+                amt = int(io.read_line("จำนวน: ").strip() or "0")
+            except Exception:
+                amt = 0
+            for n in give_money_gift(
+                player, reg, mi, currency=currency, amount=amt
+            ):
+                io.write_line(n)
+            io.read_line("Enter...")
+        elif ch == "5":
+            io.write_line()
+            for line in soft_party_discovery_lines():
+                io.write_line(line)
+            io.write_line(" · ให้ของ/เงินมีค่า → สัมพันธ์ขึ้น (แต่ละตนชอบต่างกัน)")
+            io.write_line(" · ไม่อยู่ในทีม → สัมพันธ์ลดช้ามาก")
+            io.write_line(" · ไฟต์: ซุ่มช่วยอัตโน · ยิ่งสนิทยิ่งบ่อย")
+            io.read_line("Enter...")
 
 
 

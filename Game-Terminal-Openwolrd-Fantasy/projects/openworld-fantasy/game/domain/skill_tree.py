@@ -191,6 +191,14 @@ def learn_skill(
     if skill_id not in unlocked:
         unlocked.append(skill_id)
         player["skill_tree_unlocked"] = unlocked
+    # WO-037: Anima soft moment on learn
+    try:
+        from game.domain.stat_arch import anima_presence_lines
+
+        for ln in anima_presence_lines(player, "learn_skill", reg=reg):
+            msg += f"\n{ln}"
+    except Exception:
+        pass
     # SK-R2: roll skill rank on first learn
     try:
         import random

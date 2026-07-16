@@ -4,21 +4,21 @@
   desc: ยาฟื้นเลือดเล็กน้อย ใช้ในสนามหรือไฟต์
   kind: consumable
   heal_hp: 30
-  price_world: 25
+  price_world: 18  # WO-021 early sink softer
 - id: potion_hp
   rarity: common
   name: ยา HP
   desc: ยาฟื้นเลือดมาตรฐาน
   kind: consumable
   heal_hp: 55
-  price_world: 45
+  price_world: 36
 - id: potion_mana
   rarity: common
   name: ยา Mana
   desc: ยาฟื้นมานา
   kind: consumable
   heal_mana: 35
-  price_world: 40
+  price_world: 32
 - id: focus_tea
   code: pt_tea
   rarity: common
@@ -51,7 +51,7 @@
   desc: ล้างพิษและอาการใกล้เคียง
   kind: consumable
   clear_status: poison
-  price_world: 35
+  price_world: 28
 - id: panacea
   rarity: uncommon
   name: ยาถอนสถานะ
@@ -109,7 +109,7 @@
   fatigue_relief: 8
   morale_boost: 5
   heal_hp: 20
-  price_world: 30
+  price_world: 22
 - id: iron_arrowhead
   rarity: common
   name: หัวลูกศรเหล็ก
@@ -377,6 +377,12 @@
   def: 2
   mdef: 5
   latent_hp_pct: 0.025
+- id: escape_shard
+  name: เศษหนี
+  kind: material
+  rarity: uncommon
+  price_world: 80
+  desc: เศษคริสตัลบาง — รู้สึกดึงออกจากวงรบหนักได้บ้าง
 - id: dungeon_thread
   name: ด้ายกลับทาง
   kind: material
@@ -404,7 +410,7 @@
   morale_boost: 6
   heal_hp: 15
   heal_mana: 10
-  price_world: 30
+  price_world: 22
 - id: city_map_scrap
   name: เศษแผนที่เมือง
   kind: material
@@ -461,7 +467,7 @@
   fatigue_relief: 3
   morale_boost: 3
   heal_hp: 12
-  price_world: 12
+  price_world: 9
   desc: อุ่นเล็กน้อย — อิ่มท้องชั่วคราว
 - id: trail_stew
   rarity: uncommon
@@ -474,7 +480,7 @@
   fatigue_relief: 18
   morale_boost: 10
   heal_hp: 30
-  price_world: 55
+  price_world: 48
   food_buff: might
   desc: อุ่นท้อง — รู้สึกฮึดขึ้นชั่วคราว
 - id: inn_feast
@@ -1741,3 +1747,169 @@
   skill_rank_nudge: true
   skill_rank_nudge_bonus: 0.18
   price_world: 180
+
+# WO-023.5 — Divine Burden content (rare drop/quest only — not bulk shop)
+- id: relic_storm_fang
+  code: rl_st1
+  rarity: legendary
+  name: เขี้ยววายุเทพ
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  material: storm
+  weight_class: medium
+  atk: 26
+  sockets: 2
+  price_world: 720
+  price_heaven: 2
+  divine_burden: true
+  tags: [storm, holy]
+  desc: เรลิกสายฟ้า — คมร้องในมือผู้ไม่พร้อม
+  latent_atk_pct: 0.04
+  latent_crit: 1.2
+- id: relic_hell_ember_blade
+  code: rl_he1
+  rarity: divine
+  name: ดาบเถ้าโลกันตร์
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  material: hellsteel
+  weight_class: heavy
+  atk: 34
+  sockets: 2
+  price_world: 980
+  price_hell: 3
+  divine_burden: true
+  force_burden: true
+  tags: [fire, hell]
+  desc: เรลิกนรก — ความร้อนแผ่แม้ยังไม่ชัก
+  latent_atk_pct: 0.05
+- id: relic_aegis_sky
+  code: rl_ag1
+  rarity: legendary
+  name: เกราะท้องฟ้าแรก
+  kind: equipment
+  slot: body
+  material: skysteel
+  weight_class: heavy
+  def: 20
+  mdef: 16
+  max_hp: 45
+  sockets: 2
+  price_world: 800
+  price_heaven: 2
+  divine_burden: true
+  tags: [holy, sky]
+  desc: เรลิกคุ้มครอง — หนักเกินคนธรรมดา
+  latent_hp_pct: 0.05
+- id: relic_void_whisper_ring
+  code: rl_vr1
+  rarity: legendary
+  name: แหวนกระซิบสุญญะ
+  kind: equipment
+  slot: acc_1
+  material: void
+  weight_class: light
+  atk: 6
+  max_mana: 25
+  mdef: 8
+  sockets: 0
+  price_world: 540
+  divine_burden: true
+  tags: [shadow, arcane]
+  desc: เรลิกเงียบ — จิตสั่นเมื่อสวม
+  latent_crit: 0.8
+# WO-042 — Relic content for Infernal/Echo Soft Bonds (not shop)
+- id: relic_hell_brand_charm
+  code: rl_hb1
+  rarity: legendary
+  name: เครื่องรางตรานรก
+  kind: equipment
+  slot: acc_1
+  material: hellsteel
+  weight_class: light
+  atk: 5
+  def: 4
+  max_hp: 12
+  sockets: 0
+  price_world: 560
+  price_hell: 2
+  divine_burden: true
+  tags: [hell, fire, blood]
+  desc: เรลิกนรกชิ้นเล็ก — ร้อนคุ้นเมื่อคู่ดาบเถ้า · เปิด Infernal Bond
+  latent_atk_pct: 0.02
+  latent_crit: 0.6
+- id: relic_echo_shroud
+  code: rl_es1
+  rarity: legendary
+  name: ผ้าคลุมเสียงสะท้อน
+  kind: equipment
+  slot: body
+  material: void
+  weight_class: medium
+  def: 14
+  mdef: 18
+  max_mana: 30
+  max_hp: 20
+  sockets: 1
+  price_world: 760
+  divine_burden: true
+  tags: [shadow, void, ancient, echo]
+  desc: เรลิกเงาโบราณ — สั่นคู่แหวนสุญญะ · เปิด Echo Bond
+  latent_hp_pct: 0.03
+  latent_crit: 0.5
+# WO-043 — third pieces enable Soft Chorus (3 same lean) · not shop
+- id: relic_divine_laurel
+  code: rl_dl1
+  rarity: legendary
+  name: พวงหรีดวายุแรก
+  kind: equipment
+  slot: head
+  material: skysteel
+  weight_class: light
+  def: 8
+  mdef: 10
+  max_hp: 18
+  sockets: 0
+  price_world: 520
+  price_heaven: 1
+  divine_burden: true
+  tags: [holy, sky, storm]
+  desc: เรลิกศีรษะสายสวรรค์ — คู่เขี้ยว+เกราะ → Soft Chorus เทพ
+  latent_hp_pct: 0.02
+- id: relic_hell_ash_greaves
+  code: rl_hg1
+  rarity: legendary
+  name: สนับขาเถ้าโลกันตร์
+  kind: equipment
+  slot: legs
+  material: hellsteel
+  weight_class: medium
+  def: 12
+  atk: 4
+  max_hp: 16
+  sockets: 0
+  price_world: 580
+  price_hell: 2
+  divine_burden: true
+  tags: [hell, fire, blood]
+  desc: เรลิกนรกขา — คู่ดาบ+เครื่องราง → Soft Chorus มาร
+  latent_atk_pct: 0.02
+- id: relic_echo_sandals
+  code: rl_ed1
+  rarity: legendary
+  name: รองเท้าเงาโบราณ
+  kind: equipment
+  slot: feet
+  material: void
+  weight_class: light
+  def: 6
+  mdef: 12
+  max_mana: 15
+  sockets: 0
+  price_world: 500
+  divine_burden: true
+  tags: [shadow, void, ancient, echo]
+  desc: เรลิกเท้าเงา — คู่แหวน+ผ้าคลุม → Soft Chorus เงา
+  latent_crit: 0.4

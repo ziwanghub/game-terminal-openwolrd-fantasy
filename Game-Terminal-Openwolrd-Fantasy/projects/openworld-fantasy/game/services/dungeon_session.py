@@ -1,4 +1,4 @@
-"""Dungeon field session — enter, floor turns, boss, escape, help signal (H0–H2)."""
+"""Dungeon field session v2 — free exit, floor bosses, depth, help signal."""
 from __future__ import annotations
 
 import random
@@ -8,14 +8,20 @@ from game.data_load.registry import DataRegistry
 from game.domain.dungeon import (
     advance_floor,
     begin_dungeon,
+    can_advance_floor,
+    count_escape_shards,
     dungeon_by_id,
     dungeon_menu_actions,
+    dungeon_rest,
+    dungeon_shop_price_mult,
     exit_dungeon,
     explore_floor_event,
     format_dungeon_panel,
     get_run,
     in_dungeon,
+    set_boss_encounter,
     soft_difficulty_text,
+    spawn_floor_boss,
     tick_dungeon_time,
     try_escape,
 )
@@ -121,7 +127,7 @@ def _enter_dungeon_flow(
     rng: random.Random,
     dungeon_id: str,
 ) -> None:
-    """Confirm party prep then enter — difficulty unknown."""
+    """Confirm party prep then enter — difficulty / depth unknown."""
     d = dungeon_by_id(reg, dungeon_id)
     if not d:
         io.write_line("ทางเข้าจางหาย...")
@@ -133,17 +139,30 @@ def _enter_dungeon_flow(
         f" ปากดันเจียน · {d.get('name')}",
         "---",
         f" สัญญาณ   {soft}",
-        " ความยาก  ซ่อน (สังเกต / หาข้อมูลเอง)",
+        " ความยาก  ซ่อน · ลึกแค่ไหน — ไม่รู้จนกว่าจะลง",
         f" ปาร์ตี้   {len(player.get('party') or [])}/3",
         "---",
+        " · เดินออกได้ทุกเมื่อ (ยกเว้นตอนท้าผู้เฝ้าชั้น)",
+        " · ต้องกำจัดผู้เฝ้าชั้น ถึงจะลงลึก",
+        " · ไฟต์ผู้เฝ้า: หนีปกติไม่ได้ — ใช้เศษหนีหรือสู้",
+        "---",
     ]
+    # WO-015: soft foresight before entry
+    try:
+        from game.domain.soft_foresight import soft_dungeon_entry_warnings
+
+        for w in soft_dungeon_entry_warnings(player, reg, dungeon=d):
+            lines.append(w if str(w).startswith(" ") else f" {w}")
+        lines.append("---")
+    except Exception:
+        pass
     for line in format_party_panel(player, reg):
         if "ปาร์ตี้" in line or "·" in line:
             lines.append(f" {line.strip()}")
     lines.extend(
         [
             "---",
-            "  1  เข้าไปเคลียร์ (ทางออกอาจล็อก)",
+            "  1  เข้าไป (สำรวจ / ลงลึก)",
             "  2  จัดปาร์ตี้ก่อน",
             "  0  ถอย",
         ]
@@ -160,8 +179,54 @@ def _enter_dungeon_flow(
     elif ch != "1":
         io.write_line("คุณถอยจากปากถ้ำ")
         return
+    # extreme underprep: one more soft confirm
+    try:
+        from game.domain.soft_foresight import should_soft_block_dungeon
+
+        if should_soft_block_dungeon(player, reg):
+            io.write_line(
+                " ⚠ สภาพวิกฤต (หิว/ขวัญ + ไม่มีอาหาร) — ลงต่ออาจสลบเร็ว"
+            )
+            conf2 = io.read_line("  ยังจะลง? (1=ยืนยัน · 0=ถอย): ").strip()
+            if conf2 != "1":
+                io.write_line("คุณถอยจากปากถ้ำ")
+                return
+    except Exception:
+        pass
     for line in begin_dungeon(player, reg, dungeon_id, rng):
         io.write_line(line)
+
+
+def _confirm_floor_boss(player: Dict[str, Any], reg: DataRegistry, io: IO) -> bool:
+    """UX: player must confirm boss challenge (no normal flee)."""
+    from game.ui_terminal.layout import render_box
+
+    shards = count_escape_shards(player, reg)
+    run = get_run(player) or {}
+    depth = int(run.get("depth") or run.get("floor") or 1)
+    lines = [
+        " ท้าทายผู้เฝ้าชั้น",
+        "---",
+        f" ความลึก   ลงมาชั้นที่ {depth}",
+        " · หนีปกติใช้ไม่ได้",
+        " · ชนะ = ทางลงเปิด · แพ้ = ถูกเหวี่ยงออก (เสียของบางส่วน)",
+    ]
+    if shards:
+        names = " · ".join(n for _, _, n in shards[:3])
+        lines.append(f" · เศษหนีในมือ: {len(shards)} ชิ้น ({names})")
+    else:
+        lines.append(" · เศษหนีในมือ: ไม่มี — ต้องมั่นใจว่าชนะได้")
+    lines.extend(
+        [
+            "---",
+            "  1  มั่นใจ — ท้าทาย",
+            "  0  ยังไม่พร้อม",
+        ]
+    )
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    ch = io.read_line("\n  ยืนยัน (1/0): ").strip()
+    return ch == "1"
 
 
 def _dungeon_field_turn(
@@ -171,7 +236,7 @@ def _dungeon_field_turn(
     rng: random.Random,
 ) -> Union[bool, str]:
     """
-    Restricted loop while locked in dungeon.
+    Dungeon explore loop (v2).
     Returns True to continue field, 'quit_save' to leave field after save.
     """
     run = get_run(player)
@@ -185,8 +250,9 @@ def _dungeon_field_turn(
     if acts:
         io.write_line()
         io.write_line(render_box(acts, double=False))
-    ch = io.read_line("\n  ในดัน เลือก (1–6 · Y · 0): ").strip()
+    ch = io.read_line("\n  ในดัน เลือก (1–9 · A ออโต้ · Y · 0): ").strip()
     acted = False
+
     if ch == "1":
         io.write_line("สำรวจชั้นนี้...")
         ev = explore_floor_event(player, reg, rng)
@@ -195,68 +261,134 @@ def _dungeon_field_turn(
         if ev.get("trigger_combat"):
             _run_combat(player, reg, io, rng)
         acted = True
+
     elif ch == "2":
+        run = get_run(player) or {}
+        if run.get("boss_defeated"):
+            io.write_line("หัวใจดันสงบแล้ว — ไม่มีผู้เฝ้าอีก")
+        elif run.get("floor_boss_cleared"):
+            io.write_line("ผู้เฝ้าชั้นนี้ล้มแล้ว — ลงลึก (3) หรือออก (4)")
+        else:
+            if not _confirm_floor_boss(player, reg, io):
+                io.write_line("คุณยังไม่ท้าทาย — เตรียมตัวต่อ")
+            else:
+                boss = spawn_floor_boss(player, reg, rng)
+                if not boss:
+                    io.write_line("เงาผู้เฝ้าจางหาย... (ลองสำรวจก่อน)")
+                else:
+                    set_boss_encounter(player, True)
+                    soft_name = "ผู้เฝ้าชั้น" if not boss.get("dungeon_heart_boss") else "เงาที่ปลายโพรง"
+                    io.write_line(f"\n☠ {soft_name} ปรากฏ — วงบอสขังคุณ!")
+                    io.write_line(" หนีปกติใช้ไม่ได้ · เศษหนีเท่านั้น (เมนูหนี)")
+                    _run_combat(player, reg, io, rng, mon=boss, ambush=False)
+                    # ensure flag cleared if combat ended oddly
+                    if in_dungeon(player):
+                        set_boss_encounter(player, False)
+                    acted = True
+
+    elif ch == "3":
         for line in advance_floor(player, reg, rng):
             io.write_line(line)
         acted = True
-    elif ch == "3":
-        run = get_run(player) or {}
-        floor = int(run.get("floor") or 1)
-        floors = int(run.get("floors") or 1)
-        if floor < floors and not run.get("boss_defeated"):
-            io.write_line("บอสยังอยู่ชั้นในสุด — ลงลึกกว่านี้ก่อน")
-        elif run.get("boss_defeated"):
-            io.write_line("บอสล้มแล้ว — เก็บของ/ออกได้")
-        else:
-            boss_id = run.get("boss_id")
-            from game.domain.boss import spawn_boss
 
-            area_for_boss = str(run.get("area_id") or "dark_forest")
-            boss = spawn_boss(reg, area_for_boss, rng)
-            if not boss:
-                base = reg.monsters.get(str(boss_id)) or {}
-                if base:
-                    boss = {
-                        "id": boss_id,
-                        "name": base.get("name") or boss_id,
-                        "level": int(base.get("level_min") or 10),
-                        "hp": int(base.get("hp_base") or 200),
-                        "max_hp": int(base.get("hp_base") or 200),
-                        "atk": int(base.get("atk_base") or 20),
-                        "elements": list(base.get("elements") or ["physical"]),
-                        "xp_mult": float(base.get("xp_mult") or 3),
-                        "attack_profiles": [],
-                        "statuses": [],
-                        "boss": True,
-                        "dungeon_boss": True,
-                    }
-            if boss:
-                boss["dungeon_boss"] = True
-                boss["boss"] = True
-                io.write_line(f"\n☠ เผชิญบอสดันเจียน: {boss.get('name')}")
-                _run_combat(player, reg, io, rng, mon=boss, ambush=False)
-            else:
-                io.write_line("ไม่พบบอส — ข้อมูลหาย")
-            acted = True
     elif ch == "4":
         for line in try_escape(player, reg, rng):
             io.write_line(line)
         acted = True
+
     elif ch == "5":
         for line in format_dungeon_panel(player, reg):
             io.write_line(line)
         io.read_line("Enter...")
+
     elif ch == "6":
         result = _help_signal_menu(player, reg, io)
         if result == "quit_save":
             return "quit_save"
+
+    elif ch == "7":
+        # bag / potions while in dungeon
+        try:
+            from game.services.bag_hub import run_bag_hub
+            from game.services.shop import run_shop
+
+            run_bag_hub(
+                player,
+                reg,
+                io,
+                open_shop=lambda p, r, i: run_shop(p, r, i),
+            )
+        except Exception as e:
+            io.write_line(f" กระเป๋าใช้ไม่ได้ชั่วคราว ({e})")
+
+    elif ch == "8":
+        # shadow shop inside dungeon (prices auto markup via scaled_price)
+        try:
+            from game.services.shop import run_shop
+
+            io.write_line(
+                f" ร้านเงาในโพรง — ราคาประมาณ ×{dungeon_shop_price_mult(player):.2f} (soft)"
+            )
+            run_shop(player, reg, io)
+        except Exception as e:
+            io.write_line(f" ร้านเงาเลือนหาย... ({e})")
+
+    elif ch == "9":
+        io.write_line("พักในมุมมืด...")
+        result = dungeon_rest(player, reg, rng)
+        for line in result.get("notes") or []:
+            io.write_line(line)
+        if result.get("trigger_combat"):
+            _run_combat(
+                player, reg, io, rng, ambush=bool(result.get("ambush"))
+            )
+        acted = True
+
+    elif ch in ("a", "A"):
+        from game.runtime.dungeon_auto import (
+            can_auto_fight_floor_boss,
+            count_food,
+            ensure_auto_prefs,
+            format_dungeon_auto_hud,
+            run_dungeon_auto,
+        )
+
+        ensure_auto_prefs(player)
+        io.write_line(format_dungeon_auto_hud(player, reg))
+        if count_food(player, reg) <= 0:
+            io.write_line(" ⚠ ไม่มีอาหาร — ออโต้จะหิวเร็ว · แนะนำ 8 ร้านเงาก่อน")
+        if not can_auto_fight_floor_boss(player):
+            io.write_line(
+                " บอสชั้นนี้ยังไม่เคยชนะด้วยมือ — ออโต้จะไม่ท้าหัวใจ/ผู้เฝ้าแทนคุณ"
+            )
+            io.write_line(" (สำรวจ/มอนทั่วไปยังออโต้ได้ · ท้าบอสใช้เมนู 2 ก่อน 1 ครั้ง)")
+        conf = io.read_line(" ตั้งค่าออโต้ก่อน? (Enter=ใช่ · s=ข้ามใช้ค่าเดิม): ").strip().lower()
+        skip_cfg = conf in ("s", "skip", "n", "0")
+        raw = io.read_line(" ติก (Enter=15 · หรือเลข 5–40): ").strip()
+        ticks = 15
+        if raw.isdigit():
+            ticks = max(5, min(40, int(raw)))
+        run_dungeon_auto(
+            player,
+            reg,
+            io,
+            rng,
+            max_ticks=ticks,
+            continuous=True,
+            skip_config=skip_cfg,
+        )
+        acted = True
+
     elif ch in ("y", "Y"):
         _party_menu(player, reg, io)
+
     elif ch == "0":
         for line in exit_dungeon(player, reg, success=True):
             io.write_line(line)
+
     else:
         io.write_line("เลือกไม่ถูกต้อง")
+
     if acted and in_dungeon(player):
         for line in tick_dungeon_time(player, reg, rng, cost=1):
             io.write_line(line)

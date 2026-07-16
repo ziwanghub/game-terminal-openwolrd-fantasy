@@ -40,18 +40,30 @@ def bump_stat(player: MutableMapping[str, Any], key: str, amount: int = 1) -> No
 
 
 def format_stats_lines(player: Mapping[str, Any]) -> List[str]:
+    """Lifetime counters — grouped rows for scanability under full status."""
     st = dict(player.get("stats") or DEFAULT_STATS)
     name = player.get("name", "?")
     lv = player.get("level", 1)
+    boss_kinds = len(player.get("bosses_defeated") or [])
     lines = [
-        f"สถิติ: {name} Lv.{lv}",
-        f" ฆ่ามอน {st.get('kills', 0)} · บอส {st.get('boss_kills', 0)} · ไฟต์ {st.get('combats', 0)}",
-        f" ตาย(soft) {st.get('deaths', 0)} · หนี {st.get('flees', 0)}",
-        f" สำรวจ {st.get('explores', 0)} · พัก {st.get('rests', 0)} · เดินทาง {st.get('travels', 0)}",
-        f" คราฟ {st.get('crafts', 0)} · อัปเกียร์ {st.get('upgrades', 0)} · ใส่การ์ด {st.get('cards_socketed', 0)}",
-        f" เควสสำเร็จ {st.get('quests_completed', 0)} · หีบ {st.get('chests_opened', 0)} · ซื้อของ {st.get('shop_purchases', 0)}",
-        f" ติกออโต้ {st.get('auto_ticks', 0)}",
-        f" XP รวมที่ได้ {st.get('xp_gained_total', 0)} · เงินโลกที่ได้ {st.get('money_gained_total', 0)}",
-        f" บอสที่ชนะ: {len(player.get('bosses_defeated') or [])} ชนิด",
+        f" {name}  ·  Lv.{lv}",
+        f" ต่อสู้   ฆ่ามอน {st.get('kills', 0)}"
+        f"  ·  บอส {st.get('boss_kills', 0)}"
+        f"  ·  ไฟต์ {st.get('combats', 0)}"
+        f"  ·  ตาย {st.get('deaths', 0)}"
+        f"  ·  หนี {st.get('flees', 0)}",
+        f" โลก     สำรวจ {st.get('explores', 0)}"
+        f"  ·  พัก {st.get('rests', 0)}"
+        f"  ·  เดินทาง {st.get('travels', 0)}"
+        f"  ·  ออโต้ {st.get('auto_ticks', 0)}",
+        f" ทำของ   คราฟ {st.get('crafts', 0)}"
+        f"  ·  อัป {st.get('upgrades', 0)}"
+        f"  ·  การ์ด {st.get('cards_socketed', 0)}",
+        f" เควส    สำเร็จ {st.get('quests_completed', 0)}"
+        f"  ·  หีบ {st.get('chests_opened', 0)}"
+        f"  ·  ซื้อ {st.get('shop_purchases', 0)}",
+        f" รางวัล  XP รวม {st.get('xp_gained_total', 0)}"
+        f"  ·  เงินโลก {st.get('money_gained_total', 0)}",
+        f" บอสที่ชนะ  {boss_kinds} ชนิด",
     ]
     return lines

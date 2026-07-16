@@ -7,6 +7,8 @@ appear_chance: 0.18
 # Time limit: each dungeon action (explore/advance/boss try/escape fail) spends 1 turn
 # Numbers hidden — player only feels pressure messages
 time_limit:
+  # v2 default off — free exit design (set true to restore collapse)
+  enabled: false
   base_turns: 14
   per_floor: 4
   per_difficulty: 2
@@ -81,6 +83,8 @@ default_rewards:
 escape:
   # items that MAY allow exit if already in inventory when entering (not taught in UI)
   items:
+    - id: escape_shard
+      success_chance: 0.50
     - id: dungeon_thread
       success_chance: 0.55
     - id: void_key_shard
@@ -113,6 +117,7 @@ dungeons:
     layout_bias: [winding, chamber, pool]
     rewards:
       money_world: [50, 100]
+      money_heaven: [1, 2]  # WO-021: early guaranteed special currency range
       xp: [30, 70]
       items:
         - id: upgrade_mat
@@ -124,6 +129,9 @@ dungeons:
         - id: dungeon_thread
           chance: 0.12
           rarity: rare
+        - id: relic_storm_fang
+          chance: 0.04
+          rarity: legendary
     soft_labels:
       vague: "ลมจากโพรงเย็นผิดปกติ"
       known: "อันตรายปานกลาง — เคยได้ยิน"
@@ -172,6 +180,7 @@ dungeons:
     layout_bias: [collapse, chamber, choke]
     rewards:
       money_world: [60, 120]
+      money_hell: [1, 2]
       xp: [40, 90]
       items:
         - id: upgrade_mat
@@ -207,6 +216,9 @@ dungeons:
         - id: copper_ring
           chance: 0.15
           rarity: uncommon
+        - id: relic_hell_ember_blade
+          chance: 0.08
+          rarity: divine
     soft_labels:
       vague: "ความร้อนพวยจากปากอุโมงค์"
       known: "อันตรายสูง — แห้งและโหด"
@@ -225,6 +237,7 @@ dungeons:
     layout_bias: [shrine, winding, chamber]
     rewards:
       money_world: [100, 180]
+      money_heaven: [1, 3]
       xp: [70, 140]
       items:
         - id: rare_mat
@@ -254,6 +267,7 @@ dungeons:
     layout_bias: [pool, winding, choke]
     rewards:
       money_world: [65, 130]
+      money_hell: [1, 2]
       xp: [45, 95]
       items:
         - id: antidote
@@ -292,6 +306,9 @@ dungeons:
         - id: dungeon_thread
           chance: 0.1
           rarity: rare
+        - id: relic_aegis_sky
+          chance: 0.10
+          rarity: legendary
     soft_labels:
       vague: "แสงหักเหจนมึน"
       known: "อันตรายมาก — ผลึกตัด"

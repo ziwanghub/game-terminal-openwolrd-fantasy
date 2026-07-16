@@ -90,7 +90,8 @@ def test_tama_panel_has_soft_ui():
     lines = format_tama_panel(p)
     text = "\n".join(lines)
     assert "Tama" in text or "สถานะ" in text
-    assert "ท้อง" in text
+    # soft needs labels: หิว (standard) or legacy ท้อง
+    assert "หิว" in text or "ท้อง" in text
     assert "%" not in text
     assert tama_mood_line(p)
 

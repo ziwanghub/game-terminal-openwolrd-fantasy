@@ -10,9 +10,13 @@ ART_DIR = DATA_DIR / "art"
 PROTOTYPE_PATH = PROJECT_ROOT / "pixel_fantasy_openskill.py"
 
 APP_NAME = "Open World Fantasy"
-APP_VERSION = "1.48.0-alpha"
-PHASE = "solo-polish-post-cm"
+APP_VERSION = "1.94.0-alpha"
+PHASE = "wo047-human-feedback-feel"
 
 # Terminal layout (RD-09)
 UI_WIDTH = 60
 UI_USE_UNICODE = True
+
+# WO-002 world theme / custom-world UX — deferred (player preferred simple picker).
+# Code kept in world_creation / world_service; set True to re-enable.
+WORLD_THEME_UX_ENABLED = False

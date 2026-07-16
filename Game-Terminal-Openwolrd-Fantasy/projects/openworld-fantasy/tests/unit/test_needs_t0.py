@@ -55,7 +55,8 @@ def test_soft_labels_no_raw_numbers():
     p = create_player(reg, "n5", "warrior", "เมษ")
     ensure_needs(p)
     text = "\n".join(format_needs_soft_lines(p))
-    assert "ท้อง" in text
+    # WO-006+: standard label is หิว (not ท้อง)
+    assert "หิว" in text or "ท้อง" in text
     assert "%" not in text
 
 

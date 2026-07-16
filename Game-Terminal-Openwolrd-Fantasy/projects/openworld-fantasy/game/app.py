@@ -18,6 +18,7 @@ from game.services.world_service import (
     format_save_picker_lines,
     format_world_picker_lines,
     list_world_menu_rows,
+    pick_world_interactive,
     world_summary_lines,
 )
 from game.ui_terminal.layout import render_box
@@ -42,7 +43,20 @@ def render_main_menu() -> str:
 
 
 def pick_world(reg: DataRegistry, io) -> str:
-    """World picker — box UI, scannable blocks, clear prompt."""
+    """
+    World picker — simple catalog list (default).
+    WO-002 theme/custom path only if WORLD_THEME_UX_ENABLED.
+    """
+    from game.config import WORLD_THEME_UX_ENABLED
+
+    if WORLD_THEME_UX_ENABLED:
+        wid = pick_world_interactive(reg, io)
+        if wid:
+            return wid
+        rows = list_world_menu_rows(reg)
+        return str(rows[0]["id"]) if rows else "default"
+
+    # Simple original path
     rows = list_world_menu_rows(reg)
     if not rows:
         return "default"
@@ -51,7 +65,6 @@ def pick_world(reg: DataRegistry, io) -> str:
     n = len(rows)
     raw = io.read_line(f"\n  เลือกโลก (1–{n}): ").strip()
     if raw in ("", "0", "q", "Q"):
-        # empty / cancel → first (easiest) world as soft default
         return str(rows[0]["id"])
     try:
         idx = int(raw) - 1
@@ -128,7 +141,6 @@ def run() -> None:
                     )
                     sub = io.read_line("\n  เลือก (1/2/0): ").strip()
                     if sub == "1":
-                        # ensure world mods present
                         if not latest.get("world_modifiers"):
                             latest["world_modifiers"] = (
                                 (reg.worlds.get(world_id) or {}).get("modifiers") or {}

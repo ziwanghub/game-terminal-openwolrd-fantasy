@@ -97,16 +97,27 @@ def run_personal_hub(
                 io.write_line(line)
         # Menu only — points/mission already in hub frame above
         io.write_line()
+        pts = int(player.get("stat_points") or 0)
+        ppts = int(player.get("personality_points") or 0)
         io.write_line(
             render_mode_actions(
                 MODE_PERSONAL,
-                stat_points=0,
-                personality_points=0,
+                stat_points=pts,
+                personality_points=ppts,
                 mission_line="",
                 money_world=None,
+                player=player,
+                reg=reg,
             )
         )
-        ch = io.read_line("\n  เลือก (1–8 · R · E · 0 กลับ): ").strip()
+        if not player.get("_hub_relic_banner_done"):
+            player["_hub_relic_banner_done"] = True
+            io.write_line(
+                "  ใบ้: V=ประเมินตัวเอง · G=ห้องเรลิก · A=Policy · X=playtest"
+            )
+        ch = io.read_line(
+            "\n  เลือก (V=ประเมิน · R/E/H/M/A · X · G · 1–6 · 0 กลับ): "
+        ).strip()
         if ch in ("0", "", "q", "Q"):
             try:
                 from game.domain.needs import close_tama_panel_session
@@ -115,30 +126,76 @@ def run_personal_hub(
             except Exception:
                 pass
             break
+        # WO-035: self assess (soft core facets)
+        if ch in ("v", "V", "assess", "ประเมิน", "self"):
+            from game.domain.stat_arch import self_assess_lines
+
+            io.write_line()
+            io.write_line(
+                render_box(
+                    self_assess_lines(player, force=True, reg=reg),
+                    double=False,
+                )
+            )
+            io.read_line("Enter...")
+            continue
+        # WO-023: Godforge Chamber
+        if ch in ("g", "G", "godforge", "chamber"):
+            from game.services.godforge_chamber import run_godforge_chamber
+
+            run_godforge_chamber(player, reg, io)
+            continue
+        # WO-011: Playtest / Test Run
+        if ch in ("x", "X", "testrun", "test", "playtest"):
+            from game.runtime.auto_run_log import run_playtest_hub
+
+            run_playtest_hub(
+                player, reg, io, area_name=area_name or ""
+            )
+            continue
+        # WO-007 index
         if ch == "1" or ch in ("s", "S"):
-            _show_full_status(player, reg, io, area_name)
+            _show_overview_status(player, reg, io, area_name)
         elif ch == "2" or ch in ("bag",):
             _open_bag(player, reg, io)
-        elif ch == "3":
-            _manage_gear(player, reg, io)
-        elif ch == "4" or ch == "9":
+            # gear quick path
+            sub = io.read_line("  เกียร์? (g=เปิด / Enter=ข้าม): ").strip().lower()
+            if sub in ("g", "gear", "3"):
+                _manage_gear(player, reg, io)
+        elif ch == "3" or ch in ("k", "K"):
+            _skill_tree_menu(player, reg, io)
+        elif ch == "4" or ch in ("n", "N", "p", "P", "c", "C"):
+            if ch in ("p", "P"):
+                _stat_allocate_menu(player, reg, io)
+            elif ch in ("c", "C"):
+                _class_change_menu(player, reg, io)
+            else:
+                _points_submenu(player, reg, io)
+        elif ch == "5" or ch in ("y", "Y"):
+            _party_menu(player, reg, io)
+        elif ch == "6":
+            _show_auto_history_log(player, io)
+        elif ch == "7" or ch == "j" or ch == "J":
             _show_missions(player, reg, io)
-        elif ch == "5":
+            sub = io.read_line("  J=กระดานเต็ม · Enter=กลับ: ").strip()
+            if sub in ("j", "J"):
+                from game.services.mission_service import run_mission_board
+
+                run_mission_board(player, reg, io)
+        elif ch == "8" or ch in ("u", "U"):
+            _settings_save_submenu(player, io)
+        elif ch == "9":
             for line in money_summary_lines(player):
                 io.write_line(line)
-            io.write_line(" ร้าน/ตลาด → 0 กลับ แล้วกด 6 จากสำรวจ (หรือ M ทางลัด)")
-            sub = io.read_line("M=ตลาดผู้เล่น · Enter=กลับ: ").strip()
-            if sub in ("m", "M"):
+            io.write_line(" L=ห้องสมุด · shop=ตลาด · Enter=กลับ")
+            sub = io.read_line("เลือก: ").strip().lower()
+            if sub in ("l", "library"):
+                _library(player, reg, io)
+            elif sub in ("shop", "market", "ตลาด"):
                 from game.services.shop_hub import run_shop_hub
 
                 run_shop_hub(player, reg, io, area_name=area_name)
-        elif ch == "6":
-            _points_submenu(player, reg, io)
-        elif ch == "7":
-            _skills_party_lib_submenu(player, reg, io)
-        elif ch == "8":
-            _settings_save_submenu(player, io)
-        # T2 care
+        # care + WO-008 Auto Policy (A only here — field A remains rank)
         elif ch in ("r", "R"):
             from game.domain.needs import personal_rest_care
 
@@ -151,31 +208,54 @@ def run_personal_hub(
             for line in personal_eat_first_food(player, reg):
                 io.write_line(line)
             io.read_line("Enter...")
-        # hotkey aliases inside PERSONAL
-        elif ch in ("p", "P"):
-            _stat_allocate_menu(player, reg, io)
-        elif ch in ("n", "N"):
-            _personality_allocate_menu(player, reg, io)
-        elif ch in ("c", "C"):
-            _class_change_menu(player, reg, io)
-        elif ch in ("k", "K"):
-            _skill_tree_menu(player, reg, io)
-        elif ch in ("y", "Y"):
-            _party_menu(player, reg, io)
-        elif ch in ("u", "U"):
-            _ui_prefs_menu(player, io)
+        elif ch in ("h", "H"):
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="hp"):
+                io.write_line(line)
+            io.read_line("Enter...")
+        elif ch in ("m", "M"):
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="mp"):
+                io.write_line(line)
+            io.read_line("Enter...")
+        elif ch in ("a", "A"):
+            from game.services.auto_policy_hub import run_auto_policy_hub
+
+            run_auto_policy_hub(player, reg, io)
         elif ch in ("l", "L"):
             _library(player, reg, io)
-        elif ch in ("m", "M"):
-            from game.services.shop_hub import run_shop_hub
-
-            run_shop_hub(player, reg, io, area_name=area_name)
-        elif ch in ("j", "J"):
-            from game.services.mission_service import run_mission_board
-
-            run_mission_board(player, reg, io)
         else:
-            io.write_line("เลือก 0–8 · R พัก · E กิน · hotkey (P/N/S/…)")
+            io.write_line(
+                "1–6 ไปที่ · 7 ภารกิจ · 8 ตั้งค่า · 9 เงิน/ห้องสมุด · "
+                "R/E/H/M ดูแล · A=Auto Policy · X=Test Run · 0 กลับ"
+            )
+
+
+def _show_overview_status(
+    player: Dict[str, Any],
+    reg: DataRegistry,
+    io: IO,
+    area_name: str,
+) -> None:
+    """WO-007 item 1: overview with Needs prominent + optional full dump."""
+    ensure_stats(player)
+    io.write_line()
+    io.write_line(render_mode_chrome("สถานะโดยรวม", area_name))
+    io.write_line(render_status_l1c(player, area_name))
+    try:
+        from game.services.auto_policy_hub import soft_agent_summary
+
+        io.write_line()
+        for line in soft_agent_summary(player, reg)[:8]:
+            io.write_line(line if line.startswith(" ") or line.startswith("─") else f" {line}")
+    except Exception:
+        pass
+    io.write_line()
+    more = io.read_line("  f=สถานะเต็ม+สถิติ · Enter=กลับ: ").strip().lower()
+    if more in ("f", "full", "1"):
+        _show_full_status(player, reg, io, area_name)
 
 
 def _show_full_status(
@@ -204,6 +284,50 @@ def _show_full_status(
         io.write_line(render_box(format_tama_panel(player), double=False))
     except Exception:
         pass
+    io.read_line("Enter...")
+
+
+def _show_auto_history_log(player: Dict[str, Any], io: IO) -> None:
+    """WO-007/011: auto care notes + Auto Run events + last summary."""
+    from game.runtime.auto_run_log import (
+        format_auto_run_summary,
+        format_recent_auto_events,
+    )
+
+    # God-readable event log first
+    lines = list(format_recent_auto_events(player, limit=14))
+    notes = list(player.get("auto_care_notes") or [])
+    if notes:
+        lines.append("---")
+        lines.append(" care ring (ล่าสุด):")
+        for n in notes[-8:]:
+            lines.append(f"  · {n}" if not str(n).startswith(" ") else str(n))
+    if player.get("_auto_run_last"):
+        lines.append("---")
+        lines.extend(format_auto_run_summary(player)[:10])
+    # WO-016: multi-run snapshot
+    try:
+        from game.runtime.auto_run_log import format_playtest_history
+
+        if player.get("_playtest_run_history"):
+            lines.append("---")
+            lines.extend(format_playtest_history(player, limit=4))
+    except Exception:
+        pass
+    lines.append("---")
+    try:
+        from game.domain.stats import format_stats_lines as _fsl
+
+        for line in list(_fsl(player))[:6]:
+            lines.append(f" {line}" if not str(line).startswith(" ") else line)
+    except Exception:
+        stats = player.get("stats") or {}
+        if stats:
+            lines.append(
+                f" kills {stats.get('kills', 0)} · auto_ticks {stats.get('auto_ticks', 0)}"
+            )
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
     io.read_line("Enter...")
 
 

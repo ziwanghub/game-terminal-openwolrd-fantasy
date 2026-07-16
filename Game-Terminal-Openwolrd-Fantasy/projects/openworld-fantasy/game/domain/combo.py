@@ -75,16 +75,38 @@ def max_combo_for_player(player: Mapping[str, Any], reg: DataRegistry) -> int:
 
 
 def parse_combo_input(text: str, max_n: int = 3) -> List[int]:
-    """Parse '1,2,3' or '1 2' into 1-based indices list."""
-    text = text.replace(" ", ",")
-    parts = [p.strip() for p in text.split(",") if p.strip()]
+    """
+    Parse skill combo indices (1-based menu numbers).
+
+    Preferred (UX): space-separated  ``2 1``  ``10 13 15``
+    Also accepted:  commas  ``2,1`` · plus/slash  ``2+1``
+
+    Never split glued digits: ``21`` is skill #21, not 2 then 1
+    (future menus may list skills 10+).
+    """
+    import re
+
+    raw = str(text or "").strip()
+    if not raw:
+        return []
+    max_n = max(1, int(max_n or 1))
+
+    # Split only on explicit separators (space, comma, ; + / | · -)
+    # Do NOT split multi-digit numbers into single digits.
+    parts = re.split(r"[\s,，;+/|·・\-–—]+", raw)
     out: List[int] = []
-    for p in parts[:max_n]:
+    for p in parts:
+        if not p or not re.fullmatch(r"\d+", p):
+            continue
         try:
-            out.append(int(p))
+            n = int(p)
         except ValueError:
             continue
-    return out
+        if n >= 1:
+            out.append(n)
+        if len(out) >= max_n:
+            break
+    return out[:max_n]
 
 
 def resolve_combo(

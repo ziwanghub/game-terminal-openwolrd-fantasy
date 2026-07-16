@@ -39,17 +39,21 @@ def test_party_max_three():
     assert "เต็ม" in msg
 
 
-def test_call_party_costs_mana():
+def test_call_party_is_free_relationship_info():
+    """Call is free — no mana/gold; assists auto by relationship."""
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "call", "mage", "เมถุน")
     t = (reg.party or {}).get("templates")[0]
     add_member(p, member_from_template(t), reg)
     p["mana"] = 100
     p["max_mana"] = 100
-    before = p["mana"]
+    p["money_world"] = 50
+    before_m, before_g = p["mana"], p["money_world"]
     ok, msg, bon = call_party_power(p, reg, 0)
     assert ok
-    assert p["mana"] < before
+    assert p["mana"] == before_m
+    assert p["money_world"] == before_g
+    assert "มานา" in msg or "ไม่เสีย" in msg or "ซุ่ม" in msg or "สัมพันธ์" in msg
     assert bon.get("atk", 0) >= 0
 
 

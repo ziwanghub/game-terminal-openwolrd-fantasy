@@ -110,16 +110,30 @@ def do_explore(
                     area_id=area_id,
                 ),
             )
-            io.write_line("  มันจ้องคุณ — ยื่นมือรับ? (ต้องได้รับการยอมรับ)")
+            io.write_line("  มันจ้องคุณ — ยื่นมือรับ? (ต้องได้รับการยอมรับ · อาจมีราคา soft)")
             if io.read_line("1=ยื่นมือ  อื่น=เดินจาก: ").strip() == "1":
-                mem = member_from_template(offer, reg, rng)
-                io.write_line(add_member(player, mem, reg))
-                emit_narrative(
-                    io,
-                    narrate_field(reg, "party_join", rng, name=mem.get("name")),
-                )
-                apply_party_passives_to_player(player, reg)
-                recompute_stats(player, reg)
+                from game.domain.party import attempt_join_template
+
+                ok, notes = attempt_join_template(player, reg, offer, rng)
+                for n in notes:
+                    io.write_line(n if str(n).startswith(" ") or str(n).startswith("✦") else f"  {n}")
+                if ok:
+                    emit_narrative(
+                        io,
+                        narrate_field(reg, "party_join", rng, name=offer.get("name")),
+                    )
+                    apply_party_passives_to_player(player, reg)
+                    recompute_stats(player, reg)
+                else:
+                    emit_narrative(
+                        io,
+                        narrate_field(
+                            reg,
+                            "party_reject",
+                            rng,
+                            name=offer.get("name"),
+                        ),
+                    )
             else:
                 emit_narrative(
                     io,
@@ -149,12 +163,54 @@ def do_explore(
         am[area_id] = min(100, int(am.get(area_id, 0)) + gain)
         player["area_mastery"] = am
         io.write_line(f"ชำนาญพื้นที่ +{gain}%")
+        try:
+            from game.domain.world_creation import try_open_skill_emergence
+
+            area = reg.areas.get(area_id) or {}
+            ctx = list(area.get("climate") or []) + [area_id]
+            for n in try_open_skill_emergence(
+                player, reg, rng, context_tags=[str(x) for x in ctx]
+            ):
+                io.write_line(n)
+        except Exception:
+            pass
     try:
         from game.domain.needs import apply_needs_event, try_hunger_collapse
         from game.domain.balance import apply_soft_death
 
         for line in apply_needs_event(player, "explore"):
             io.write_line(line)
+        # WO-040: relic whispers while exploring
+        try:
+            from game.domain.relic_anima import try_relic_explore_whisper
+
+            for line in try_relic_explore_whisper(
+                player, reg, rng, area_id=area_id
+            ):
+                io.write_line(line)
+        except Exception:
+            pass
+        # WO-044: rare soft world gaze while exploring
+        try:
+            from game.domain.soft_foresight import explore_soft_gaze_tick
+
+            for line in explore_soft_gaze_tick(
+                player, reg, rng, area_id=area_id
+            ):
+                io.write_line(line)
+        except Exception:
+            pass
+        # WO-046/047: relic × area synergy anima pulse (feel polish ~24%)
+        try:
+            from game.domain.relic_anima import try_area_synergy_presence_pulse
+
+            if rng.random() < 0.24:
+                for line in try_area_synergy_presence_pulse(
+                    player, reg, area_id=area_id
+                ):
+                    io.write_line(line)
+        except Exception:
+            pass
         collapsed, cnotes = try_hunger_collapse(player, rng, action="explore")
         for line in cnotes:
             io.write_line(line)
@@ -225,6 +281,33 @@ def do_travel(
         return
     player["location"] = dest
     emit_narrative(io, field_enter_area(reg, dest, rng))
+    # WO-029: soft area loop tip once per visit key
+    # WO-044: Soft Foresight world gaze on each travel arrival
+    try:
+        from game.domain.soft_foresight import (
+            area_loop_soft_lines,
+            area_world_gaze_lines,
+        )
+
+        seen = dict(player.get("_area_loop_tip_seen") or {})
+        if not seen.get(dest):
+            for ln in area_loop_soft_lines(player, reg):
+                io.write_line(ln)
+            seen[dest] = True
+            player["_area_loop_tip_seen"] = seen
+        else:
+            # WO-045: re-visit → brief gaze only (less spam than full foresight)
+            for ln in area_world_gaze_lines(
+                player,
+                reg,
+                area_id=dest,
+                force=False,
+                include_moment_hint=True,
+                brief=True,
+            ):
+                io.write_line(ln)
+    except Exception:
+        pass
     io.write_line(f"→ ถึง {reg.area_name(dest)}")
     bump_stat(player, "travels", 1)
     try:

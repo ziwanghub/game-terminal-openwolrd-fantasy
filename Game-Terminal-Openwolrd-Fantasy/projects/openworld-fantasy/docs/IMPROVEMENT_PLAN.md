@@ -1,7 +1,9 @@
 # แผนพัฒนา / คิวงาน
 
-**เกมปัจจุบัน:** `1.48.0-alpha` (`solo-polish-post-cm`)  
+**เกมปัจจุบัน:** `1.54.0-alpha` (`party-relationship-assist`) — ดู `game/config.py`  
 **แผนหลัก (Wave A–F):** [`ROADMAP.md`](ROADMAP.md) ← อ่านภาพรวมก่อน  
+**Work Order Backlog (เอกสารกลาง WO):** [`WO_BACKLOG.md`](WO_BACKLOG.md) ← งานที่แตกเป็น WO แล้ว (เริ่มสะสม 2026-07-15)  
+**Needs 3 เฟส / Phase 1 design:** [`NEEDS_PHASE1_DESIGN.md`](NEEDS_PHASE1_DESIGN.md) · **WO-004** (ready — รอ implement)
 
 ### ทิศล็อก (product) — 2026-07-14
 
