@@ -13,10 +13,42 @@ from game.config import PROJECT_ROOT, SAVES_DIR
 SAVE_VERSION = 4  # EL0: multi-slot loadout main_hand/body/… (legacy weapon/armor migrate)
 EXPORT_DIR = PROJECT_ROOT / "exports"
 
+# World-folder JSON that are not player characters (must not appear in picker)
+_SYSTEM_SAVE_STEMS = frozenset(
+    {
+        "market",
+        "rank_board",
+        "world_meta",
+        "world_signals",
+        "client_pointer",
+        "tax_fund",
+        "mission_board",
+    }
+)
+
 
 def _safe_name(name: str) -> str:
     s = re.sub(r"[^\w\-]+", "_", name.strip(), flags=re.UNICODE)
     return s[:40] or "hero"
+
+
+def _is_player_save_payload(data: Dict[str, Any], stem: str) -> bool:
+    """True if this JSON looks like a character save (not world infrastructure)."""
+    if stem in _SYSTEM_SAVE_STEMS:
+        return False
+    # explicit world/meta markers
+    if data.get("kind") in ("world_meta", "market", "rank_board", "world_signals"):
+        return False
+    if "host_status" in data and "players" in data and not data.get("occupation"):
+        return False
+    # character saves have occupation and/or name + level
+    if data.get("occupation") or data.get("occupation_id"):
+        return True
+    if data.get("name") and data.get("level") is not None and data.get("location"):
+        return True
+    if data.get("stats") or data.get("stats_alloc") or data.get("equip_ids"):
+        return True
+    return False
 
 
 def list_saves(world_id: str = "default") -> List[Dict[str, Any]]:
@@ -26,7 +58,11 @@ def list_saves(world_id: str = "default") -> List[Dict[str, Any]]:
     out = []
     for path in sorted(folder.glob("*.json")):
         try:
+            if path.stem in _SYSTEM_SAVE_STEMS:
+                continue
             data = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict) or not _is_player_save_payload(data, path.stem):
+                continue
             out.append(
                 {
                     "path": str(path),
@@ -38,7 +74,7 @@ def list_saves(world_id: str = "default") -> List[Dict[str, Any]]:
                     "updated_at": data.get("updated_at"),
                 }
             )
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, TypeError):
             continue
     return out
 

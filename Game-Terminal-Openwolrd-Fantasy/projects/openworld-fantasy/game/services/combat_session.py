@@ -835,7 +835,7 @@ def _player_act(
     except Exception:
         pass
     meta.append(" (จิต/ฉลาด = โฟกัสคอมโบ · ขวัญ = กำลังใจรอบกาย)")
-    meta.append(" ประเมินศัตรู soft  I หรือ ?  (ไม่เสียเทิร์น)")
+    meta.append(" อ่านชั้น soft  I / ?  (ไม่เสียเทิร์น · S–SSS ตามตา)")
     try:
         from game.domain.monster_ai import talk_eligible
 
@@ -847,15 +847,41 @@ def _player_act(
     io.write_line(render_box(meta, double=False))
     ch = io.read_line("\n  〔ไฟต์〕 เลือก (1–8 / A · I=ประเมิน): ").strip()
 
-    # WO-036: free soft enemy assess (no turn spent — re-open menu)
-    if ch in ("i", "I", "?", "assess", "ประเมิน"):
+    # WO-036/051: soft enemy assess + appraisal tiers (no turn — re-open menu)
+    if ch in ("i", "I", "?", "assess", "ประเมิน", "อ่าน"):
         try:
-            from game.domain.stat_arch import enemy_assess_lines
+            from game.domain.appraisal import (
+                resolve_appraisal_tier,
+                run_appraisal,
+                sync_appraisal_tier,
+                TIER_BASE,
+            )
 
-            for ln in enemy_assess_lines(mon, player, known=known, reg=reg):
+            sync_appraisal_tier(player)
+            tier = resolve_appraisal_tier(player)
+            # free base always; paid only when using S+ depth
+            paid = tier != TIER_BASE
+            lines, growth = run_appraisal(
+                player,
+                target="monster",
+                mon=mon,
+                reg=reg,
+                known=known,
+                paid=paid,
+                rng=rng,
+            )
+            for ln in lines:
                 io.write_line(ln)
+            if growth:
+                io.write_line(growth)
         except Exception:
-            io.write_line(" …อ่านศัตรูไม่ออกในจังหวะนี้")
+            try:
+                from game.domain.stat_arch import enemy_assess_lines
+
+                for ln in enemy_assess_lines(mon, player, known=known, reg=reg):
+                    io.write_line(ln)
+            except Exception:
+                io.write_line(" …อ่านศัตรูไม่ออกในจังหวะนี้")
         io.read_line(" Enter...")
         return _player_act(
             player,
@@ -1454,8 +1480,8 @@ def _player_act(
                 mid = str(m.get("id"))
                 rel = get_relationship(player, mid, m)
                 io.write_line(
-                    f"  {i}. {m.get('name')} · [{relationship_bar(rel)}] "
-                    f"{soft_relationship_label(rel)}"
+                    f"  {i}. {m.get('name')} · สัมพันธ์สหาย "
+                    f"[{relationship_bar(rel)}] {soft_relationship_label(rel)}"
                 )
         except Exception:
             for i, m in enumerate(party, 1):
@@ -1599,6 +1625,20 @@ def _run_combat(
         from game.domain.needs import record_needs_soft_alerts
 
         for al in record_needs_soft_alerts(player):
+            io.write_line(al)
+    except Exception:
+        pass
+    # WO-054: Soft Combat Identity pre-fight (grade/bond/faction/weakness lite)
+    try:
+        from game.domain.combat_identity import (
+            clear_fight_identity_flags,
+            pre_fight_identity_lines,
+        )
+
+        clear_fight_identity_flags(player)
+        for al in pre_fight_identity_lines(
+            player, mon, reg, area_id=area_id, rng=rng, force=True
+        ):
             io.write_line(al)
     except Exception:
         pass

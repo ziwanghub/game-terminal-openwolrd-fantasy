@@ -213,6 +213,7 @@ def format_world_picker_lines(reg: DataRegistry) -> List[str]:
                 lines.append("")
         lines.append("---")
         lines.append(f" พิมพ์ 1–{len(rows)} แล้ว Enter")
+        lines.append(" 0  ย้อนกลับเมนูหลัก")
         return lines
 
     # ── WO-002 full picker (disabled by default) ──
@@ -263,6 +264,7 @@ def format_world_picker_lines(reg: DataRegistry) -> List[str]:
     lines.append("    ตั้งชื่อ · เลือกธีมเริ่มต้น · รู้สึกเป็นโลกคุณ")
     lines.append("---")
     lines.append(f" พิมพ์ 1–{create_idx} แล้ว Enter")
+    lines.append(" 0  ย้อนกลับเมนูหลัก")
     return lines
 
 
@@ -280,6 +282,8 @@ def format_save_picker_lines(
     ]
     if not saves:
         lines.append(" (ยังไม่มีเซฟในโลกนี้)")
+        lines.append("---")
+        lines.append(" 0  ย้อนกลับเมนูหลัก")
         return lines
     for i, s in enumerate(saves, 1):
         occ = s.get("occupation") or "?"
@@ -292,6 +296,7 @@ def format_save_picker_lines(
             lines.append("")
     lines.append("---")
     lines.append(f" พิมพ์ 1–{len(saves)} แล้ว Enter")
+    lines.append(" 0  ย้อนกลับเมนูหลัก")
     return lines
 
 
@@ -413,20 +418,21 @@ def pick_world_interactive(reg: DataRegistry, io: IO) -> Optional[str]:
         return None
     use_create = world_theme_ux_enabled()
     create_n = n + 1 if use_create else n
-    raw = io.read_line(f"\n  เลือกโลก (1–{create_n}): ").strip()
+    raw = io.read_line(f"\n  เลือกโลก (1–{create_n} · 0=ย้อนกลับ): ").strip()
     if raw in ("", "0", "q", "Q"):
-        return str(rows[0]["id"])
+        io.write_line("  ย้อนกลับเมนูหลัก")
+        return None
     try:
         idx = int(raw)
     except Exception:
-        io.write_line(" (ใช้เลขไม่ถูกต้อง — เลือกโลกแรก)")
-        return str(rows[0]["id"])
+        io.write_line(f"  เลขไม่ถูกต้อง — พิมพ์ 1–{create_n} หรือ 0 ย้อนกลับ")
+        return None
     if use_create and idx == create_n:
         return run_create_world_flow(reg, io)
     if 1 <= idx <= n:
         return str(rows[idx - 1]["id"])
-    io.write_line(" (นอกช่วง — เลือกโลกแรก)")
-    return str(rows[0]["id"])
+    io.write_line(f"  นอกช่วง — พิมพ์ 1–{create_n} หรือ 0 ย้อนกลับ")
+    return None
 
 
 def prepare_player_for_world(

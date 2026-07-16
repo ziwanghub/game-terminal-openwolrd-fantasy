@@ -154,8 +154,9 @@ def test_specialty_shops_exist():
     assert "rare_exchange" in reg.shops
     assert "legend_pavilion" in reg.shops
     assert int(reg.shops["legend_pavilion"].get("min_rarity_rank") or 0) >= 5
-    # legend pavilion: system stock empty — high gear from drop → player market
-    assert list(reg.shops["legend_pavilion"].get("stock") or []) == []
+    # WO-Shop-2: light legend stock only (not Divine dump / not empty)
+    leg_stock = list(reg.shops["legend_pavilion"].get("stock") or [])
+    assert 1 <= len(leg_stock) <= 6
     from game.services.shop import shop_rank_window
 
     lo, hi = shop_rank_window(reg.shops["rare_exchange"])

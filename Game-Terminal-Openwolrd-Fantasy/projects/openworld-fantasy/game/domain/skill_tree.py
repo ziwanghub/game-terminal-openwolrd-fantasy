@@ -47,23 +47,19 @@ def has_prereqs(player: Mapping[str, Any], skill: Mapping[str, Any]) -> bool:
 
 
 def _count_item(player: Mapping[str, Any], item_id: str) -> int:
-    ids = list(player.get("inventory_ids") or [])
-    return sum(1 for x in ids if x == item_id)
+    from game.domain.bag_stack import count_item_units
+
+    return count_item_units(player, item_id)
 
 
 def _remove_items(player: MutableMapping[str, Any], item_id: str, n: int, reg: DataRegistry) -> None:
-    ids = list(player.get("inventory_ids") or [])
-    left = n
-    new_ids: List[str] = []
-    for x in ids:
-        if x == item_id and left > 0:
-            left -= 1
-            continue
-        new_ids.append(x)
-    player["inventory_ids"] = new_ids
-    names = [str((reg.items.get(iid) or {}).get("name") or iid) for iid in new_ids]
-    if names:
-        player["inventory"] = names
+    from game.domain.bag_stack import remove_one_unit
+
+    left = int(n)
+    while left > 0:
+        if not remove_one_unit(player, item_id, reg):
+            break
+        left -= 1
 
 
 def _required_level(sk: Mapping[str, Any], learn: Mapping[str, Any]) -> int:

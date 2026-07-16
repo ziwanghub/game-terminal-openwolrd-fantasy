@@ -257,8 +257,32 @@ def on_level_up_points(player: MutableMapping[str, Any], reg: DataRegistry, leve
     mp_gain = max(1, int(round(2 * levels * mp_b)))
     player["base_max_hp"] = int(player.get("base_max_hp", player.get("max_hp", 100))) + hp_gain
     player["base_max_mana"] = int(player.get("base_max_mana", player.get("max_mana", 50))) + mp_gain
-    player["stat_points"] = int(player.get("stat_points", 0)) + gain
-    notes = [f"ได้แต้มสถานะ +{gain} (เหลือ {player['stat_points']} แต้ม — กด P เพื่อแจก)"]
+    notes: List[str] = []
+    # WO-052: after Lv30+ no manual P points — automatic growth
+    try:
+        from game.domain.auto_growth import (
+            on_level_up_auto_growth,
+            should_grant_stat_points,
+            soft_threshold_flag,
+        )
+
+        if should_grant_stat_points(player):
+            player["stat_points"] = int(player.get("stat_points", 0)) + gain
+            notes.append(
+                f"ได้แต้มสถานะ +{gain} (เหลือ {player['stat_points']} แต้ม — กด P เพื่อแจก)"
+            )
+            if soft_threshold_flag(player):
+                notes.append(" …พลังเริ่มอั้น — ใกล้จังหวะที่แต้มจะไม่อยู่ในมือ")
+        else:
+            auto_notes = on_level_up_auto_growth(player, reg, levels)
+            notes.extend(auto_notes)
+            if not any("พัฒนา" in str(n) or "ไหล" in str(n) for n in auto_notes):
+                notes.append(" พลังไหลเวียนเองตามเลเวล… (ไม่ได้อยู่ในมือเป็นแต้ม)")
+    except Exception:
+        player["stat_points"] = int(player.get("stat_points", 0)) + gain
+        notes.append(
+            f"ได้แต้มสถานะ +{gain} (เหลือ {player['stat_points']} แต้ม — กด P เพื่อแจก)"
+        )
     notes.extend(try_occupation_rank_up(player, reg))
     notes.extend(try_unit_unlock(player, reg))
     # rare blessing roll (no formula shown)
@@ -341,6 +365,19 @@ def allocate_stat(
     points: int = 1,
 ) -> str:
     ensure_progression(player, reg)
+    # WO-052: manual P locked after auto growth
+    try:
+        from game.domain.auto_growth import (
+            is_manual_p_locked,
+            refuse_manual_allocate_message,
+            activate_auto_growth_if_needed,
+        )
+
+        if is_manual_p_locked(player):
+            activate_auto_growth_if_needed(player, reg)
+            return refuse_manual_allocate_message(player)
+    except Exception:
+        pass
     if stat == "luck":
         return "ค่านี้… แจกตรงๆ ไม่ได้"
     if stat == "intelligence":
@@ -370,20 +407,41 @@ def allocate_stat(
         recompute_stats(player, reg)
     except Exception:
         pass
-    # WO-035: soft feedback — no raw invest total in player message
+    # WO-048: grade progress + soft feedback (no raw numbers)
+    old_g = new_g = None
     try:
-        from game.domain.stat_arch import soft_facet_label, recompute_anima
+        from game.domain.stat_grades import apply_invest_to_grades, invest_feedback_message
 
-        recompute_anima(player, reg)
-        feel = soft_facet_label(min(100, int(alloc[stat]) * 12.0 + 10))
-        msg = (
-            f"「{STAT_LABELS[stat]}」รู้สึกหนาขึ้น · 〔{feel}〕 · "
-            f"แต้มเหลือ {player['stat_points']} · (V=ประเมินตัวเอง)"
+        old_g, new_g, old_t, new_t = apply_invest_to_grades(player, stat, points)
+        msg = invest_feedback_message(
+            player,
+            stat,
+            old_letter=old_g,
+            new_letter=new_g,
+            points_left=int(player["stat_points"]),
+            old_tier=old_t,
+            new_tier=new_t,
         )
     except Exception:
-        msg = (
-            f"เพิ่ม{STAT_LABELS[stat]} · เหลือแต้ม {player['stat_points']}"
-        )
+        try:
+            from game.domain.stat_arch import soft_facet_label, recompute_anima
+
+            recompute_anima(player, reg)
+            feel = soft_facet_label(min(100, int(alloc[stat]) * 12.0 + 10))
+            msg = (
+                f"「{STAT_LABELS[stat]}」รู้สึกหนาขึ้น · 〔{feel}〕 · "
+                f"แต้มเหลือ {player['stat_points']} · (V=ประเมินตัวเอง)"
+            )
+        except Exception:
+            msg = (
+                f"เพิ่ม{STAT_LABELS[stat]} · เหลือแต้ม {player['stat_points']}"
+            )
+    try:
+        from game.domain.stat_arch import recompute_anima
+
+        recompute_anima(player, reg)
+    except Exception:
+        pass
     # soft path band if secret occupation active (stat+style HSR)
     if player.get("unit_class_id"):
         try:
@@ -584,7 +642,15 @@ def format_alloc_panel(player: Mapping[str, Any]) -> List[str]:
     """
     Stat invest overview — WO-035 soft shell (no raw ×N / power dump).
     luck never listed; crit legacy not shown in menu.
+    WO-052: after Lv30+ show auto-growth panel instead.
     """
+    try:
+        from game.domain.auto_growth import format_p_menu_or_auto, is_manual_p_locked
+
+        if is_manual_p_locked(player):
+            return format_p_menu_or_auto(player)
+    except Exception:
+        pass
     try:
         from game.domain.stat_arch import SOFT_INVEST_UI, format_soft_invest_lines
 

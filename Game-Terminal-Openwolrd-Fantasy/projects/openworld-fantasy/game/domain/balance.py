@@ -160,6 +160,107 @@ def scaled_price(
     return max(1, int(round(base * mult)))
 
 
+# WO-Shop-1: junk / mat sell soft caps (of buy-equivalent; never shown as % in UI)
+JUNK_SELL_RATIO = 0.22  # 20–25% band center
+MAT_SELL_RATIO_CAP = 0.34  # specialty shops cannot pay more than this for mats
+_CRAFT_MAT_IDS = frozenset({"upgrade_mat", "rare_mat"})
+_JUNK_ID_HINTS = (
+    "scrap",
+    "junk",
+    "rat_tail",
+    "goblin_scrap",
+    "stone_chip",
+    "bird_quill",
+    "undead_ash",
+    "void_ash",
+    "marsh_slime",
+)
+
+
+def is_junk_item(
+    item_id: Optional[str] = None,
+    *,
+    item_kind: Optional[str] = None,
+    rarity: Optional[str] = None,
+    item: Optional[Mapping[str, Any]] = None,
+) -> bool:
+    """
+    Soft junk for sell ratio — scrap/trash mats, not core craft mats.
+    Equipment / potions / food / upgrade_mat are never junk.
+    """
+    iid = str(item_id or "").lower()
+    it = dict(item or {})
+    kind = str(item_kind or it.get("kind") or "").lower()
+    rid = str(rarity or it.get("rarity") or "common").lower()
+    if iid in _CRAFT_MAT_IDS:
+        return False
+    if kind in ("equipment", "weapon", "armor", "accessory", "relic", "key", "quest", "consumable", "food"):
+        return False
+    if it.get("slot") or it.get("heal_hp") or it.get("heal_mana") or it.get("food_tier"):
+        return False
+    tags = it.get("tags") or []
+    if isinstance(tags, str):
+        tags = [tags]
+    tag_l = {str(t).lower() for t in tags}
+    if kind in ("junk", "scrap") or "junk" in tag_l or "scrap" in tag_l:
+        return True
+    if any(h in iid for h in _JUNK_ID_HINTS):
+        return True
+    # cheap common material scrap (price floor trash)
+    if kind in ("material", "mat") or "mat" in iid:
+        price = int(it.get("price_world") or 0)
+        if rid in ("common", "") and 0 < price < 28 and iid not in _CRAFT_MAT_IDS:
+            name = str(it.get("name") or "")
+            if "เศษ" in name or "scrap" in name.lower() or price <= 18:
+                return True
+    return False
+
+
+def _is_material_kind(item_kind: Optional[str], item_id: Optional[str]) -> bool:
+    kind = str(item_kind or "").lower()
+    iid = str(item_id or "").lower()
+    return kind == "material" or kind == "mat" or "mat" in iid or iid in _CRAFT_MAT_IDS
+
+
+def _apply_sell_ratio_modifiers(
+    sell_ratio: float,
+    *,
+    shop: Optional[Mapping[str, Any]],
+    item_kind: Optional[str],
+    item_id: Optional[str],
+    rarity: str,
+    item: Optional[Mapping[str, Any]] = None,
+) -> Tuple[float, str]:
+    """
+    Returns (ratio, band) band in junk|mat|default for debug/tests.
+    WO-ITEM-3 mat sink · WO-Shop-1 junk + mat cap.
+    """
+    rid = str(rarity or "common")
+    kind = str(item_kind or "").lower()
+    iid = str(item_id or "").lower()
+    band = "default"
+    if is_junk_item(iid, item_kind=kind, rarity=rid, item=item):
+        # absolute soft junk band 20–25%
+        sell_ratio = float(JUNK_SELL_RATIO)
+        if shop and shop.get("junk_sell_ratio") is not None:
+            sell_ratio = float(shop["junk_sell_ratio"])
+            sell_ratio = max(0.20, min(0.25, sell_ratio))
+        band = "junk"
+        return sell_ratio, band
+    if _is_material_kind(kind, iid):
+        if rid.lower() in ("common", "uncommon", ""):
+            sell_ratio = float(sell_ratio) * 0.72
+        elif rid.lower() == "rare":
+            sell_ratio = float(sell_ratio) * 0.88
+        # specialty shops: never pay more than cap for mats
+        cap = MAT_SELL_RATIO_CAP
+        if shop and shop.get("mat_sell_cap") is not None:
+            cap = float(shop["mat_sell_cap"])
+        sell_ratio = min(float(sell_ratio), cap)
+        band = "mat"
+    return float(sell_ratio), band
+
+
 def sell_price(
     base: int,
     reg: DataRegistry,
@@ -169,6 +270,8 @@ def sell_price(
     sell_ratio: Optional[float] = None,
     apply_tax: bool = True,
     shop: Optional[Mapping[str, Any]] = None,
+    item_kind: Optional[str] = None,
+    item_id: Optional[str] = None,
 ) -> int:
     """
     Player sells to shop.
@@ -176,6 +279,10 @@ def sell_price(
     2) * sell_ratio (default from rarity config)
     3) price insurance floor (ประกันราคา)
     4) sell tax by rarity (ภาษี) — optional shop tax_mult
+    5) WO-Shop-3: light dynamic mult + junk/mat soft floor
+
+    WO-ITEM-3: common materials sell softer (economy sink) unless shop overrides.
+    WO-Shop-1: junk ~22% · mat effective cap ≤34%.
     """
     rid = rarity or "common"
     buy = scaled_price(base, reg, player, rarity=rid)
@@ -184,6 +291,21 @@ def sell_price(
         sell_ratio = float(rcfg.get("default_sell_ratio") or 0.4)
     if shop and shop.get("sell_ratio") is not None:
         sell_ratio = float(shop["sell_ratio"])
+    kind = str(item_kind or "").lower()
+    iid = str(item_id or "").lower()
+    it = None
+    try:
+        it = (getattr(reg, "items", None) or {}).get(str(item_id or "")) or None
+    except Exception:
+        it = None
+    sell_ratio, band = _apply_sell_ratio_modifiers(
+        float(sell_ratio),
+        shop=shop,
+        item_kind=kind,
+        item_id=iid,
+        rarity=str(rid),
+        item=it,
+    )
     gross = max(1, int(round(buy * float(sell_ratio))))
 
     # ประกันราคา: อย่างน้อย floor * buy
@@ -191,11 +313,22 @@ def sell_price(
     floor_ratio = float(floor_tbl.get(rid, floor_tbl.get("common", 0.25)))
     if shop and shop.get("price_insurance_floor") is not None:
         floor_ratio = float(shop["price_insurance_floor"])
+    # WO-ITEM-3 / Shop-1: mat/junk floor soft so insurance doesn't cancel sink
+    if band == "junk":
+        floor_ratio = min(floor_ratio, 0.12)
+    elif band == "mat" or _is_material_kind(kind, iid):
+        floor_ratio = min(floor_ratio, 0.18)
     floor_amt = max(1, int(round(buy * floor_ratio)))
     insured = max(gross, floor_amt)
 
     if not apply_tax:
-        return insured
+        try:
+            from game.domain.shop_experience import apply_dynamic_to_price, soft_band_floor
+
+            dyn = apply_dynamic_to_price(insured, player, shop, side="sell")
+            return soft_band_floor(buy, dyn, band=band)
+        except Exception:
+            return insured
 
     tax_tbl = rcfg.get("sell_tax_rate") or {}
     tax = float(tax_tbl.get(rid, 0.0))
@@ -209,6 +342,14 @@ def sell_price(
         else:
             tax = float(override)
     net = max(1, int(round(insured * (1.0 - tax))))
+    # WO-Shop-3: day/rep soft + hard floor band for junk/mat
+    try:
+        from game.domain.shop_experience import apply_dynamic_to_price, soft_band_floor
+
+        net = apply_dynamic_to_price(net, player, shop, side="sell")
+        net = soft_band_floor(buy, net, band=band)
+    except Exception:
+        pass
     return net
 
 
@@ -219,6 +360,8 @@ def sell_breakdown(
     *,
     rarity: Optional[str] = None,
     shop: Optional[Mapping[str, Any]] = None,
+    item_kind: Optional[str] = None,
+    item_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Detail for UI: gross, floor, tax, net."""
     rid = rarity or "common"
@@ -227,11 +370,30 @@ def sell_breakdown(
     ratio = float(rcfg.get("default_sell_ratio") or 0.4)
     if shop and shop.get("sell_ratio") is not None:
         ratio = float(shop["sell_ratio"])
+    kind = str(item_kind or "").lower()
+    iid = str(item_id or "").lower()
+    it = None
+    try:
+        it = (getattr(reg, "items", None) or {}).get(str(item_id or "")) or None
+    except Exception:
+        it = None
+    ratio, band = _apply_sell_ratio_modifiers(
+        float(ratio),
+        shop=shop,
+        item_kind=kind,
+        item_id=iid,
+        rarity=str(rid),
+        item=it,
+    )
     gross = max(1, int(round(buy * ratio)))
     floor_tbl = rcfg.get("price_insurance_floor") or {}
     floor_ratio = float(floor_tbl.get(rid, 0.25))
     if shop and shop.get("price_insurance_floor") is not None:
         floor_ratio = float(shop["price_insurance_floor"])
+    if band == "junk":
+        floor_ratio = min(floor_ratio, 0.12)
+    elif band == "mat" or _is_material_kind(kind, iid):
+        floor_ratio = min(floor_ratio, 0.18)
     floor_amt = max(1, int(round(buy * floor_ratio)))
     insured = max(gross, floor_amt)
     tax_tbl = rcfg.get("sell_tax_rate") or {}
@@ -239,7 +401,16 @@ def sell_breakdown(
     if shop and shop.get("sell_tax_bonus") is not None:
         tax = min(0.9, tax + float(shop["sell_tax_bonus"]))
     tax_amt = max(0, insured - max(1, int(round(insured * (1.0 - tax)))))
-    net = sell_price(base, reg, player, rarity=rid, shop=shop)
+    net = sell_price(
+        base, reg, player, rarity=rid, shop=shop, item_kind=item_kind, item_id=item_id
+    )
+    dyn_m = 1.0
+    try:
+        from game.domain.shop_experience import dynamic_price_mult
+
+        dyn_m = float(dynamic_price_mult(player, shop, side="sell"))
+    except Exception:
+        pass
     return {
         "buy_ref": buy,
         "gross": gross,
@@ -250,6 +421,9 @@ def sell_breakdown(
         "net": net,
         "rarity": rid,
         "insurance_applied": insured > gross,
+        "sell_band": band,
+        "eff_ratio": round(float(ratio), 4),
+        "dynamic_mult": round(dyn_m, 4),
     }
 
 

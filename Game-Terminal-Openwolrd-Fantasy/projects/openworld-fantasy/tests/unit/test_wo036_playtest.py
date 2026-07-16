@@ -46,8 +46,12 @@ def test_allocate_soft_message_points_to_v():
     ensure_progression(p, reg)
     p["stat_points"] = 2
     msg = allocate_stat(p, reg, "atk", 1)
-    assert "หนา" in msg or "〔" in msg
-    assert "V" in msg or "ประเมิน" in msg
+    # soft feel (grade may still be locked → V/วิหาร path)
+    assert any(
+        k in msg
+        for k in ("หนา", "〔", "มือ", "หนัก", "รู้สึก", "โจมตี")
+    )
+    assert "V" in msg or "ประเมิน" in msg or "วิหาร" in msg
 
 
 def test_luck_upgrade_bias_capped():

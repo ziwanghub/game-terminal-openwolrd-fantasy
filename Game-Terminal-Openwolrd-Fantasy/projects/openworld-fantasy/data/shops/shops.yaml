@@ -1,19 +1,32 @@
-# Shop stock policy (1.14 + 1.24 economy):
+# Shop stock policy (1.14 + 1.24 + WO-Shop-1/2):
 #   - ร้านระบบ = ของใช้ทั่วไป หาซื้อง่าย (common–uncommon เป็นหลัก)
-#   - เกียร์ rare+ / sacred+ / unit / หีบ / key ซ่อน = ไม่ขายในร้านระบบ
-#     → ดรอปจาก open world / หีบ / เควส แล้วขายตลาดผู้เล่น (ตั้งราคาเอง · ภาษีตามราคา)
+#   - เกียร์ rare+ / sacred+ / unit / หีบ / key ซ่อน = ไม่ขายในร้านระบบ (ยกเว้น legend เบา)
 #   - การ์ด (card_*) = ไม่ขายในร้านระบบ · ได้จากการดรอปไฟต์/บอสเท่านั้น
-# Specialty markets (สวรรค์/นรก) = sink สกุลเงินพิเศษ + ของใช้ ไม่ขายเกียร์ตำนาน/การ์ด
+# WO-Shop-2 identity:
+#   traveling_merchant = ยา/อาหาร/เดินทาง
+#   city_armory        = เกียร์ + วัตถุดิบอัปเกรด
+#   rare_exchange      = mat + scroll + crystal
+#   celestial_bazaar   = charm / blessing
+#   infernal_market    = hell contract / void ash
+#   legend_pavilion    = รับซื้อ rank สูง + stock legend เบา
 #
 # stock: string id OR {id, rarity}
-# min_rarity_rank / max_rarity_rank — เกรดที่ร้านรับซื้อ/โชว์ (1=common … 8=mythic)
+# tone: soft UI hint (ไม่โชว์ %)
+# mat_sell_cap — เพดาน sell ratio วัตถุดิบ (≤0.34)
 
 - id: traveling_merchant
   name: พ่อค้าเร่
+  tone: รถเร่ริมทาง — ยา อาหาร เสบียงเดินทาง
+  specialty_hint: ที่นี่เด่นเรื่องยา·เสบียงเดินทาง
+  greetings:
+  - 「ลุยทางไกลมานาน — ของใช้ครบในรถเร่」
+  - 「ยา เสบียง น้ำชา… เลือกได้ แล้วไปต่อทาง」
+  - 「ถนนยังอีกยาว ของพกติดตัวไว้ดีกว่า」
+  buy_bias: -0.01
+  sell_bias: 0.0
   min_rarity_rank: 1
   max_rarity_rank: 3
   stock:
-    # ยาทั่วไป
     - potion_hp_small
     - potion_hp
     - potion_mana
@@ -24,7 +37,6 @@
     - oil_ward
     - tonic_might
     - forest_charm
-    # อาหาร (needs)
     - city_bread
     - travel_pass_city
     - repair_kit_basic
@@ -32,36 +44,35 @@
     - hunter_ration
     - traveler_ration
     - trail_stew
-    # วัสดุเล็ก
-    - iron_arrowhead
+    - shop_merchant_road_tea
+    - shop_merchant_mixed_ration
     - herb_bundle
     - upgrade_mat
-    - forest_moss
-    - marsh_slime
-    - bird_quill
-    - chitin_plate_mat
+    - iron_arrowhead
     - id: scroll_guard_level
       rarity: common
-    - id: scroll_guard_break
-      rarity: common
-    # เกียร์ต้นทาง
     - id: iron_sword
-      rarity: common
-    - id: bandit_knife
       rarity: common
     - id: leather_armor
       rarity: common
     - id: copper_ring
-      rarity: common
-    - id: bone_dagger
       rarity: common
     - id: dune_sandals
       rarity: common
 
 - id: city_armory
   name: ร้านอาวุธเมือง
+  tone: โรงตีเมือง — อาวุธ เกราะ และวัสดุอัปเกรด
+  specialty_hint: ที่นี่เด่นเรื่องเกียร์เหล็กและวัสดุอัป
+  greetings:
+  - 「ที่นี่เด่นเรื่องเกียร์เหล็ก — ลับคม ซ่อมเกราะ」
+  - 「เสียงทั่งดัง — หาอาวุธและวัสดุอัปที่นี่」
+  - 「คมดีกว่ามัว — เลือกลองถือก่อนซื้อ」
+  buy_bias: 0.015
+  sell_bias: 0.01
   min_rarity_rank: 1
   max_rarity_rank: 3
+  # WO-Shop-2: เกียร์ + วัตถุดิบอัป (ไม่ขายยา/อาหาร)
   stock:
     - id: iron_sword
       rarity: common
@@ -111,64 +122,95 @@
       rarity: uncommon
     - id: chitin_vest
       rarity: uncommon
-    - balm_nature
+    - id: bone_circlet
+      rarity: uncommon
+    # upgrade / temper
     - upgrade_mat
-    - iron_arrowhead
-    - wolf_fang
-    - goblin_scrap
-    - herb_bundle
-    - stone_chip
-    - rat_tail
-    - sand_cloak_mat
-    - crystal_dust
-    - eagle_feather
-    - jackal_fang
+    - id: rare_mat
+      rarity: uncommon
+    - repair_kit_basic
+    - shop_armory_whetstone
+    - shop_armory_temper_oil
+    - shop_armory_rivet_pack
 
 - id: celestial_bazaar
   name: ตลาดสวรรค์
+  tone: แสงบางและพรแผ่ว — เครื่องราง / blessing (เงินสวรรค์)
+  specialty_hint: ที่นี่เด่นเรื่องเครื่องราง·พร (เงินสวรรค์)
+  greetings:
+  - 「แสงบาง — เครื่องรางและพรแผ่ว」
+  - 「ไม่ขายคมดาบ — ขายความสงบและ blessing」
+  - 「ลมฟ้าแผ่ว… เลือกของอุ่นใจ」
+  buy_bias: 0.0
+  sell_bias: 0.0
   min_rarity_rank: 1
   max_rarity_rank: 4
-  sell_ratio: 0.42
-  price_insurance_floor: 0.34
-  sell_tax_bonus: -0.03   # slightly lower tax (heaven favor)
+  sell_ratio: 0.40
+  price_insurance_floor: 0.30
+  sell_tax_bonus: -0.03
+  mat_sell_cap: 0.32
   stock:
-    # sink เงินสวรรค์ + ของใช้ — ไม่ขายเกียร์ตำนาน
     - id: blessed_charm
       rarity: sacred
     - spirit_incense
-    - potion_mana
     - focus_tea
     - mind_elixir
-    - traveler_ration
-    - trail_stew
+    - lucid_incense
+    - shop_celestial_prayer_bead
+    - shop_celestial_soft_laurel
+    - shop_celestial_light_vial
     - inn_feast
 
 - id: infernal_market
   name: ตลาดนรก
+  tone: เถ้าและสัญญา — สัญญานรก / ขี้เถ้าสุญญะ (เงินนรก)
+  specialty_hint: ที่นี่เด่นเรื่องสัญญา·เถ้าสุญญะ (เงินนรก)
+  greetings:
+  - 「เถ้าและสัญญา — ระวังมือ」
+  - 「ที่นี่แลกไฟมืดเบา — ไม่ใช่ร้านยาทั่วไป」
+  - 「ควันข้น… สัญญานรกยังมีขาย」
+  buy_bias: 0.01
+  sell_bias: 0.0
   min_rarity_rank: 1
   max_rarity_rank: 4
-  sell_ratio: 0.45
-  sell_tax_bonus: 0.05    # higher tax (infernal cut)
+  sell_ratio: 0.40
+  sell_tax_bonus: 0.05
+  mat_sell_cap: 0.32
   stock:
-    # sink เงินนรก + ของใช้ — ไม่ขายเกียร์ตำนาน/เงา high
     - id: hell_contract
       rarity: rare
     - void_ash
+    - shop_infernal_ember_vial
+    - shop_infernal_void_token
+    - shop_infernal_smoke_oil
     - tonic_might
-    - oil_ward
+    - oil_shadow
 
-# รับซื้อ/แลกวัสดุกลาง — ไม่ขายเกียร์ rare+ จากระบบ
 - id: rare_exchange
   name: ตลาดวัสดุหายาก
+  tone: ผลึก ม้วน และ mat หายาก — ไม่ขายเกียร์
+  specialty_hint: ที่นี่รับ mat/ผลึก/ม้วนดี — ไม่ขายเกียร์
+  greetings:
+  - 「ผลึก ม้วน mat หายาก — ไม่ขายเกียร์」
+  - 「ของจากสนาม เอามาแลกที่นี่ได้คุ้มกว่า」
+  - 「ผงผลึกและม้วนกัน… ชั้นกลางของตลาด」
+  buy_bias: 0.0
+  sell_bias: 0.02
   min_rarity_rank: 2
   max_rarity_rank: 4
-  sell_ratio: 0.44
-  price_insurance_floor: 0.33
+  sell_ratio: 0.40
+  price_insurance_floor: 0.28
+  mat_sell_cap: 0.32
   stock:
     - upgrade_mat
     - id: rare_mat
       rarity: uncommon
-    # ม้วนกัน — หลาย rank (ต้อง rank ≥ ชิ้นเกียร์)
+    - crystal_dust
+    - cave_crystal_shard
+    - prism_shard
+    - shop_rare_crystal_lens
+    - shop_rare_prism_vial
+    - shop_rare_bound_scroll
     - id: scroll_guard_level
       rarity: common
     - id: scroll_guard_level
@@ -183,39 +225,48 @@
       rarity: rare
     - id: scroll_guard_break
       rarity: sacred
-    - crystal_dust
     - sand_cloak_mat
-    - panacea
-    - mind_elixir
-    - lucid_incense
-    - balm_nature
-    - oil_shadow
     - bird_quill
     - chitin_plate_mat
     - plant_heart
     - undead_ash
     - void_filament
-    - prism_shard
-    - id: fang_charm
-      rarity: uncommon
-    - id: bone_circlet
-      rarity: uncommon
-    - id: chitin_vest
-      rarity: uncommon
-    - id: mid_storm_boots
-      rarity: rare
-    - id: mid_steel_glaive
-      rarity: rare
-    - id: scroll_guard_break
-      rarity: rare
+    - wolf_fang
+    - goblin_scrap
+    - stone_chip
+    - rat_tail
+    - eagle_feather
+    - jackal_fang
+    - marsh_slime
+    - herb_bundle
+    - iron_arrowhead
 
-# ศาลาตำนาน = รับซื้อของแรงก์สูงจากผู้เล่น (max_rarity สูง) — stock ระบบว่าง
-# ของตำนานต้องดรอปจากโลก แล้วตั้งราคาขายตลาดผู้เล่นเอง
+# ศาลาตำนาน = รับซื้อ rank สูง + stock legend เบา (WO-Shop-2 · ไม่ Divine dump)
 - id: legend_pavilion
   name: ศาลาตำนาน
+  tone: ศาลาเงียบ — รับซื้อของแรงก์สูง · วางขายตำนานเบา
+  specialty_hint: ที่นี่รับซื้อแรงก์สูง · stock ตำนานเบา
+  greetings:
+  - 「ศาลาเงียบ — รับซื้อของแรงก์สูง · ตำนานเบา」
+  - 「ของตำนานวางน้อย — ส่วนใหญ่รับซื้อ」
+  - 「เสียงก้องแผ่ว… ดู stock เบา แล้วค่อยขายของแรง」
+  buy_bias: 0.02
+  sell_bias: 0.01
   min_rarity_rank: 5
   max_rarity_rank: 8
-  sell_ratio: 0.48
-  price_insurance_floor: 0.38
-  sell_tax_bonus: 0.08
-  stock: []
+  sell_ratio: 0.36
+  price_insurance_floor: 0.28
+  sell_tax_bonus: 0.10
+  mat_sell_cap: 0.30
+  buy_stock: true
+  stock:
+    # light showcase always visible (rep still affects price; not Divine dump)
+    - id: shop_legend_memory_fragment
+      rarity: legendary
+      always_show: true
+    - id: shop_legend_soft_seal
+      rarity: legendary
+      always_show: true
+    - id: shop_legend_echo_thread
+      rarity: legendary
+      always_show: true

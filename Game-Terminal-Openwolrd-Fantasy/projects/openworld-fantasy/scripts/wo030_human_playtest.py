@@ -67,11 +67,11 @@ def main() -> int:
     prefs["auto_avoid_relic_echo"] = True
     prefs["auto_buy_supplies"] = True
     p["auto_prefs"] = prefs
-    tut_ok = len(TUTORIAL_PAGES) >= 9 and any(
+    tut_ok = len(TUTORIAL_PAGES) == 6 and any(
         "เรลิก" in "\n".join(pg) or "ภาระ" in "\n".join(pg) for pg in TUTORIAL_PAGES
     )
     tip_ok = any("เรลิก" in t or "ห้อง" in t or "ภาระ" in t for t in CITY_ONBOARD_TIPS)
-    log("P1", f"tutorial9={tut_ok} onboard_relic_tips={tip_ok}")
+    log("P1", f"tutorial6={tut_ok} onboard_relic_tips={tip_ok}")
     if not tut_ok:
         findings.append({"sev": "P2", "msg": "tutorial missing relic page"})
     scores["P1_bootstrap"] = 5 if tut_ok and tip_ok else 3

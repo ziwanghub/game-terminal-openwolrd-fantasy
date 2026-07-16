@@ -180,6 +180,26 @@ def auto_fight(
         lines.extend(record_needs_soft_alerts(player))
     except Exception:
         pass
+    # WO-054: soft combat identity pre-fight (no spam — auto collects lines)
+    try:
+        from game.domain.combat_identity import (
+            clear_fight_identity_flags,
+            pre_fight_identity_lines,
+        )
+
+        clear_fight_identity_flags(player)
+        lines.extend(
+            pre_fight_identity_lines(
+                player,
+                mon,
+                reg,
+                area_id=str(player.get("location") or ""),
+                rng=rng,
+                force=True,
+            )
+        )
+    except Exception:
+        pass
     turn = 0
     plan = list(skill_plan or [])
     while mon["hp"] > 0 and player["hp"] > 0 and turn < 40:
@@ -415,6 +435,9 @@ def should_pause_sight(player: Dict[str, Any], sight: Dict[str, Any]) -> Tuple[b
             return False, "Mini-Moment · ออโต้จัดการ soft"
         except Exception:
             return True, "สายตาโลก"
+    if kind == "shop_rep_event":
+        # soft help by default in auto — no pause spam
+        return False, "เหตุการณ์ร้าน · ออโต้ช่วย soft"
     if kind == "npc":
         return True, "คนแปลกหน้า — ต้องตัดสินใจ"
     # WO-025: player echo + Relic Aura
@@ -685,6 +708,25 @@ def run_auto_farm(
                     f"mini-moment {s.get('label') or s.get('moment_id')}",
                 )
                 break  # one moment per tick
+        except Exception:
+            pass
+
+        # WO-Shop-5: soft-resolve shop reputation events (auto prefers help)
+        try:
+            from game.domain.shop_rep_content import auto_resolve_shop_rep_event
+
+            for s in sights:
+                if s.get("kind") != "shop_rep_event":
+                    continue
+                for ln in auto_resolve_shop_rep_event(player, s, reg=reg, prefer_help=True):
+                    io.write_line(ln)
+                    observe_auto_lines(player, [ln])
+                log_auto_event(
+                    player,
+                    "world",
+                    f"shop-event {s.get('label') or s.get('event_id')}",
+                )
+                break
         except Exception:
             pass
 

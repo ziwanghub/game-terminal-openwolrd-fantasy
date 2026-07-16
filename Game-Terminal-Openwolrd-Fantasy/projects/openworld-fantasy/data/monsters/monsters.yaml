@@ -25,6 +25,24 @@
   - item: ash_club
     rate: rare
     note: อุปกรณ์
+  - item: mid_forest_thorn_blade
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Goblin นักล่า เตรียมจู่โจม…
+    power: 7
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Goblin นักล่า ทุ่มแรง!
+    power: 9
+  role_tag: humanoid
+  weak_to:
+  - arcane
+  - fire
 - id: forest_wolf
   name: Wolf ป่า
   level_min: 2
@@ -52,6 +70,24 @@
   - item: leather_greaves
     rate: very_rare
     note: อุปกรณ์
+  - item: mid_forest_thorn_blade
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Wolf ป่า เตรียมจู่โจม…
+    power: 9
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Wolf ป่า ทุ่มแรง!
+    power: 11
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: wood_ent
   rarity: uncommon
   name: Ent ไม้ยักษ์
@@ -82,6 +118,28 @@
   - item: scout_spear
     rate: rare
     note: อุปกรณ์
+  - item: mid_forest_bark_mail
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    - physical
+    telegraph: Ent ไม้ยักษ์ เตรียมจู่โจม…
+    power: 8
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 9
+    status: poison
+    status_chance: 0.2
+  role_tag: plant
+  weak_to:
+  - fire
+  - slash
 - id: forest_wraith
   rarity: rare
   name: วิญญาณป่า
@@ -110,6 +168,33 @@
   - item: shadow_cloak
     rate: very_rare
     note: อุปกรณ์
+  - item: mid_forest_moss_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: วิญญาณป่า เตรียมจู่โจม…
+    power: 12
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 13
+    status: poison
+    status_chance: 0.2
+  - id: el2_nature
+    tags:
+    - nature
+    - magic
+    telegraph: ละอองพิษ!
+    power: 14
+  role_tag: undead
+  weak_to:
+  - holy
+  - light
 - id: cave_bat
   name: Cave Bat Swarm
   level_min: 3
@@ -134,6 +219,24 @@
   - item: trail_boots
     rate: rare
     note: อุปกรณ์
+  - item: mid_cave_bat_cloak
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Cave Bat Swarm เตรียมจู่โจม…
+    power: 8
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Cave Bat Swarm ทุ่มแรง!
+    power: 10
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: dark_slime
   name: Dark Slime
   level_min: 4
@@ -158,6 +261,28 @@
   - item: ranger_leggings
     rate: rare
     note: อุปกรณ์
+  - item: mid_cave_bat_cloak
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    - physical
+    telegraph: Dark Slime เตรียมจู่โจม…
+    power: 7
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 8
+    status: poison
+    status_chance: 0.18
+  role_tag: slime
+  weak_to:
+  - holy
+  - light
 - id: shadow_wraith
   rarity: rare
   name: Shadow Wraith
@@ -198,6 +323,13 @@
   - item: focus_crystal
     rate: rare
     note: อุปกรณ์
+  - item: mid_cave_bat_cloak
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  role_tag: undead
+  weak_to:
+  - holy
+  - light
 - id: abyss_lurker
   rarity: sacred
   name: Abyss Lurker
@@ -227,6 +359,28 @@
   - item: iron_greaves
     rate: rare
     note: อุปกรณ์
+  - item: mid_cave_echo_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    - physical
+    telegraph: Abyss Lurker เตรียมจู่โจม…
+    power: 16
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 17
+    status: poison
+    status_chance: 0.18
+  role_tag: abyss
+  weak_to:
+  - holy
+  - light
 - id: rock_golem
   rarity: uncommon
   name: Rock Golem
@@ -255,6 +409,26 @@
   - item: chain_coif
     rate: very_rare
     note: อุปกรณ์
+  - item: mid_ridge_slate_plate
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    - physical
+    telegraph: Rock Golem เตรียมจู่โจม…
+    power: 10
+  - id: el_earth
+    tags:
+    - earth
+    - magic
+    telegraph: พื้นสั่น!
+    power: 11
+  role_tag: construct
+  weak_to:
+  - wind
+  - water
 - id: mountain_troll
   name: Mountain Troll
   level_min: 5
@@ -281,6 +455,24 @@
   - item: iron_greaves
     rate: rare
     note: อุปกรณ์
+  - item: mid_ridge_iron_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Mountain Troll เตรียมจู่โจม…
+    power: 12
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Mountain Troll ทุ่มแรง!
+    power: 14
+  role_tag: brute
+  weak_to:
+  - arcane
+  - fire
 - id: stone_drake
   name: Stone Drake
   level_min: 8
@@ -307,6 +499,33 @@
   - item: iron_sabatons
     rate: rare
     note: อุปกรณ์
+  - item: mid_ridge_stone_axe
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: Stone Drake เตรียมจู่โจม…
+    power: 14
+  - id: el_fire
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวไฟรวมตัว!
+    power: 15
+    status: burn
+    status_chance: 0.22
+  - id: el2_fire
+    tags:
+    - fire
+    - magic
+    telegraph: ความร้อนแผ่!
+    power: 16
+  role_tag: dragonkin
+  weak_to:
+  - wind
+  - water
 - id: ruins_specter
   name: Ruins Specter
   level_min: 7
@@ -331,6 +550,30 @@
   - item: mage_robe
     rate: very_rare
     note: อุปกรณ์
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: Ruins Specter เตรียมจู่โจม…
+    power: 13
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 14
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 15
+  role_tag: undead
+  weak_to:
+  - physical
+  - holy
 - id: cursed_knight
   name: Cursed Knight
   level_min: 8
@@ -360,6 +603,30 @@
   - item: steel_blade
     rate: very_rare
     note: อุปกรณ์
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Cursed Knight เตรียมจู่โจม…
+    power: 15
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 16
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 17
+  role_tag: humanoid
+  weak_to:
+  - arcane
+  - fire
 - id: ancient_guardian
   name: Ancient Guardian
   level_min: 12
@@ -385,6 +652,28 @@
   - item: arcane_circlet
     rate: very_rare
     note: อุปกรณ์
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: Ancient Guar… เตรียมจู่โจม…
+    power: 17
+  - id: el_earth
+    tags:
+    - earth
+    - magic
+    telegraph: พื้นสั่น!
+    power: 18
+  - id: el2_earth
+    tags:
+    - earth
+    - magic
+    telegraph: หินยก!
+    power: 19
+  role_tag: construct
+  weak_to:
+  - physical
+  - holy
 - id: sand_scorpion
   name: Sand Scorpion
   level_min: 7
@@ -408,6 +697,24 @@
   - item: dust_veil
     rate: rare
     note: อุปกรณ์
+  - item: mid_desert_sun_scimitar
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Sand Scorpion เตรียมจู่โจม…
+    power: 14
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Sand Scorpion ทุ่มแรง!
+    power: 16
+  role_tag: insect
+  weak_to:
+  - arcane
+  - fire
 - id: desert_raider
   name: Desert Raider
   level_min: 8
@@ -430,6 +737,24 @@
     rate: rare
   - item: hardened_boots
     rate: very_rare
+  - item: mid_desert_sand_wrap
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: Desert Raider เตรียมจู่โจม…
+    power: 13
+  - id: heavy
+    tags:
+    - physical
+    telegraph: Desert Raider ทุ่มแรง!
+    power: 15
+  role_tag: humanoid
+  weak_to:
+  - arcane
+  - fire
 - id: fire_salamander
   name: Fire Salamander
   level_min: 10
@@ -452,6 +777,25 @@
     note: ใช้ได้
   - item: mage_robe
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - fire
+    - physical
+    telegraph: Fire Salaman… เตรียมจู่โจม…
+    power: 16
+  - id: el_fire
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวไฟรวมตัว!
+    power: 17
+    status: burn
+    status_chance: 0.22
+  role_tag: beast
+  weak_to:
+  - water
+  - earth
 - id: boss_forest_king
   rarity: legendary
   name: ราชันย์เถื่อน — King of Thorns
@@ -492,6 +836,34 @@
   - item: relic_storm_fang
     rate: very_rare
     note: WO-024 เรลิกภาระ · หายาก
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: ราชันย์เถื่อ… เตรียมจู่โจม…
+    power: 18
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 20
+  - id: finisher
+    tags:
+    - physical
+    telegraph: ราชันย์เถื่อ… กำลังรวบพลัง…!
+    power: 22
+    status: poison
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - nature
+    - physical
+    telegraph: ━━ ราชันย์เถื่อ… เปลี่ยนจังหวะ! ━━
+    power: 23
+  role_tag: boss
+  weak_to:
+  - fire
+  - slash
 - id: boss_shadow_queen
   rarity: legendary
   name: ราชินีเงา — Umbra Queen
@@ -541,6 +913,39 @@
   - item: relic_echo_sandals
     rate: very_rare
     note: WO-043 Soft Chorus ชิ้นที่ 3 · เงา
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: ราชินีเงา — … เตรียมจู่โจม…
+    power: 22
+  - id: el_fire
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวไฟรวมตัว!
+    power: 24
+    status: burn
+    status_chance: 0.22
+  - id: finisher
+    tags:
+    - fire
+    - magic
+    telegraph: ราชินีเงา — … กำลังรวบพลัง…!
+    power: 26
+    status: burn
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - shadow
+    - fire
+    - physical
+    telegraph: ━━ ราชินีเงา — … เปลี่ยนจังหวะ! ━━
+    power: 27
+  role_tag: boss
+  weak_to:
+  - holy
+  - light
 - id: boss_stone_titan
   rarity: sacred
   name: ไททันหิน — Stone Titan
@@ -583,6 +988,32 @@
   - item: titan_greaves
     rate: rare
     note: ของบอสเฉพาะ
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: ไททันหิน — S… เตรียมจู่โจม…
+    power: 24
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 26
+  - id: finisher
+    tags:
+    - physical
+    telegraph: ไททันหิน — S… กำลังรวบพลัง…!
+    power: 28
+  - id: phase_roar
+    tags:
+    - earth
+    - physical
+    telegraph: ━━ ไททันหิน — S… เปลี่ยนจังหวะ! ━━
+    power: 29
+  role_tag: boss
+  weak_to:
+  - wind
+  - water
 - id: boss_ruin_oracle
   rarity: sacred
   name: นักพยากรณ์ซาก — Ruin Oracle
@@ -623,6 +1054,39 @@
   - item: oracle_sash
     rate: rare
     note: ของบอสเฉพาะ
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: นักพยากรณ์ซา… เตรียมจู่โจม…
+    power: 26
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 28
+    status: poison
+    status_chance: 0.18
+  - id: finisher
+    tags:
+    - shadow
+    - magic
+    telegraph: นักพยากรณ์ซา… กำลังรวบพลัง…!
+    power: 30
+    status: poison
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - arcane
+    - shadow
+    - physical
+    telegraph: ━━ นักพยากรณ์ซา… เปลี่ยนจังหวะ! ━━
+    power: 31
+  role_tag: boss
+  weak_to:
+  - physical
+  - holy
 - id: boss_sun_scourge
   rarity: legendary
   name: ภัยพิบัติอาทิตย์ — Sun Scourge
@@ -670,6 +1134,39 @@
   - item: relic_hell_ash_greaves
     rate: very_rare
     note: WO-043 Soft Chorus ชิ้นที่ 3 · มาร
+  attack_profiles:
+  - id: basic
+    tags:
+    - fire
+    telegraph: ภัยพิบัติอาท… เตรียมจู่โจม…
+    power: 28
+  - id: el_lightning
+    tags:
+    - lightning
+    - magic
+    telegraph: ประกายไฟแลบ!
+    power: 30
+    status: shock
+    status_chance: 0.18
+  - id: finisher
+    tags:
+    - lightning
+    - magic
+    telegraph: ภัยพิบัติอาท… กำลังรวบพลัง…!
+    power: 32
+    status: shock
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - fire
+    - lightning
+    - physical
+    telegraph: ━━ ภัยพิบัติอาท… เปลี่ยนจังหวะ! ━━
+    power: 33
+  role_tag: boss
+  weak_to:
+  - water
+  - earth
 - id: marsh_leech
   name: ปลิงหนอง
   level_min: 5
@@ -694,6 +1191,33 @@
     rate: uncommon
   - item: potion_hp_small
     rate: common
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - water
+    telegraph: ปลิงหนอง เตรียมจู่โจม…
+    power: 11
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 12
+    status: poison
+    status_chance: 0.2
+  - id: el2_nature
+    tags:
+    - nature
+    - magic
+    telegraph: ละอองพิษ!
+    power: 13
+  role_tag: amphibian
+  weak_to:
+  - lightning
+  - nature
 - id: fog_wisp
   name: วิญญาณหมอก
   level_min: 6
@@ -715,6 +1239,31 @@
     rate: rare
   - item: upgrade_mat
     rate: uncommon
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: วิญญาณหมอก เตรียมจู่โจม…
+    power: 13
+  - id: el_water
+    tags:
+    - water
+    - magic
+    telegraph: น้ำวนรวมตัว!
+    power: 14
+  - id: el2_water
+    tags:
+    - water
+    - magic
+    telegraph: คลื่นซัด!
+    power: 15
+  role_tag: spirit
+  weak_to:
+  - physical
+  - holy
 - id: bog_troll
   name: โทรลหนอง
   level_min: 7
@@ -736,6 +1285,33 @@
     rate: rare
   - item: woodsman_axe
     rate: rare
+  - item: mid_marsh_fog_veil
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: โทรลหนอง เตรียมจู่โจม…
+    power: 14
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 15
+    status: poison
+    status_chance: 0.2
+  - id: el2_nature
+    tags:
+    - nature
+    - magic
+    telegraph: ละอองพิษ!
+    power: 16
+  role_tag: brute
+  weak_to:
+  - arcane
+  - fire
 - id: mist_horror
   name: สยองหมอก
   level_min: 9
@@ -757,6 +1333,31 @@
     rate: rare
   - item: shadow_cloak
     rate: very_rare
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: สยองหมอก เตรียมจู่โจม…
+    power: 16
+  - id: el_water
+    tags:
+    - water
+    - magic
+    telegraph: น้ำวนรวมตัว!
+    power: 17
+  - id: el2_water
+    tags:
+    - water
+    - magic
+    telegraph: คลื่นซัด!
+    power: 18
+  role_tag: undead
+  weak_to:
+  - holy
+  - light
 - id: crystal_golem
   name: โกเล็มผลึก
   level_min: 10
@@ -781,6 +1382,28 @@
     rate: rare
   - item: chain_coif
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: โกเล็มผลึก เตรียมจู่โจม…
+    power: 15
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 16
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 17
+  role_tag: construct
+  weak_to:
+  - wind
+  - water
 - id: shard_imp
   name: อิมพ์เศษแก้ว
   level_min: 9
@@ -800,6 +1423,28 @@
     rate: uncommon
   - item: apprentice_staff
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - lightning
+    telegraph: อิมพ์เศษแก้ว เตรียมจู่โจม…
+    power: 17
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 18
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 19
+  role_tag: spirit
+  weak_to:
+  - earth
+  - wind
 - id: prism_drake
   name: มังกรปริซึม
   level_min: 12
@@ -841,6 +1486,10 @@
     rate: rare
   - item: arcane_circlet
     rate: very_rare
+  role_tag: dragonkin
+  weak_to:
+  - water
+  - earth
 - id: light_wraith
   name: วิญญาณแสง
   level_min: 11
@@ -862,6 +1511,28 @@
     rate: rare
   - item: spirit_incense
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - holy
+    telegraph: วิญญาณแสง เตรียมจู่โจม…
+    power: 18
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 19
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 20
+  role_tag: undead
+  weak_to:
+  - shadow
+  - dark
 - id: void_crawler
   name: คลานสุญญะ
   level_min: 13
@@ -882,6 +1553,25 @@
     rate: uncommon
   - item: shadow_dagger
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    - physical
+    telegraph: คลานสุญญะ เตรียมจู่โจม…
+    power: 20
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 21
+    status: poison
+    status_chance: 0.18
+  role_tag: void
+  weak_to:
+  - holy
+  - light
 - id: null_mage
   name: จอมเวทย์ศูนย์
   level_min: 14
@@ -903,6 +1593,30 @@
     rate: rare
   - item: focus_crystal
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: จอมเวทย์ศูนย์ เตรียมจู่โจม…
+    power: 22
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 23
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 24
+  role_tag: caster
+  weak_to:
+  - physical
+  - holy
 - id: rift_beast
   name: อสูรรอยแยก
   level_min: 15
@@ -927,6 +1641,30 @@
     rate: rare
   - item: thorn_blade
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: อสูรรอยแยก เตรียมจู่โจม…
+    power: 21
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 22
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 23
+  role_tag: undead
+  weak_to:
+  - arcane
+  - fire
 - id: entropy_spawn
   name: ลูกเอนโทรปี
   level_min: 16
@@ -956,6 +1694,30 @@
   - item: sealed_chest_rare
     rate: very_rare
     note: หีบ
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: ลูกเอนโทรปี เตรียมจู่โจม…
+    power: 24
+  - id: el_fire
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวไฟรวมตัว!
+    power: 25
+    status: burn
+    status_chance: 0.22
+  - id: el2_lightning
+    tags:
+    - lightning
+    - magic
+    telegraph: สายฟ้าสะสม!
+    power: 26
+  role_tag: plant
+  weak_to:
+  - holy
+  - light
 - id: boss_mist_hydra
   rarity: legendary
   name: ไฮดราหมอก — Mist Hydra
@@ -996,6 +1758,39 @@
   - item: hydra_fang
     rate: rare
     note: ของบอสเฉพาะ
+  attack_profiles:
+  - id: basic
+    tags:
+    - water
+    telegraph: ไฮดราหมอก — … เตรียมจู่โจม…
+    power: 23
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 25
+    status: poison
+    status_chance: 0.2
+  - id: finisher
+    tags:
+    - shadow
+    - magic
+    telegraph: ไฮดราหมอก — … กำลังรวบพลัง…!
+    power: 27
+    status: poison
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - water
+    - nature
+    - physical
+    telegraph: ━━ ไฮดราหมอก — … เปลี่ยนจังหวะ! ━━
+    power: 28
+  role_tag: boss
+  weak_to:
+  - lightning
+  - nature
 - id: boss_prism_sovereign
   rarity: divine
   name: เจ้าแห่งปริซึม — Prism Sovereign
@@ -1042,6 +1837,39 @@
   - item: relic_divine_laurel
     rate: very_rare
     note: WO-043 Soft Chorus ชิ้นที่ 3 · เทพ
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: เจ้าแห่งปริซ… เตรียมจู่โจม…
+    power: 27
+  - id: el_lightning
+    tags:
+    - lightning
+    - magic
+    telegraph: ประกายไฟแลบ!
+    power: 29
+    status: shock
+    status_chance: 0.18
+  - id: finisher
+    tags:
+    - holy
+    - magic
+    telegraph: เจ้าแห่งปริซ… กำลังรวบพลัง…!
+    power: 31
+    status: stun
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - arcane
+    - lightning
+    - physical
+    telegraph: ━━ เจ้าแห่งปริซ… เปลี่ยนจังหวะ! ━━
+    power: 32
+  role_tag: boss
+  weak_to:
+  - physical
+  - holy
 - id: boss_void_herald
   rarity: divine
   name: ผู้ประกาศสุญญะ — Void Herald
@@ -1087,6 +1915,37 @@
   - item: relic_hell_ember_blade
     rate: very_rare
     note: WO-024 เรลิกภาระ · หายาก
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: ผู้ประกาศสุญ… เตรียมจู่โจม…
+    power: 30
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 32
+  - id: finisher
+    tags:
+    - arcane
+    - magic
+    telegraph: ผู้ประกาศสุญ… กำลังรวบพลัง…!
+    power: 34
+    status: poison
+    status_chance: 0.2
+  - id: phase_roar
+    tags:
+    - shadow
+    - arcane
+    - physical
+    telegraph: ━━ ผู้ประกาศสุญ… เปลี่ยนจังหวะ! ━━
+    power: 35
+  role_tag: boss
+  weak_to:
+  - holy
+  - light
 - id: city_rat
   name: หนูเมือง
   level_min: 1
@@ -1108,6 +1967,21 @@
     rate: uncommon
   - item: potion_hp_small
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: หนูเมือง เตรียมจู่โจม…
+    power: 4
+  - id: heavy
+    tags:
+    - physical
+    telegraph: หนูเมือง ทุ่มแรง!
+    power: 6
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: alley_thug
   name: นักเลงซอย
   level_min: 1
@@ -1128,6 +2002,21 @@
     rate: rare
   - item: copper_ring
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: นักเลงซอย เตรียมจู่โจม…
+    power: 6
+  - id: heavy
+    tags:
+    - physical
+    telegraph: นักเลงซอย ทุ่มแรง!
+    power: 8
+  role_tag: humanoid
+  weak_to:
+  - arcane
+  - fire
 - id: crystal_mite
   name: ไรผลึก
   level_min: 6
@@ -1149,6 +2038,23 @@
     rate: uncommon
   - item: focus_tea
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    - physical
+    telegraph: ไรผลึก เตรียมจู่โจม…
+    power: 10
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 11
+  role_tag: caster
+  weak_to:
+  - physical
+  - holy
 - id: void_mote
   name: ละอองสุญญะ
   level_min: 12
@@ -1168,6 +2074,28 @@
     rate: uncommon
   - item: potion_mana
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: ละอองสุญญะ เตรียมจู่โจม…
+    power: 14
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 15
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 16
+  role_tag: spirit
+  weak_to:
+  - holy
+  - light
 - id: cliff_eagle
   name: นกผา
   level_min: 4
@@ -1204,6 +2132,13 @@
   - item: climber_boots
     rate: rare
     note: อุปกรณ์
+  - item: mid_ridge_stone_axe
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  role_tag: bird
+  weak_to:
+  - arcane
+  - fire
 - id: stone_mole
   name: ตุ่นหิน
   level_min: 3
@@ -1227,6 +2162,29 @@
   - item: padded_helm
     rate: rare
     note: อุปกรณ์
+  - item: mid_ridge_iron_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: ตุ่นหิน เตรียมจู่โจม…
+    power: 9
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 10
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 11
+  role_tag: beast
+  weak_to:
+  - wind
+  - water
 - id: ridge_reaver
   name: โจรสันผา
   rarity: uncommon
@@ -1269,6 +2227,13 @@
   - item: bronze_buckler
     rate: rare
     note: อุปกรณ์
+  - item: mid_ridge_iron_band
+    rate: rare
+    note: เกียร์ mid · elite
+  role_tag: elite
+  weak_to:
+  - arcane
+  - fire
 - id: sand_viper
   name: งูทราย
   level_min: 7
@@ -1310,6 +2275,13 @@
   - item: dune_sandals
     rate: rare
     note: อุปกรณ์
+  - item: mid_desert_heat_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  role_tag: plant
+  weak_to:
+  - arcane
+  - fire
 - id: dust_wisp
   name: วิญญาณฝุ่น
   rarity: uncommon
@@ -1343,6 +2315,10 @@
   - item: storm_hood
     rate: very_rare
     note: อุปกรณ์
+  role_tag: spirit
+  weak_to:
+  - earth
+  - lightning
 - id: oasis_jackal
   name: หมาจิ้งจอกโอเอซิส
   level_min: 7
@@ -1370,6 +2346,24 @@
   - item: dune_wraps
     rate: rare
     note: อุปกรณ์
+  - item: mid_desert_heat_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: หมาจิ้งจอกโอ… เตรียมจู่โจม…
+    power: 12
+  - id: heavy
+    tags:
+    - physical
+    telegraph: หมาจิ้งจอกโอ… ทุ่มแรง!
+    power: 14
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: dune_stalker
   name: เงาเนินทราย
   rarity: rare
@@ -1410,6 +2404,13 @@
   - item: scale_greaves
     rate: rare
     note: อุปกรณ์
+  - item: mid_desert_heat_charm
+    rate: rare
+    note: เกียร์ mid · elite
+  role_tag: elite
+  weak_to:
+  - holy
+  - light
 - id: cave_glow_beetle
   name: ด้วงเรืองถ้ำ
   level_min: 3
@@ -1436,6 +2437,29 @@
     note: อุปกรณ์
   - item: bone_dagger
     rate: very_rare
+  - item: mid_cave_bat_cloak
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: ด้วงเรืองถ้ำ เตรียมจู่โจม…
+    power: 8
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 9
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 10
+  role_tag: insect
+  weak_to:
+  - fire
+  - slash
 - id: marsh_toad
   name: คางคกบึงยักษ์
   level_min: 4
@@ -1461,6 +2485,33 @@
     rate: rare
   - item: marsh_reed_staff
     rate: very_rare
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - water
+    telegraph: คางคกบึงยักษ์ เตรียมจู่โจม…
+    power: 9
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 10
+    status: poison
+    status_chance: 0.2
+  - id: el2_nature
+    tags:
+    - nature
+    - magic
+    telegraph: ละอองพิษ!
+    power: 11
+  role_tag: amphibian
+  weak_to:
+  - lightning
+  - nature
 - id: moss_sprite
   name: ภูตมอส
   level_min: 2
@@ -1484,6 +2535,28 @@
     rate: rare
   - item: leather_cap
     rate: rare
+  - item: mid_forest_moss_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    - physical
+    telegraph: ภูตมอส เตรียมจู่โจม…
+    power: 7
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 8
+    status: poison
+    status_chance: 0.2
+  role_tag: spirit
+  weak_to:
+  - fire
+  - slash
 - id: city_pickpocket
   name: จอมล้วงเมือง
   level_min: 5
@@ -1505,6 +2578,30 @@
     rate: rare
   - item: rare_mat
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: จอมล้วงเมือง เตรียมจู่โจม…
+    power: 11
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 12
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 13
+  role_tag: undead
+  weak_to:
+  - arcane
+  - fire
 - id: cave_crystal_spider
   name: แมงมุมคริสตัลถ้ำ
   level_min: 4
@@ -1529,6 +2626,31 @@
     rate: very_rare
   - item: bone_dagger
     rate: rare
+  - item: mid_cave_bat_cloak
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: แมงมุมคริสตั… เตรียมจู่โจม…
+    power: 10
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 11
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 12
+  role_tag: insect
+  weak_to:
+  - arcane
+  - fire
 - id: forest_boar
   name: หมูป่าดงดิบ
   level_min: 2
@@ -1552,6 +2674,24 @@
     rate: rare
   - item: woodsman_axe
     rate: rare
+  - item: mid_forest_bark_mail
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: หมูป่าดงดิบ เตรียมจู่โจม…
+    power: 9
+  - id: heavy
+    tags:
+    - physical
+    telegraph: หมูป่าดงดิบ ทุ่มแรง!
+    power: 11
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: marsh_gas_blob
   name: ก้อนแก๊สบึง
   level_min: 5
@@ -1577,6 +2717,31 @@
     rate: rare
   - item: scroll_guard_level
     rate: very_rare
+  - item: mid_marsh_leech_ring
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: ก้อนแก๊สบึง เตรียมจู่โจม…
+    power: 11
+  - id: el_water
+    tags:
+    - water
+    - magic
+    telegraph: น้ำวนรวมตัว!
+    power: 12
+  - id: el2_water
+    tags:
+    - water
+    - magic
+    telegraph: คลื่นซัด!
+    power: 13
+  role_tag: slime
+  weak_to:
+  - fire
+  - slash
 - id: peak_ice_sprite
   name: ภูตน้ำแข็งยอด
   level_min: 8
@@ -1601,6 +2766,28 @@
     rate: rare
   - item: rare_mat
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - water
+    telegraph: ภูตน้ำแข็งยอด เตรียมจู่โจม…
+    power: 12
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 13
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 14
+  role_tag: spirit
+  weak_to:
+  - lightning
+  - nature
 - id: void_shade_larva
   name: ตัวอ่อนเงาสุญญะ
   level_min: 12
@@ -1625,6 +2812,28 @@
     rate: rare
   - item: scroll_guard_break
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: ตัวอ่อนเงาสุ… เตรียมจู่โจม…
+    power: 14
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 15
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 16
+  role_tag: void
+  weak_to:
+  - holy
+  - light
 - id: ridge_goat
   name: แพะผาหิน
   level_min: 4
@@ -1645,6 +2854,24 @@
     rate: rare
   - item: ridge_spear
     rate: rare
+  - item: mid_ridge_slate_plate
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: แพะผาหิน เตรียมจู่โจม…
+    power: 9
+  - id: heavy
+    tags:
+    - physical
+    telegraph: แพะผาหิน ทุ่มแรง!
+    power: 11
+  role_tag: beast
+  weak_to:
+  - arcane
+  - fire
 - id: forest_mantrap
   name: พืชกินคนดง
   level_min: 3
@@ -1672,6 +2899,27 @@
     rate: uncommon
   - item: vine_wrap_body
     rate: rare
+  - item: mid_forest_moss_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    - physical
+    telegraph: พืชกินคนดง เตรียมจู่โจม…
+    power: 9
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 10
+    status: poison
+    status_chance: 0.2
+  weak_to:
+  - fire
+  - slash
 - id: forest_hornet
   name: ต่อยักษ์ป่า
   level_min: 2
@@ -1700,6 +2948,28 @@
     qty:
     - 1
     - 3
+  - item: mid_forest_bark_mail
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: ต่อยักษ์ป่า เตรียมจู่โจม…
+    power: 11
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 12
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 13
+  weak_to:
+  - fire
+  - slash
 - id: cave_skull_crawler
   name: หัวกะโหลกคลาน
   level_min: 5
@@ -1725,6 +2995,28 @@
     rate: rare
   - item: oil_shadow
     rate: uncommon
+  - item: mid_cave_shadow_fang
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: หัวกะโหลกคลาน เตรียมจู่โจม…
+    power: 11
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 12
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 13
+  weak_to:
+  - holy
+  - light
 - id: city_bone_walker
   name: โครงกระดูกตรอก
   level_min: 6
@@ -1750,6 +3042,25 @@
     rate: rare
   - item: upgrade_mat
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: โครงกระดูกตรอก เตรียมจู่โจม…
+    power: 12
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 13
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 14
+  weak_to:
+  - holy
+  - light
 - id: desert_vulture
   name: แร้งทะเลทราย
   level_min: 7
@@ -1775,6 +3086,28 @@
     rate: rare
   - item: hunter_ration
     rate: uncommon
+  - item: mid_desert_sun_scimitar
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - wind
+    telegraph: แร้งทะเลทราย เตรียมจู่โจม…
+    power: 12
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: ร่างกายกระชาก!
+    power: 13
+  - id: el2_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 14
+  weak_to:
+  - earth
+  - lightning
 - id: desert_scarab
   name: ด้วงสคารับ
   level_min: 6
@@ -1800,6 +3133,32 @@
     rate: rare
   - item: upgrade_mat
     rate: uncommon
+  - item: mid_desert_heat_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: ด้วงสคารับ เตรียมจู่โจม…
+    power: 10
+  - id: el_nature
+    tags:
+    - nature
+    - magic
+    telegraph: เถาวัลย์กระชาก!
+    power: 11
+    status: poison
+    status_chance: 0.2
+  - id: el2_nature
+    tags:
+    - nature
+    - magic
+    telegraph: ละอองพิษ!
+    power: 12
+  weak_to:
+  - arcane
+  - fire
 - id: marsh_reed_horror
   name: สยองกอหญ้า
   level_min: 5
@@ -1828,6 +3187,30 @@
     rate: uncommon
   - item: marsh_reed_staff
     rate: rare
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: สยองกอหญ้า เตรียมจู่โจม…
+    power: 10
+  - id: el_water
+    tags:
+    - water
+    - magic
+    telegraph: น้ำวนรวมตัว!
+    power: 11
+  - id: el2_water
+    tags:
+    - water
+    - magic
+    telegraph: คลื่นซัด!
+    power: 12
+  weak_to:
+  - fire
+  - slash
 - id: crystal_songbird
   name: นกเพลงผลึก
   level_min: 9
@@ -1856,6 +3239,27 @@
     rate: rare
   - item: potion_mana
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - wind
+    telegraph: นกเพลงผลึก เตรียมจู่โจม…
+    power: 13
+  - id: el_lightning
+    tags:
+    - lightning
+    - magic
+    telegraph: ประกายไฟแลบ!
+    power: 14
+  - id: el2_lightning
+    tags:
+    - lightning
+    - magic
+    telegraph: สายฟ้าสะสม!
+    power: 15
+  weak_to:
+  - earth
+  - lightning
 - id: mountain_carrion_crow
   name: กาซากเขา
   level_min: 4
@@ -1884,6 +3288,32 @@
     rate: rare
   - item: upgrade_mat
     rate: uncommon
+  - item: mid_ridge_iron_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - wind
+    telegraph: กาซากเขา เตรียมจู่โจม…
+    power: 10
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 11
+    status: poison
+    status_chance: 0.18
+  - id: el2_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: มืดกลืน!
+    power: 12
+  weak_to:
+  - earth
+  - lightning
 - id: void_bone_moth
   name: มอดกระดูกสุญญะ
   level_min: 13
@@ -1912,6 +3342,27 @@
     rate: rare
   - item: rare_mat
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: มอดกระดูกสุญญะ เตรียมจู่โจม…
+    power: 15
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 16
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 17
+  weak_to:
+  - holy
+  - light
 - id: elite_forest_alpha_wolf
   name: 【Elite】หมาป่าอัลฟาดง
   elite: true
@@ -1941,6 +3392,9 @@
     rate: rare
   - item: rare_mat
     rate: uncommon
+  - item: mid_forest_bark_mail
+    rate: rare
+    note: เกียร์ mid · elite
   attack_profiles:
   - id: howl_strike
     tags:
@@ -1959,6 +3413,9 @@
     - wind
     telegraph: เล็บเกี่ยวขา — ชะลอจังหวะ!
     power: 13
+  weak_to:
+  - arcane
+  - fire
 - id: elite_cave_abyss_matron
   name: 【Elite】แม่มดเหวถ้ำ
   elite: true
@@ -1988,6 +3445,9 @@
     rate: rare
   - item: rare_mat
     rate: uncommon
+  - item: mid_cave_bat_cloak
+    rate: rare
+    note: เกียร์ mid · elite
   attack_profiles:
   - id: abyss_veil
     tags:
@@ -2008,6 +3468,9 @@
     - shadow
     telegraph: เงาเหวหวด!
     power: 14
+  weak_to:
+  - holy
+  - light
 - id: elite_ridge_warlord
   name: 【Elite】ขุนศึกสันผา
   elite: true
@@ -2036,6 +3499,9 @@
     rate: very_rare
   - item: rare_mat
     rate: common
+  - item: mid_ridge_iron_band
+    rate: rare
+    note: เกียร์ mid · elite
   attack_profiles:
   - id: war_cleave
     tags:
@@ -2054,6 +3520,9 @@
     - pierce
     telegraph: แทงตรงจุดอ่อน!
     power: 17
+  weak_to:
+  - arcane
+  - fire
 - id: elite_dune_warlock
   name: 【Elite】จอมเวทย์เนินทราย
   elite: true
@@ -2083,6 +3552,9 @@
     rate: uncommon
   - item: rare_mat
     rate: uncommon
+  - item: mid_desert_sun_scimitar
+    rate: rare
+    note: เกียร์ mid · elite
   attack_profiles:
   - id: sun_hex
     tags:
@@ -2104,6 +3576,9 @@
     - magic
     telegraph: หอกเถ้าพุ่ง!
     power: 17
+  weak_to:
+  - water
+  - earth
 - id: elite_marsh_plague_toad
   name: 【Elite】คางคกโรคระบาด
   elite: true
@@ -2133,6 +3608,9 @@
     rate: very_rare
   - item: rare_mat
     rate: uncommon
+  - item: mid_marsh_leech_ring
+    rate: rare
+    note: เกียร์ mid · elite
   attack_profiles:
   - id: plague_spit
     tags:
@@ -2155,6 +3633,9 @@
     power: 13
     status: poison
     status_chance: 0.2
+  weak_to:
+  - fire
+  - slash
 - id: elite_city_hex_captain
   name: 【Elite】หัวหน้าคำสาปเมือง
   elite: true
@@ -2204,6 +3685,9 @@
     - shadow
     telegraph: เครื่องหมายเงาวางบนคุณ!
     power: 14
+  weak_to:
+  - holy
+  - light
 - id: elite_prism_sentinel
   name: 【Elite】เซนทิเนลปริซึม
   elite: true
@@ -2254,6 +3738,9 @@
     - lightning
     telegraph: ร่างผลึกกระแทก!
     power: 19
+  weak_to:
+  - earth
+  - wind
 - id: elite_void_riven_knight
   name: 【Elite】อัศวินรอยแยก
   elite: true
@@ -2302,6 +3789,9 @@
     - pierce
     telegraph: แทงทะลุมิติ!
     power: 20
+  weak_to:
+  - holy
+  - light
 - id: crystal_shard_swarm
   name: ฝูงเศษปริซึม
   level_min: 10
@@ -2329,6 +3819,28 @@
     rate: uncommon
   - item: late_prism_veil
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - lightning
+    telegraph: ฝูงเศษปริซึม เตรียมจู่โจม…
+    power: 14
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 15
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 16
+  role_tag: swarm
+  weak_to:
+  - earth
+  - wind
 - id: crystal_echo_wraith
   name: วิญญาณสะท้อนผลึก
   level_min: 11
@@ -2353,6 +3865,28 @@
     rate: very_rare
   - item: rare_mat
     rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: วิญญาณสะท้อน… เตรียมจู่โจม…
+    power: 15
+  - id: el_holy
+    tags:
+    - holy
+    - magic
+    telegraph: แสงศักดิ์แผ่!
+    power: 16
+  - id: el2_holy
+    tags:
+    - holy
+    - magic
+    telegraph: รัศมีกด!
+    power: 17
+  role_tag: undead
+  weak_to:
+  - physical
+  - holy
 - id: void_rift_mite
   name: ไรรอยแยก
   level_min: 13
@@ -2376,6 +3910,25 @@
     rate: uncommon
   - item: late_void_edge
     rate: very_rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    - physical
+    telegraph: ไรรอยแยก เตรียมจู่โจม…
+    power: 16
+  - id: el_shadow
+    tags:
+    - shadow
+    - magic
+    telegraph: เงากระชาก!
+    power: 17
+    status: poison
+    status_chance: 0.18
+  role_tag: void
+  weak_to:
+  - holy
+  - light
 - id: void_whisperer
   name: กระซิบสุญญะ
   level_min: 14
@@ -2400,6 +3953,28 @@
     rate: very_rare
   - item: scroll_guard_break
     rate: rare
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: กระซิบสุญญะ เตรียมจู่โจม…
+    power: 17
+  - id: el_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: วงเวทร้อง!
+    power: 18
+  - id: el2_arcane
+    tags:
+    - arcane
+    - magic
+    telegraph: พลังเวทรั่ว!
+    power: 19
+  role_tag: void
+  weak_to:
+  - holy
+  - light
 - id: elite_crystal_prism_guard
   name: 【Elite】องครักษ์ปริซึม
   elite: true
@@ -2451,6 +4026,10 @@
     - lightning
     telegraph: ทวนองครักษ์พุ่ง!
     power: 19
+  role_tag: elite
+  weak_to:
+  - earth
+  - wind
 - id: elite_void_null_archon
   name: 【Elite】อาร์คอนศูนย์
   elite: true
@@ -2500,6 +4079,10 @@
     - shadow
     telegraph: มือมืดฉุดจิต!
     power: 18
+  role_tag: elite
+  weak_to:
+  - holy
+  - light
 - id: desert_sand_golem
   name: โกเล็มทราย
   level_min: 9
@@ -2527,3 +4110,550 @@
     rate: rare
   - item: upgrade_mat
     rate: uncommon
+  - item: mid_desert_sand_wrap
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: โกเล็มทราย เตรียมจู่โจม…
+    power: 15
+  - id: el_fire
+    tags:
+    - fire
+    - magic
+    telegraph: เปลวไฟรวมตัว!
+    power: 16
+    status: burn
+    status_chance: 0.22
+  - id: el2_fire
+    tags:
+    - fire
+    - magic
+    telegraph: ความร้อนแผ่!
+    power: 17
+  role_tag: construct
+  weak_to:
+  - arcane
+  - fire
+- id: forest_spore_cap
+  name: เห็ดสปอร์ดง
+  level_min: 3
+  level_max: 7
+  hp_base: 52
+  atk_base: 8
+  elements:
+  - nature
+  - poison
+  xp_mult: 1.1
+  role_tag: plant
+  weak_to:
+  - fire
+  - wind
+  card_id: card_wood_ent
+  card_rate: very_rare
+  drops:
+  - item: herb_bundle
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: upgrade_mat
+    rate: uncommon
+  - item: mid_forest_thorn_blade
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: เห็ดสปอร์ดง เตรียมจู่โจม…
+    power: 8
+  - id: el_poison
+    tags:
+    - poison
+    telegraph: ละอองพิษ!
+    power: 10
+- id: forest_vine_lurker
+  name: เถาวัลย์ซุ่มดง
+  level_min: 4
+  level_max: 8
+  hp_base: 60
+  atk_base: 10
+  elements:
+  - nature
+  - physical
+  xp_mult: 1.15
+  role_tag: plant
+  weak_to:
+  - fire
+  card_rate: very_rare
+  drops:
+  - item: ent_bark
+    rate: common
+  - item: herb_bundle
+    rate: uncommon
+  - item: mid_forest_moss_charm
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: เถาวัลย์ซุ่ม เตรียมจู่โจม…
+    power: 10
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 12
+  card_id: card_goblin_hunter
+- id: cave_echo_bat
+  name: ค้างคาวเสียงสะท้อน
+  level_min: 4
+  level_max: 8
+  hp_base: 44
+  atk_base: 9
+  elements:
+  - wind
+  - shadow
+  xp_mult: 1.08
+  role_tag: beast
+  weak_to:
+  - lightning
+  - holy
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: common
+  - item: potion_hp_small
+    rate: uncommon
+  - item: mid_cave_echo_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - wind
+    telegraph: ค้างคาวเสียง เตรียมจู่โจม…
+    power: 9
+  - id: el_shadow
+    tags:
+    - shadow
+    telegraph: เงากระชาก!
+    power: 11
+  card_id: card_goblin_hunter
+- id: cave_iron_slug
+  name: ทากเหล็กถ้ำ
+  level_min: 5
+  level_max: 9
+  hp_base: 72
+  atk_base: 7
+  elements:
+  - earth
+  - physical
+  xp_mult: 1.12
+  role_tag: brute
+  weak_to:
+  - fire
+  - nature
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  - item: mid_cave_echo_band
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: ทากเหล็กถ้ำ เตรียมจู่โจม…
+    power: 7
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 9
+  card_id: card_goblin_hunter
+- id: ridge_ember_goat
+  name: แพะเถ้าผา
+  level_min: 6
+  level_max: 11
+  hp_base: 58
+  atk_base: 11
+  elements:
+  - fire
+  - physical
+  xp_mult: 1.14
+  role_tag: beast
+  weak_to:
+  - water
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: common
+  - item: mid_ridge_stone_axe
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - fire
+    telegraph: แพะเถ้าผา เตรียมจู่โจม…
+    power: 11
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 13
+  card_id: card_goblin_hunter
+- id: city_ink_specter
+  name: เงาหมึกเมือง
+  level_min: 7
+  level_max: 12
+  hp_base: 55
+  atk_base: 12
+  elements:
+  - shadow
+  - arcane
+  xp_mult: 1.2
+  role_tag: undead
+  weak_to:
+  - holy
+  - light
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - shadow
+    telegraph: เงาหมึกเมือง เตรียมจู่โจม…
+    power: 12
+  - id: el_arcane
+    tags:
+    - arcane
+    telegraph: วงเวทร้อง!
+    power: 14
+  card_id: card_goblin_hunter
+- id: desert_sun_beetle
+  name: ด้วงแดด
+  level_min: 5
+  level_max: 10
+  hp_base: 50
+  atk_base: 10
+  elements:
+  - fire
+  - earth
+  xp_mult: 1.1
+  role_tag: insect
+  weak_to:
+  - water
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: common
+  - item: mid_desert_sun_scimitar
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - fire
+    telegraph: ด้วงแดด เตรียมจู่โจม…
+    power: 10
+  - id: el_earth
+    tags:
+    - earth
+    telegraph: พื้นสั่น!
+    power: 12
+  card_id: card_goblin_hunter
+- id: marsh_willow_haunt
+  name: ต้นหลิวหนอง
+  level_min: 6
+  level_max: 11
+  hp_base: 68
+  atk_base: 9
+  elements:
+  - nature
+  - water
+  xp_mult: 1.18
+  role_tag: plant
+  weak_to:
+  - fire
+  - lightning
+  card_rate: very_rare
+  drops:
+  - item: herb_bundle
+    rate: common
+  - item: upgrade_mat
+    rate: uncommon
+  - item: mid_marsh_reed_spear
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: ต้นหลิวหนอง เตรียมจู่โจม…
+    power: 9
+  - id: el_water
+    tags:
+    - water
+    telegraph: คลื่นซัด!
+    power: 11
+  card_id: card_goblin_hunter
+- id: peak_hail_sprite
+  name: ภูตลูกเห็บ
+  level_min: 10
+  level_max: 16
+  hp_base: 48
+  atk_base: 13
+  elements:
+  - ice
+  - wind
+  xp_mult: 1.22
+  role_tag: spirit
+  weak_to:
+  - fire
+  - lightning
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - ice
+    telegraph: ภูตลูกเห็บ เตรียมจู่โจม…
+    power: 13
+  - id: el_wind
+    tags:
+    - wind
+    telegraph: ลมกรีด!
+    power: 15
+  card_id: card_goblin_hunter
+- id: void_static_mite
+  name: ไรไฟฟ้าแหว่ง
+  level_min: 14
+  level_max: 20
+  hp_base: 46
+  atk_base: 14
+  elements:
+  - lightning
+  - arcane
+  xp_mult: 1.25
+  role_tag: swarm
+  weak_to:
+  - earth
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: uncommon
+  attack_profiles:
+  - id: basic
+    tags:
+    - lightning
+    telegraph: ไรไฟฟ้าแหว่ง เตรียมจู่โจม…
+    power: 14
+  - id: el_arcane
+    tags:
+    - arcane
+    telegraph: วงเวทร้อง!
+    power: 16
+  card_id: card_goblin_hunter
+- id: elite_forest_spore_king
+  name: 【Elite】ราชาสปอร์ดง
+  level_min: 6
+  level_max: 10
+  hp_base: 110
+  atk_base: 15
+  elements:
+  - nature
+  - poison
+  xp_mult: 1.9
+  elite: true
+  rarity: rare
+  intel_tier: 2
+  role_tag: elite
+  weak_to:
+  - fire
+  card_rate: very_rare
+  drops:
+  - item: herb_bundle
+    rate: common
+    qty:
+    - 2
+    - 3
+  - item: upgrade_mat
+    rate: rare
+  - item: mid_forest_bark_mail
+    rate: rare
+    note: เกียร์ mid · elite
+  attack_profiles:
+  - id: basic
+    tags:
+    - nature
+    telegraph: 【Elite】ราชาส เตรียมจู่โจม…
+    power: 15
+  - id: el_poison
+    tags:
+    - poison
+    telegraph: ละอองพิษ!
+    power: 17
+  - id: finisher
+    tags:
+    - nature
+    - poison
+    telegraph: 【Elite】ราช กำลังรวบพลัง…!
+    power: 19
+  card_id: card_goblin_hunter
+- id: elite_cave_iron_matriarch
+  name: 【Elite】ราชินีทากเหล็ก
+  level_min: 8
+  level_max: 13
+  hp_base: 130
+  atk_base: 14
+  elements:
+  - earth
+  - physical
+  xp_mult: 1.95
+  elite: true
+  rarity: rare
+  intel_tier: 2
+  role_tag: elite
+  weak_to:
+  - fire
+  - nature
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: rare
+    qty:
+    - 1
+    - 2
+  - item: mid_cave_echo_band
+    rate: rare
+    note: เกียร์ mid · elite
+  attack_profiles:
+  - id: basic
+    tags:
+    - earth
+    telegraph: 【Elite】ราชิน เตรียมจู่โจม…
+    power: 14
+  - id: el_physical
+    tags:
+    - physical
+    telegraph: พุ่งเข้ามา!
+    power: 16
+  - id: finisher
+    tags:
+    - earth
+    - physical
+    telegraph: 【Elite】ราช กำลังรวบพลัง…!
+    power: 18
+  card_id: card_goblin_hunter
+- id: marsh_firefly_swarm
+  name: ฝูงหิ่งห้อยหนอง
+  level_min: 5
+  level_max: 9
+  hp_base: 42
+  atk_base: 9
+  elements:
+  - light
+  - nature
+  xp_mult: 1.08
+  role_tag: swarm
+  weak_to:
+  - wind
+  - shadow
+  card_rate: very_rare
+  drops:
+  - item: herb_bundle
+    rate: uncommon
+  - item: mid_marsh_leech_ring
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - light
+    telegraph: ฝูงหิ่งห้อยห เตรียมจู่โจม…
+    power: 9
+  - id: el_nature
+    tags:
+    - nature
+    telegraph: เถาวัลย์กระชาก!
+    power: 11
+  card_id: card_goblin_hunter
+- id: city_clockwork_scout
+  name: ลูกเสือเฟืองเมือง
+  level_min: 8
+  level_max: 13
+  hp_base: 64
+  atk_base: 12
+  elements:
+  - physical
+  - lightning
+  xp_mult: 1.2
+  role_tag: construct
+  weak_to:
+  - earth
+  - water
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: common
+    qty:
+    - 1
+    - 2
+  attack_profiles:
+  - id: basic
+    tags:
+    - physical
+    telegraph: ลูกเสือเฟือง เตรียมจู่โจม…
+    power: 12
+  - id: el_lightning
+    tags:
+    - lightning
+    telegraph: ประกายไฟแลบ!
+    power: 14
+  card_id: card_goblin_hunter
+- id: desert_mirage_fox
+  name: จิ้งจอกภาพลวง
+  level_min: 7
+  level_max: 12
+  hp_base: 54
+  atk_base: 12
+  elements:
+  - arcane
+  - wind
+  xp_mult: 1.16
+  role_tag: beast
+  weak_to:
+  - holy
+  card_rate: very_rare
+  drops:
+  - item: upgrade_mat
+    rate: uncommon
+  - item: mid_desert_sand_wrap
+    rate: very_rare
+    note: เกียร์ mid พื้นที่
+  attack_profiles:
+  - id: basic
+    tags:
+    - arcane
+    telegraph: จิ้งจอกภาพลว เตรียมจู่โจม…
+    power: 12
+  - id: el_wind
+    tags:
+    - wind
+    telegraph: ลมกรีด!
+    power: 14
+  card_id: card_goblin_hunter

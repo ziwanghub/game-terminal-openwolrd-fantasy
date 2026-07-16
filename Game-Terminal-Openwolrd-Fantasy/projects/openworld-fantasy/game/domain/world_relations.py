@@ -132,6 +132,16 @@ def adjust_faction(
     except Exception:
         lines = [f"  · {meta['presence']}"]
 
+    # WO-053: personal journal faction gaze
+    try:
+        from game.domain.personal_system import note_faction_story
+
+        # only when score crosses soft band meaningfully
+        if abs(after - before) >= 3 or force_alert:
+            note_faction_story(player, faction_id, warm=rising)
+    except Exception:
+        pass
+
     # soft anima / morale nudge (no numbers)
     if rising and faction_id == FACTION_DIVINE and delta > 0:
         try:

@@ -41,9 +41,9 @@ def test_shop_buy_category_flow():
     reg = DataRegistry.load(DATA_DIR)
     p = create_player(reg, "buyer", "warrior", "เมษ")
     p["money_world"] = 500
-    # B buy -> pick food category (find number dynamically is hard; use shortcut f)
-    # After B: menu shows categories; f = food shortcut, 1 = first food, 0 back, 0 exit
-    io = ScriptedIO(["b", "f", "1", "0", "0"])
+    # B buy -> food (f) -> buy #1 -> stay on list (WO-Shop multi-buy) -> 0 back list
+    # -> 0 back categories -> 0 exit shop
+    io = ScriptedIO(["b", "f", "1", "0", "0", "0"])
     run_shop(p, reg, io, shop_id="traveling_merchant")
     # should have bought something food-like
     ids = p.get("inventory_ids") or []

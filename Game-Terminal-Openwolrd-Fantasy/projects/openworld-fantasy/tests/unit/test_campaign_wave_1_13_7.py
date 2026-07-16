@@ -78,7 +78,8 @@ def test_pack_roster_lines():
     assert any("เลือกเป้า" in x or "พร้อมกัน" in x for x in lines)
 
 
-def test_tutorial_eight_pages_mode_first():
-    # 1.38+: onboarding 8 pages (was 7)
-    assert len(TUTORIAL_PAGES) >= 8
-    assert "โหมด" in "\n".join(TUTORIAL_PAGES[0])
+def test_tutorial_six_pages_soft_intro_first():
+    # Soft Feel rewrite: 6 short pages, page 1 = world/needs intro
+    assert len(TUTORIAL_PAGES) == 6
+    p0 = "\n".join(TUTORIAL_PAGES[0])
+    assert "โลก" in p0 and ("หิว" in p0 or "ขวัญ" in p0)

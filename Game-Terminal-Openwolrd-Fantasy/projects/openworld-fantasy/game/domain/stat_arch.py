@@ -267,6 +267,25 @@ def anima_presence_lines(
         player["_anima_presence_felt"] = True
         if band in ("deep", "steady"):
             player["_self_assess_done"] = True  # allow soft status line
+        # WO-052: anima moment can soft-fuel auto growth (Lv30+)
+        try:
+            from game.domain.auto_growth import is_auto_growth_mode, pulse_auto_growth
+
+            if is_auto_growth_mode(player) and float(meta.get("nudge") or 0) > 0:
+                extra = pulse_auto_growth(
+                    player, "anima", reg=reg, magnitude=0.55
+                )
+                if extra:
+                    lines = list(lines) + extra[:2]
+        except Exception:
+            pass
+        # WO-053: personal journal anima beat
+        try:
+            from game.domain.personal_system import note_anima_story
+
+            note_anima_story(player, str(reason or ""))
+        except Exception:
+            pass
     return lines
 
 
@@ -421,6 +440,16 @@ def self_assess_lines(
             lines.append(f"  · ภาระเรลิก〔{lab}〕กดขวัญ — ไม่ลดจิตวิญญาณตรง ๆ")
     except Exception:
         pass
+    # WO-048/049: grade surface (letter + tier soft after temple)
+    try:
+        from game.domain.stat_grades import grade_self_assess_extra
+
+        lines.append("---")
+        lines.append(" ④ เกรด (soft surface · หลังปลดวิหาร)")
+        for ln in grade_self_assess_extra(player):
+            lines.append(ln if str(ln).startswith(" ") else f" {ln}")
+    except Exception:
+        pass
     # WO-038: world relations soft block
     try:
         from game.domain.world_relations import format_world_relations_soft
@@ -518,34 +547,30 @@ def enemy_assess_lines(
 # ── Soft invest UI (phase 1) ─────────────────────────────────────────────
 
 def format_soft_invest_lines(player: Mapping[str, Any]) -> List[str]:
-    """Replace raw ×N with soft bars + facet feel."""
-    from game.domain.progression import ALLOCATE_KEYS, STAT_LABELS
+    """WO-048/049: Soft P + grade letters/tiers after temple (panel already surfaces)."""
+    try:
+        from game.domain.stat_grades import format_grade_p_panel
 
-    alloc = player.get("stats_alloc") or {}
-    pts = int(player.get("stat_points") or 0)
-    lines = [
-        " แจกแต้มสถานะ",
-        "---",
-        f" แต้มที่ใช้ได้  {pts}",
-        f" อาชีพ          {player.get('occupation') or '-'} · {player.get('occ_rank_title') or '-'}",
-        "---",
-        " ลงแต้มแล้ว “รู้สึก” หนาขึ้น — ไม่โชว์ตัวเลขพลัง",
-    ]
-    for i, k in enumerate(ALLOCATE_KEYS, 1):
-        n = int(alloc.get(k, 0))
-        filled = min(8, max(0, n))
-        dots = "█" * filled + "░" * (8 - filled)
-        feel = soft_facet_label(min(100, n * 12.0 + 10))
-        lines.append(f"  {i}. {STAT_LABELS[k]:<8}  [{dots}]  〔{feel}〕")
+        lines = list(format_grade_p_panel(player))
+    except Exception:
+        from game.domain.progression import ALLOCATE_KEYS, STAT_LABELS
+
+        pts = int(player.get("stat_points") or 0)
+        lines = [
+            " แจกแต้มสถานะ",
+            "---",
+            f" แต้มที่ใช้ได้  {pts}",
+            "---",
+            " ลงแต้มแล้ว “รู้สึก” หนาขึ้น — ไม่โชว์ตัวเลขพลัง",
+        ]
+        for i, k in enumerate(ALLOCATE_KEYS, 1):
+            lines.append(f"  {i}. {STAT_LABELS[k]}")
     lines.append("---")
-    lines.append(" หมายเหตุ")
-    lines.append("  · โจม/กัน/เวท/เร็ว ลงได้อิสระ — ผลอยู่ในไฟต์แบบ soft")
-    lines.append("  · จิตวิญญาณไม่ได้อยู่ในเมนูนี้ (กด V ประเมิน)")
+    lines.append("  · จิตวิญญาณไม่ได้อยู่ในเมนูนี้ (กด V)")
     lines.append("  · โชค = ดวงแผ่ว · แจกตรงไม่ได้")
     try:
         ensure_stat_arch(player)  # type: ignore[arg-type]
         lines.append("---")
-        lines.append(" แกน Core (soft · ประเมินเพื่ออ่านชัดขึ้น)")
         lines.append(
             f"  กาย 〔{soft_facet_label(physical_score(player))}〕 · "
             f"เวท 〔{soft_facet_label(magical_score(player))}〕 · "
@@ -553,32 +578,25 @@ def format_soft_invest_lines(player: Mapping[str, Any]) -> List[str]:
         )
     except Exception:
         pass
-    try:
-        from game.domain.intelligence import format_intel_status_line, ensure_intelligence
-
-        ensure_intelligence(player)  # type: ignore
-        lines.append("---")
-        lines.append(" สติ (ใช้เร่งจังหวะ · คนละชั้นกับจิตวิญญาณ)")
-        lines.append(f"  {format_intel_status_line(player).strip()}")
-    except Exception:
-        pass
     return lines
 
 
 def format_soft_invest_menu_lines(player: Mapping[str, Any]) -> List[str]:
-    from game.domain.progression import ALLOCATE_KEYS, STAT_LABELS
+    try:
+        from game.domain.stat_grades import format_grade_p_menu
 
-    alloc = player.get("stats_alloc") or {}
-    nkeys = len(ALLOCATE_KEYS)
-    lines = [" ลงทุนที่ (soft)", "---"]
-    for i, k in enumerate(ALLOCATE_KEYS, 1):
-        n = int(alloc.get(k, 0))
-        feel = soft_facet_label(min(100, n * 12.0 + 10))
-        lines.append(f"  {i}  {STAT_LABELS[k]:<8}  〔{feel}〕")
-    lines.append("---")
-    lines.append("  0  กลับ")
-    lines.append(f" พิมพ์ 1–{nkeys} แล้วใส่จำนวนแต้ม")
-    return lines
+        return format_grade_p_menu(player)
+    except Exception:
+        from game.domain.progression import ALLOCATE_KEYS, STAT_LABELS
+
+        nkeys = len(ALLOCATE_KEYS)
+        lines = [" ลงทุนที่ (soft)", "---"]
+        for i, k in enumerate(ALLOCATE_KEYS, 1):
+            lines.append(f"  {i}  {STAT_LABELS[k]:<8}")
+        lines.append("---")
+        lines.append("  0  กลับ")
+        lines.append(f" พิมพ์ 1–{nkeys} แล้วใส่จำนวนแต้ม")
+        return lines
 
 
 # ── World relations (phase 3 lite) ───────────────────────────────────────

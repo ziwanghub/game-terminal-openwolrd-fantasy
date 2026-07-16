@@ -252,12 +252,30 @@ def use_bag_entry(player, reg, bag_index) -> notes  # for healing
 ## 7. ความสัมพันธ์ข้อมูล
 
 ```text
-inventory_ids[]  + inventory[]  + inventory_rarities[]   ← ของทั่วไป
-card_bag[]       + card_rarities[]                     ← การ์ด
-equip_ids / sockets / upgrade_levels                   ← สวมอยู่
+inventory_ids[]  + inventory[]  + inventory_rarities[]  + inventory_qty[]  ← ของทั่วไป (1 แถว = 1 ช่อง)
+inventory_items[].qty                                                   ← instance SoT (WO-INV-1)
+card_bag[]       + card_rarities[]                                      ← การ์ด (1 ใบ = 1 ช่อง)
+equip_ids / sockets / upgrade_levels                                    ← สวมอยู่
 ```
 
-sanitize_inventory ยังบังคับ parallel ก่อนเข้า hub ทุกครั้ง
+**WO-INV True stack:** consumable / material / food / healing / sealed chest  
+→ ชนิดเดียวกัน + rarity เดียวกัน = ช่องเดียว มี `qty`  
+→ อุปกรณ์ / เรลิก / quest ไม่ stack  
+
+**Soft cap:** นับ *ช่อง* (`bag_count` = stacks + cards) · เกิน cap แล้วเพิ่มช่องใหม่ไม่ได้  
+(stack เข้ากองเดิมได้แม้เต็ม) · `add_item` / `try_add_item` / ร้านซื้อ เคารพ cap  
+
+**Organize (hub `O`):** `bag_organize.organize_bag` — collapse stack แล้วเรียง หมวด → rarity → ชื่อ  
+
+**Bulk sell (ร้าน 2 ขาย):**  
+- `B` = ขายทั้งหมวด (ทั้ง stack)  
+- `C` = ขายเฉพาะ common ในหมวด  
+- `J` = ขายขยะ common ทั้งกระเป๋า  
+→ ยืนยัน y/n · ไม่ขายเรลิก / unique / หีบ / เกียร์ rare+  
+
+**Relic tab (hub `R`):** แยกจากอุปกรณ์ · `divine_burden` / `relic_*`  
+
+sanitize_inventory ยังบังคับ parallel + collapse stack ก่อนเข้า hub
 
 ---
 

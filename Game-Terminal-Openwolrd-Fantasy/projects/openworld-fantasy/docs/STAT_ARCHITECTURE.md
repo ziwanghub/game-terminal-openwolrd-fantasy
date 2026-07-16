@@ -3,7 +3,7 @@
 | ฟิลด์ | ค่า |
 |--------|-----|
 | **WO** | WO-035 |
-| **สถานะ** | … · WO-046 Synergy · **WO-047 Human Feedback + Feel Polish · DNA lock** @ 1.94 |
+| **สถานะ** | … · WO-047 Feel · **WO-048 Hidden Grade + Temple Unlock** @ 1.95 |
 | **หลัก** | 3 Layer · map ของเดิม · ไม่ rewrite ครั้งเดียว · soft DNA |
 
 ---
@@ -332,7 +332,113 @@ Soft Alert: `world.synergy_*` · `anima.synergy_*`
 
 DNA หลัก (Needs · Anima · Bond/Chorus · Moments · Foresight · Synergy · Auto) **ถือว่าล็อกแนวทาง** — ขยาย content/ soft layer ถัดไปได้โดยไม่ rewrite
 
+### 0.17 Hidden Grade + Temple (WO-048)
+
+| ชั้น | รหัส | เปิดเผย |
+|------|------|---------|
+| เกรดรวม | `player_grade` F–SSS | หลังวิหารปลด |
+| เกรดแกน | โจมตี/กัน/เวท/เร็ว | หลังวิหาร · ตัวอักษร + soft คำ |
+| growth_profile | สมดุล / เฉพาะ / ผสม | ส่งผลอัตราเติบโตแกน |
+
+| วิหาร | |
+|--------|--|
+| เงื่อนไข | `level ≥ 10` + soft ตัน (แต้ม≥5 / kills≥8 / pressure / lv≥12) |
+| UX | ตัวละคร **W** · ใบ้สนามเมื่อตัน |
+| ผล | ปลดเกรด · โชว์ตัวอักษร · **ยังไม่ตัด P** |
+
+| Soft P | `โจมตี (นักฝึก) F` หลังปลด · ก่อนปลด soft อย่างเดียว |
+| เอกสารล็อก | [`STAT_GRADES_LOCK.md`](STAT_GRADES_LOCK.md) |
+| โมดูล | `game/domain/stat_grades.py` |
+
+**นอกขอบเขต 048:** ตัด P@30 · appraisal S–SSS · damage volatility
+
+### 0.18 Grade Surface + Tier Soft (WO-049)
+
+| ชิ้น | |
+|------|--|
+| Soft Tier | ขั้นต้น / ขั้นกลาง / ขั้นปลาย / พิเศษ ภายในแบนด์เกรด |
+| Grade Surface | Status · Personal hub · V · เมนู P หลังปลดวิหาร |
+| เกรดรวม soft | นักฝึก → เสี้ยวเทพ (คู่ตัวอักษร) |
+| แกน surface | `โจมตี (นักรบฝึกหัด) C · ขั้นต้น` |
+| growth | ยังใช้ `player_grade` × `growth_profile` (ไม่ตัด P) |
+
+| UI | compact hub / overview · full บน Status+V |
+| เอกสาร | [`STAT_GRADES_LOCK.md`](STAT_GRADES_LOCK.md) §2.1–2.2 · §7.1 |
+| Harness | `scripts/wo049_grade_surface_playtest.py` |
+
+**นอกขอบเขต 049:** ตัด P@30 · Appraisal S–SSS เต็ม · Damage volatility / weakness
+
+### 0.19 Damage Pipeline v1 (WO-050)
+
+| ชิ้น | |
+|------|--|
+| Adapter | `game/domain/damage_pipeline.py` — outbound / inbound / monster raw |
+| Wrappers | `combat.player_attack_damage` · `apply_incoming_damage` · `monster_raw_damage` |
+| Grade soft | player_grade + axis (+ tier) mult เบา · clamp outbound 0.85–1.18 |
+| Presence | Anima / burden / bond flag เบา |
+| Soft log | รู้สึกได้ · ไม่โชว์สูตร |
+| Backend | สูตรเดิมยังอยู่ — pipeline ห่อ |
+
+| เอกสาร | [`DAMAGE_PIPELINE.md`](DAMAGE_PIPELINE.md) |
+| Harness | `scripts/wo050_damage_pipeline_playtest.py` |
+
+**นอกขอบเขต 050:** weakness recipes · SSS volatility · Appraisal เต็ม · ตัด P@30
+
+### 0.20 Appraisal Skill S–SSS (WO-051)
+
+| ชิ้น | |
+|------|--|
+| โมดูล | `game/domain/appraisal.py` |
+| สกิล | `soft_appraise` 「อ่านชั้น」 |
+| S | ตัวอักษร + tier soft (ตัวเอง/ศัตรู) |
+| SS | + จุดอ่อน soft ธาตุ |
+| SSS | + Soft Recipe 1–2 สาย |
+| UX | V ตัวละคร · I ไฟต์ · seed จากวิหาร |
+| เอกสาร | [`APPRAISAL_GUIDE.md`](APPRAISAL_GUIDE.md) |
+
+**นอกขอบเขต 051:** ตัด P@30 · weakness recipes เต็มใน combat · resource ใหม่
+
+### 0.21 Automatic Growth + Cut P @30 (WO-052)
+
+| ชิ้น | |
+|------|--|
+| เกต | `AUTO_GROWTH_LEVEL = 30` |
+| ก่อน 30 | Soft P ลงแต้มได้ · Lv28–29 ใบ้พลังอั้น |
+| หลัง 30 | ไม่รับแต้ม P · residual phase-out · auto pulse |
+| แหล่งโต | level · quest · combat · anima · relic soft |
+| เกรด | player_grade rate × growth_profile tilt |
+| UI | เมนู P = “พลังไหลเวียนเอง” |
+| โมดูล | `game/domain/auto_growth.py` |
+| เอกสาร | [`GROWTH_GUIDE.md`](GROWTH_GUIDE.md) |
+
+**นอกขอบเขต 052:** weakness recipes · volatility · resource ใหม่ · rewrite combat
+
+### 0.22 Personal System Full (WO-053)
+
+| ชิ้น | |
+|------|--|
+| Panel | 「เรื่องของฉัน」 — V ใน Personal Hub |
+| รวม | เกรด · Appraisal · Anima · Relic/Bond · Faction · Growth · Journal |
+| Journal | soft events วิหาร / โต / Anima / เรลิก / สายตาโลก |
+| โมดูล | `game/domain/personal_system.py` |
+| เอกสาร | [`PERSONAL_SYSTEM_GUIDE.md`](PERSONAL_SYSTEM_GUIDE.md) |
+
+**นอกขอบเขต 053:** weakness recipes เต็ม · appraisal เฉลยสูตร · resource ใหม่ · online
+
+### 0.23 Soft Combat Identity + Weakness Lite (WO-054)
+
+| ชิ้น | |
+|------|--|
+| Identity | เกรด · bond · faction · anima → pre-fight / hit soft + mult เบา |
+| Weakness Lite | หลัง Appraisal SS+ · ใบ้ soft + micro mult ธาตุตรง |
+| โมดูล | `game/domain/combat_identity.py` |
+| ผูก | damage_pipeline · combat_session · auto_farm |
+| เอกสาร | [`COMBAT_IDENTITY_GUIDE.md`](COMBAT_IDENTITY_GUIDE.md) |
+
+**นอกขอบเขต 054:** recipes เต็ม · fusion อัตโนมัติ · appraisal เฉลยสูตร · resource ใหม่
+
 ---
+
 
 ## เฟส implement
 
@@ -371,3 +477,4 @@ DNA หลัก (Needs · Anima · Bond/Chorus · Moments · Foresight · Syner
 | 2026-07-16 | WO-045 Playtest Polish · DNA lock lite · foresight/moment/equip tone |
 | 2026-07-16 | WO-046 Relic × Moment/Area Soft Synergy lite |
 | 2026-07-16 | WO-047 Human Feedback round · feel polish · DNA lock |
+| 2026-07-16 | WO-048 Hidden Grade + Temple unlock + Soft P grades |

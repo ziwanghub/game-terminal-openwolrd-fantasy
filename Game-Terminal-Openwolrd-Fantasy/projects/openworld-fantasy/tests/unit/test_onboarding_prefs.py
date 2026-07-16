@@ -23,19 +23,21 @@ def _blob() -> str:
 
 
 def test_tutorial_mode_shell_pages():
-    assert len(TUTORIAL_PAGES) >= 7
+    # Soft Feel 6-page tutorial (DNA: feel first, not command dump)
+    assert len(TUTORIAL_PAGES) == 6
     blob = _blob()
     for key in (
-        "โหมด",
-        "ตัวละคร",
-        "ร้าน",
-        "ATB",
-        "แท่ง",
-        "ตลาด",
-        "กระดาน",
-        "สติ",
-        "sw001",
+        "หิว",
+        "ล้า",
+        "ขวัญ",
+        "จิตวิญญาณ",
+        "Anima",
+        "Mini-Moment",
         "5 หรือ I",
+        "เรลิก",
+        "ภาระ",
+        "ห้องทดสอบ",
+        "Auto",
     ):
         assert key in blob, f"missing onboarding keyword: {key}"
 
@@ -48,12 +50,13 @@ def test_help_mentions_market_board_modes():
 
 
 def test_show_tutorial_scripted_pages():
-    # 7 pages → 7 Enter
-    io = ScriptedIO([""] * 10)
+    # 6 soft pages → 6 Enter
+    io = ScriptedIO([""] * 8)
     show_tutorial(io)
     out = io.joined()
-    assert "บทเรียน 1/" in out
-    assert "บทเรียน 7/" in out or "โหมด" in out
+    assert "บทเรียน 1/6" in out
+    assert "บทเรียน 6/6" in out
+    assert "ยินดีต้อนรับ" in out or "ลองเล่น" in out
 
 
 def test_show_help_scripted():

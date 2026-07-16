@@ -101,13 +101,15 @@ def summarize_chest_ranks(
     """
     from game.domain.equipment import item_by_id
 
+    from game.domain.bag_stack import qty_at
+
     counts: Dict[str, int] = {}
-    for iid in player.get("inventory_ids") or []:
+    for i, iid in enumerate(player.get("inventory_ids") or []):
         it = item_by_id(reg, str(iid)) or {}
         if not is_chest_item(it):
             continue
         rid = chest_rank_from_item(it)
-        counts[rid] = counts.get(rid, 0) + 1
+        counts[rid] = counts.get(rid, 0) + qty_at(player, i)
     ordered = sorted(counts.items(), key=lambda kv: rank_order_index(kv[0]), reverse=True)
     return ordered
 

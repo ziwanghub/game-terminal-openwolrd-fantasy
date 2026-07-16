@@ -333,6 +333,18 @@ def _handle_sight(
             io.write_line(f"  …สายตาโลกจาง ({e})")
         return
 
+    # WO-Shop-5: shop reputation soft events
+    if kind == "shop_rep_event":
+        try:
+            from game.domain.shop_rep_content import run_shop_rep_event_menu
+
+            io.write_line()
+            io.write_line(f"── {sight.get('label') or 'เหตุการณ์ร้าน'} ──")
+            run_shop_rep_event_menu(player, sight, io, reg=reg)
+        except Exception as e:
+            io.write_line(f"  …เหตุการณ์ร้านจาง ({e})")
+        return
+
     if kind == "companion":
         emit_narrative(io, narrate_field(reg, "party_recruit", rng, name=sight.get("label")))
         io.write_line(f"\nเข้าหา: {sight.get('label')} ({sight.get('hint')})")

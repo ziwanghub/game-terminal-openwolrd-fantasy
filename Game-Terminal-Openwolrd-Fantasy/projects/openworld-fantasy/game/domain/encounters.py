@@ -166,6 +166,16 @@ def build_sights(
     except Exception:
         pass
 
+    # WO-Shop-5: soft shop reputation events
+    try:
+        from game.domain.shop_rep_content import roll_shop_rep_event_sight
+
+        se = roll_shop_rep_event_sight(player, rng, area_id=area_id)
+        if se:
+            sights.append(se)
+    except Exception:
+        pass
+
     rng.shuffle(sights)
     sights = sights[: max(1, count)]
     assign_sight_handles(sights)
@@ -187,6 +197,7 @@ def assign_sight_handles(sights: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         "player": "pl",
         "echo": "pl",
         "faction_moment": "fm",
+        "shop_rep_event": "sr",
     }
     for s in sights:
         kind = str(s.get("kind") or "x")

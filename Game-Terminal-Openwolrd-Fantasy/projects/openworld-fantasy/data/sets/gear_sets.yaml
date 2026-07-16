@@ -1,102 +1,141 @@
-# Set bonuses: active when player has enough matching set_id pieces
-# EL5: pieces count across all equip slots (main_hand/body/head/…)
-# partial pieces (< required) grant soft fractional bonuses only
 - id: iron_legion
   name: กองทัพเหล็ก
   pieces_required: 2
   bonuses:
     atk: 4
     max_hp: 20
-  flavor: "เกราะและดาบเหล็กสั่นพ้อง — แนวรบมั่นคง"
-
+  flavor: เกราะและดาบเหล็กสั่นพ้อง — แนวรบมั่นคง
 - id: shadow_veil
   name: ผ้าคลุมเงา
   pieces_required: 2
   bonuses:
     atk: 6
     pressure: 8
-  grant_tags: [shadow]
-  flavor: "เงากลืนแสง — โจมตีคมขึ้น"
-
+  grant_tags:
+  - shadow
+  flavor: เงากลืนแสง — โจมตีคมขึ้น
 - id: arcane_scholar
   name: นักปราชญ์อาร์เคน
   pieces_required: 2
   bonuses:
     max_mana: 25
     atk: 3
-  grant_tags: [arcane]
-  grant_skills: [magic_missile]
-  flavor: "มานาไหลเวียน — เวทย์ตอบสนอง"
-
+  grant_tags:
+  - arcane
+  grant_skills:
+  - magic_missile
+  flavor: มานาไหลเวียน — เวทย์ตอบสนอง
 - id: thorn_king
   name: ราชันย์หนาม (บอสเซ็ต)
   pieces_required: 2
   bonuses:
     atk: 8
     max_hp: 30
-  grant_tags: [nature]
-  flavor: "พลังราชันย์เถื่อนยังหลงเหลือในชุดเกียร์"
-
+  grant_tags:
+  - nature
+  flavor: พลังราชันย์เถื่อนยังหลงเหลือในชุดเกียร์
 - id: stone_bulwark
   name: ป้อมหินไททัน
   pieces_required: 2
   bonuses:
     max_hp: 35
     atk: 3
-  flavor: "หินยังจำแรงกระแทก — ร่างกายอึดขึ้น"
-
+  flavor: หินยังจำแรงกระแทก — ร่างกายอึดขึ้น
 - id: umbra_court
   name: ราชสำนักอัมบรา
   pieces_required: 2
   bonuses:
     atk: 5
     pressure: 6
-  grant_tags: [shadow]
-  flavor: "เงาราชินียังเกาะเกียร์"
-
+  grant_tags:
+  - shadow
+  flavor: เงาราชินียังเกาะเกียร์
 - id: sun_scourge
   name: ภัยพิบัติสุริยะ
   pieces_required: 2
   bonuses:
     atk: 10
     max_hp: 15
-  grant_tags: [fire]
-  flavor: "แสงแผดเผา — คมไฟตื่น"
-
+  grant_tags:
+  - fire
+  flavor: แสงแผดเผา — คมไฟตื่น
 - id: mist_hydra
   name: เกล็ดไฮดราหมอก
   pieces_required: 2
   bonuses:
     max_hp: 28
     max_mana: 12
-  grant_tags: [water]
-  flavor: "หัวที่ถูกตัดยังงอกในเกียร์"
-
+  grant_tags:
+  - water
+  flavor: หัวที่ถูกตัดยังงอกในเกียร์
 - id: prism_court
   name: ราชสำนักปริซึม
   pieces_required: 2
   bonuses:
     max_mana: 30
     atk: 4
-  grant_tags: [arcane, lightning]
-  flavor: "แสงหักเห — มานาสว่าง"
-
+  grant_tags:
+  - arcane
+  - lightning
+  flavor: แสงหักเห — มานาสว่าง
 - id: void_herald
   name: ตราผู้ประกาศสุญญะ
   pieces_required: 2
   bonuses:
     atk: 8
     max_mana: 18
-  grant_tags: [shadow, arcane]
-  flavor: "เสียงประกาศจากรอยแยก"
-
+  grant_tags:
+  - shadow
+  - arcane
+  flavor: เสียงประกาศจากรอยแยก
 - id: ruin_oracle
   name: ตำราพยากรณ์ซาก
   pieces_required: 2
   bonuses:
     max_mana: 22
     max_hp: 12
-  grant_tags: [arcane, holy]
-  grant_skills: [magic_missile]
-  flavor: "คำทำนายแผ่วในหู"
-
+  grant_tags:
+  - arcane
+  - holy
+  grant_skills:
+  - magic_missile
+  flavor: คำทำนายแผ่วในหู
+- id: forest_thorn
+  name: หนามดง
+  pieces_required: 2
+  bonuses:
+    atk: 3
+    max_hp: 15
+    element_bias: nature
+  flavor: เปลือกและหนามสั่นพ้อง — แนวดง
+- id: cave_shade
+  name: เงาถ้ำ
+  pieces_required: 2
+  bonuses:
+    atk: 2
+    max_mana: 12
+    element_bias: shadow
+  flavor: เงาถ้ำเกาะตัว — แนวมืดเบา
+- id: desert_sun
+  name: แดดทะเลทราย
+  pieces_required: 2
+  bonuses:
+    atk: 4
+    element_bias: fire
+  flavor: ความร้อนแผ่ — แนวไฟเบา
+- id: marsh_mist
+  name: หมอกหนอง
+  pieces_required: 2
+  bonuses:
+    max_hp: 18
+    mdef: 4
+    element_bias: water
+  flavor: หมอกชื้นห่อหุ้ม — แนวน้ำ/ธรรมชาติ
+- id: ridge_stone
+  name: หินผา
+  pieces_required: 2
+  bonuses:
+    def: 5
+    max_hp: 12
+    element_bias: earth
+  flavor: หินหนักมั่น — แนวดิน

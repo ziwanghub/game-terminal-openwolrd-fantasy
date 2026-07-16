@@ -877,3 +877,19 @@
     require_level: 12
     cost_world: 140
     cost_hell: 1
+
+# WO-051 Appraisal — soft read skill (no damage)
+- id: soft_appraise
+  name: อ่านชั้น
+  slot: support
+  cost_mana: 6
+  power: 0
+  elements: [arcane]
+  combo_ok: false
+  tree: common
+  tier: 1
+  tags: [appraisal, soft, utility]
+  learn:
+    method: [self, temple]
+    require_level: 8
+  soft_desc: ประเมินชั้นพลังแบบ soft — ไม่โชว์ตัวเลข

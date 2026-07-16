@@ -145,11 +145,19 @@ def relationship_bar(score: int, width: int = 8) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
+# WO-PARTY-4: soft ceiling — high bond assists often, never "always"
+ASSIST_CHANCE_SOFT_CAP = 0.90
+# Soft mult clamp for assist damage (lighter than full player pipeline)
+ASSIST_PIPE_CLAMP = (0.88, 1.12)
+# Soft per-member damage ceiling vs base (anti runaway with 3 max bond)
+ASSIST_HIT_SOFT_CAP_MULT = 2.4
+
+
 def assist_chance_from_relationship(score: int) -> float:
     """Higher relationship → more frequent auto-assist (no player button)."""
     s = max(0, min(100, int(score)))
-    # ~28% at 0 · ~55% at 40 · ~78% at 70 · ~94% at 100
-    return max(0.22, min(0.96, 0.28 + s / 100.0 * 0.66))
+    # ~28% at 0 · ~55% at 40 · ~78% at 70 · ~90% soft-cap at 100 (WO-PARTY-4)
+    return max(0.22, min(ASSIST_CHANCE_SOFT_CAP, 0.28 + s / 100.0 * 0.66))
 
 
 def assist_chance_for_member(
@@ -159,6 +167,7 @@ def assist_chance_for_member(
 ) -> float:
     """
     WO-035.3: relationship primary + luck soft multiplier.
+    WO-PARTY-4: soft-capped so bond 100 is not near-guaranteed every turn.
     Still no raw % shown to player.
     """
     rel = get_relationship(player, member_id, member)
@@ -166,7 +175,66 @@ def assist_chance_for_member(
     luck = float(player.get("luck_score") or 0.0)
     # WO-036: luck soft only ±~6% relative — relationship stays primary
     mult = 1.0 + max(-0.08, min(0.08, luck * 0.22))
-    return max(0.20, min(0.96, base * mult))
+    return max(0.20, min(ASSIST_CHANCE_SOFT_CAP, base * mult))
+
+
+def assist_pipeline_mult(
+    player: Mapping[str, Any],
+    mon: Optional[Mapping[str, Any]] = None,
+    reg: Optional[Any] = None,
+    *,
+    kind: str = "beast",
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    WO-PARTY-4 Assist Pipeline Lite.
+
+    Soft mult only — grade (outbound) + combat identity + kind lean.
+    Does not rewrite full combat; no formula dump to player.
+    """
+    meta: Dict[str, Any] = {"source": "assist_lite"}
+    mult = 1.0
+    # Grade soft (same table spirit as damage_pipeline, full weight OK — already mild)
+    try:
+        from game.domain.damage_pipeline import grade_outbound_mult
+
+        dmg_class = "arcane" if str(kind) in ("spirit", "heaven_god") else "physical"
+        g_m, g_meta = grade_outbound_mult(player, dmg_class)
+        # Assist uses half the grade edge (party is support, not main carry)
+        edge = 1.0 + (float(g_m) - 1.0) * 0.55
+        mult *= edge
+        meta["grade"] = round(edge, 4)
+        meta["grade_revealed"] = bool(g_meta.get("revealed"))
+    except Exception:
+        pass
+    # Combat identity soft (tiny)
+    try:
+        from game.domain.combat_identity import identity_outbound_mult
+
+        area = ""
+        if reg is not None:
+            area = str(player.get("location") or "")
+        i_m, i_meta = identity_outbound_mult(player, mon=mon, area_id=area)
+        # half identity edge
+        i_edge = 1.0 + (float(i_m) - 1.0) * 0.50
+        mult *= i_edge
+        meta["identity"] = round(i_edge, 4)
+        if i_meta:
+            meta["id_keys"] = list(i_meta.keys())[:4]
+    except Exception:
+        pass
+    # Soft mon toughness (elite/boss slightly resist raw assist spam)
+    if mon is not None:
+        if mon.get("boss"):
+            mult *= 0.92
+            meta["mon"] = "boss"
+        elif mon.get("elite"):
+            mult *= 0.96
+            meta["mon"] = "elite"
+    # Clamp
+    lo, hi = ASSIST_PIPE_CLAMP
+    mult = max(lo, min(hi, float(mult)))
+    meta["final"] = round(mult, 4)
+    return mult, meta
 
 
 def _gift_like_tags_for_member(member: Mapping[str, Any], reg: Optional[DataRegistry] = None) -> List[str]:
@@ -289,7 +357,12 @@ def give_item_gift(
     member_index: int,
     inv_index: int,
 ) -> List[str]:
-    """Give inventory item to party member — builds/hides relationship."""
+    """
+    Give inventory item to party member — builds/hides relationship.
+
+    WO-PARTY-3: remove exactly **1 unit** from a stack (True Stack safe).
+    Does not strip the whole slot when qty > 1.
+    """
     ensure_party(player)
     party = list(player.get("party") or [])
     if member_index < 0 or member_index >= len(party):
@@ -301,14 +374,42 @@ def give_item_gift(
     mid = str(m.get("id"))
     iid = str(ids[inv_index])
     it = dict((reg.items or {}).get(iid) or {"id": iid, "name": iid})
-    # remove item
+    # WO-PARTY-3: one unit only (stack-aware)
+    removed = None
     try:
-        from game.domain.rarity import remove_inventory_at_index
+        from game.domain.bag_stack import qty_at, remove_units_at
 
-        remove_inventory_at_index(player, inv_index, reg)
+        have = qty_at(player, inv_index)
+        if have < 1:
+            return ["ไม่มีของช่องนั้น"]
+        removed = remove_units_at(player, inv_index, reg, amount=1)
     except Exception:
-        ids.pop(inv_index)
-        player["inventory_ids"] = ids
+        removed = None
+    if not removed:
+        # fallback: single non-stack slot
+        try:
+            from game.domain.rarity import remove_inventory_at_index
+
+            ids_now = list(player.get("inventory_ids") or [])
+            if inv_index < 0 or inv_index >= len(ids_now):
+                return ["ไม่มีของช่องนั้น"]
+            if str(ids_now[inv_index]) != iid:
+                # index shifted — re-find first matching id
+                try:
+                    inv_index = ids_now.index(iid)
+                except ValueError:
+                    return ["ของหายไปแล้ว"]
+            popped = remove_inventory_at_index(player, inv_index, reg)
+            if not popped:
+                return ["ไม่มีของช่องนั้น"]
+            removed = (str(popped[0]), str(popped[1]), 1)
+        except Exception:
+            ids = list(player.get("inventory_ids") or [])
+            if inv_index < 0 or inv_index >= len(ids):
+                return ["ไม่มีของช่องนั้น"]
+            ids.pop(inv_index)
+            player["inventory_ids"] = ids
+            removed = (iid, "common", 1)
     tier, delta, soft = evaluate_gift(m, iid, it, reg)
     # value bonus
     price = int(it.get("price_world") or 0)
@@ -321,12 +422,33 @@ def give_item_gift(
     notes = [
         f"คุณยื่น「{iname}」ให้ {name}",
         f" {soft}",
-        f" ความสัมพันธ์ [{relationship_bar(after)}] {soft_relationship_label(after)}",
+        f" สัมพันธ์สหาย [{relationship_bar(after)}] {soft_relationship_label(after)}",
     ]
     if after > before + 10:
         notes.append(" …รู้สึกใกล้ชิดขึ้นชัดเจน")
     elif after < before:
         notes.append(" …บรรยากาศเย็นลงนิด")
+    # WO-PARTY-5: sharing food soft-eases player hunger (companions "share the meal")
+    try:
+        from game.domain.needs import apply_food_relief, is_food_item
+
+        if is_food_item(it):
+            hr = max(4, min(14, int(it.get("hunger_relief") or 12) // 3))
+            fr = max(0, min(4, int(it.get("fatigue_relief") or 2) // 2))
+            mb = max(1, min(5, int(it.get("morale_boost") or 3) // 2))
+            soft_n = apply_food_relief(
+                player,
+                hunger_relief=hr,
+                fatigue_relief=fr,
+                morale_boost=mb,
+                silent=True,
+            )
+            notes.append(" …แบ่งคำ — ท้อง/ขวัญเบาขึ้นนิด")
+            for sn in soft_n[:1]:
+                if sn and "สถานะ" not in sn:
+                    notes.append(f" {sn}")
+    except Exception:
+        pass
     return notes
 
 
@@ -373,7 +495,7 @@ def give_money_gift(
     return [
         f"คุณมอบ{label} {amt} ให้ {m.get('name')}",
         f" {msg}",
-        f" ความสัมพันธ์ [{relationship_bar(after)}] {soft_relationship_label(after)}",
+        f" สัมพันธ์สหาย [{relationship_bar(after)}] {soft_relationship_label(after)}",
     ]
 
 
@@ -418,11 +540,12 @@ def format_party_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str
     ensure_party(player)  # type: ignore
     mx = max_party_size(reg)
     lines = [f"── ปาร์ตี้ ({party_size(player)}/{mx}) ──"]
+    lines.append("  (สัมพันธ์สหาย ≠ เรโซแนนซ์เรลิก)")
     party = list(player.get("party") or [])
     if not party:
         lines.append("  ว่าง — ต้องได้รับการยอมรับจึงร่วมทีมได้")
         lines.append("  เงาในโลกอาจยื่นมือมาเมื่อคุณเดินทาง/สำรวจ…")
-        lines.append("  ความสัมพันธ์สร้างด้วยของขวัญ/ของมีค่า (ชอบอะไร — สังเกตเอง)")
+        lines.append("  สร้างสัมพันธ์สหายด้วยของขวัญ/ของมีค่า (ชอบอะไร — สังเกตเอง)")
         known = list(player.get("party_known") or [])
         if known:
             lines.append(f"  สหายที่เคยร่วมทาง: {len(known)} ตน — Y เชิญกลับได้")
@@ -437,14 +560,21 @@ def format_party_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str
         rlab = m.get("rarity_label") or m.get("rarity") or ""
         rbit = f" · {rlab}" if rlab else ""
         lines.append(f"  {i}. {name} · {kind}{rbit}")
-        lines.append(f"     สัมพันธ์ [{bar}] {soft} ({rel})")
+        # WO-PARTY-6: explicit สัมพันธ์สหาย label (no raw score in soft UI)
+        lines.append(f"     สัมพันธ์สหาย [{bar}] {soft}")
+        try:
+            from game.domain.appraisal import format_party_appraisal_blurb
+
+            lines.append(f"     {format_party_appraisal_blurb(player, m, reg)}")
+        except Exception:
+            pass
         if m.get("flavor"):
             lines.append(f"     “{m.get('flavor')}”")
-    lines.append("  ไฟต์: ช่วยโจมตีอัตโน (โอกาสตามสัมพันธ์) · ไม่เสียมานา/เงิน")
-    lines.append("  Y: ของขวัญ/เงินมีค่า เพิ่มสัมพันธ์ · ชอบอะไร — สังเกตปฏิกิริยา")
+    lines.append("  ไฟต์: ซุ่มช่วยอัตโน (โอกาสตามสัมพันธ์สหาย) · ไม่เสียมานา/เงิน")
+    lines.append("  Y: ของขวัญ · อ่านสหาย (soft) · เชิญกลับ")
     known_n = len(player.get("party_known") or [])
     if known_n:
-        lines.append(f"  รู้จักสหาย {known_n} ตน — เชิญกลับได้ (นอกทีมสัมพันธ์ลดช้ามาก)")
+        lines.append(f"  รู้จักสหาย {known_n} ตน — เชิญกลับได้ (นอกทีม bond ลดช้ามาก)")
     if player.get("unit_class_id"):
         from game.domain.unit_system import soft_mastery_label
 
@@ -567,6 +697,8 @@ def member_from_template(
         "name": template.get("name"),
         "kind": kind,
         "source": "template",
+        "template_id": str(template.get("id")),
+        "role": str(template.get("role") or template.get("assist_role") or ""),
         "rarity": rid,
         "rarity_label": rarity_label(reg, rid) if reg else rid,
         "bonus_atk": scale_stat(base_atk, rid, reg),
@@ -714,13 +846,13 @@ def call_party_power(
         player["_party_focus_used"] = True
         adjust_relationship(player, mid, 1)
         msg = (
-            f"「{name}」[{bar}] {lab} — ซุ่มช่วยอัตโนตามสัมพันธ์ · "
+            f"「{name}」สัมพันธ์สหาย [{bar}] {lab} — ซุ่มอัตโน · "
             f"โฟกัสเบา (ไม่เสียมานา/เงิน)"
         )
         return True, msg, bonuses
     msg = (
-        f"「{name}」[{bar}] {lab} — ช่วยโจมตีเองเมื่อจังหวะถึง "
-        f"(โอกาสตามสัมพันธ์ · ไม่กด · ไม่เสียทรัพยากร)"
+        f"「{name}」สัมพันธ์สหาย [{bar}] {lab} — ช่วยเมื่อจังหวะถึง "
+        f"(ตาม bond สหาย · ไม่กด · ไม่เสียทรัพยากร)"
     )
     return True, msg, bonuses
 
@@ -744,18 +876,31 @@ def party_member_turns(
 ) -> List[str]:
     """
     Soft full party turns after the player acts.
-    Each member may: โจมตี · รักษา · บัฟเบา — เลือกตาม kind + สถานการณ์ (ไม่โชว์สูตร).
+    WO-PARTY-7: Priority Decision Engine (heal/cleanse/attack/buff) + soft fail.
+    Same path for Auto Play.
     """
+    from game.domain.companion_decision_engine import (
+        ACT_ATTACK,
+        ACT_BUFF,
+        ACT_CLEANSE,
+        ACT_HEAL,
+        ACT_WAIT,
+        decide,
+        success_chance,
+    )
+
     notes: List[str] = []
     party = list(player.get("party") or [])
     if not party or int(mon.get("hp", 0)) <= 0:
         return notes
-    bonds = player.get("party_bonds") or {}
-    notes.append("  ── ซุ่มช่วย (ตามสัมพันธ์) ──")
+    notes.append("  ── ซุ่มช่วย (ตามสัมพันธ์สหาย) ──")
     acted_any = False
+    team_cleansed = False  # at most one cleanse attempt success per player turn
     for m in party:
         if int(mon.get("hp", 0)) <= 0:
             break
+        if not isinstance(m, dict):
+            continue
         mid = str(m.get("id"))
         rel = get_relationship(player, mid, m)
         try:
@@ -768,31 +913,85 @@ def party_member_turns(
         name = m.get("name") or mid
         kind = str(m.get("kind") or "")
         base = max(1, int(m.get("bonus_atk") or 2))
-        # relationship scales assist power ~0.85–1.45
         rel_pow = 0.85 + (rel / 100.0) * 0.60
-        hp_ratio = int(player.get("hp") or 0) / max(1, int(player.get("max_hp") or 1))
         mon_ratio = int(mon.get("hp") or 0) / max(1, int(mon.get("max_hp") or 1))
-        action = "attack"
-        if hp_ratio < 0.30:
-            if kind in ("spirit", "heaven_god", "heaven_beast", "player") or rng.random() < 0.55:
-                action = "heal"
-            else:
-                action = "attack"
-        elif kind in ("spirit", "heaven_god", "heaven_beast") and hp_ratio < 0.45:
-            action = "heal"
-        elif kind in ("spirit",) and rng.random() < 0.35:
-            action = "heal"
-        elif mon_ratio <= 0.22 and (mon.get("elite") or mon.get("boss") or mon_ratio <= 0.15):
-            action = "attack"
-        elif kind in ("player", "beast", "hell_beast", "hell_god") or rng.random() < 0.7:
-            action = "attack"
-        else:
-            action = "buff"
-        finish_mult = 1.0
-        if action == "attack" and mon_ratio <= 0.25:
-            finish_mult = 1.12 + (0.08 if mon.get("elite") or mon.get("boss") else 0.0)
 
-        if action == "heal":
+        decision = decide(
+            player,
+            mon,
+            m,
+            bond=rel,
+            reg=reg,
+            team_cleansed_this_round=team_cleansed,
+        )
+        action = str(decision.action or ACT_ATTACK)
+        if action == ACT_WAIT:
+            notes.append(f"  › {name} ยังรอดู…")
+            continue
+
+        # soft success roll (especially cleanse)
+        sc = success_chance(player, m, action=action, bond=rel, reg=reg)
+        ok = rng.random() < sc
+
+        if action == ACT_CLEANSE:
+            if team_cleansed:
+                # already cleansed this round — fall through to heal/attack
+                action = ACT_HEAL if int(player.get("hp") or 0) < int(player.get("max_hp") or 1) * 0.7 else ACT_ATTACK
+            elif not ok:
+                notes.append(f"  › {name} พยายามชำระอาการ… แต่แรงยังไม่พอ")
+                try:
+                    from game.domain.alerts import emit_alert_lines
+
+                    notes.extend(
+                        emit_alert_lines(
+                            player,
+                            "party.assist_fail",
+                            force=False,
+                            name=str(name),
+                        )
+                    )
+                except Exception:
+                    pass
+                continue
+            else:
+                target = str(decision.cleanse_target or "poison")
+                try:
+                    from game.domain.status_fx import cleanse, has_status
+
+                    if not has_status(player, target) and target != "all_debuffs":
+                        # try poison fallback
+                        if has_status(player, "poison"):
+                            target = "poison"
+                    cleared = cleanse(player, reg, mode=target)
+                    team_cleansed = True
+                    if cleared:
+                        notes.append(f"  › {name} ชำระ「{target}」ให้คุณ — อาการเบาขึ้น")
+                    else:
+                        notes.append(f"  › {name} แผ่แสงชำระ… (อาการบางอย่างจางลง)")
+                    try:
+                        from game.domain.alerts import emit_alert_lines
+
+                        notes.extend(
+                            emit_alert_lines(
+                                player,
+                                "party.assist_cleanse_ok",
+                                force=False,
+                                name=str(name),
+                                ailment=target,
+                            )
+                        )
+                    except Exception:
+                        pass
+                except Exception:
+                    notes.append(f"  › {name} พยายามชำระ…")
+                if rng.random() < 0.10:
+                    adjust_relationship(player, mid, 1)
+                continue
+
+        if action == ACT_HEAL:
+            if not ok and rng.random() < 0.35:
+                notes.append(f"  › {name} ยื่นมือรักษา — ยังแผ่ว")
+                continue
             heal = max(
                 2,
                 int(round(base * (1.2 + rel / 100.0) * rel_pow + rng.randint(1, 4))),
@@ -801,7 +1000,19 @@ def party_member_turns(
                 int(player.get("max_hp") or heal), int(player.get("hp") or 0) + heal
             )
             notes.append(f"  › {name} ซุ่มรักษา → HP +{heal}")
-        elif action == "buff":
+            try:
+                from game.domain.needs import ensure_needs, get_needs
+
+                ensure_needs(player)
+                n = dict(player.get("needs") or get_needs(player))
+                n["fatigue"] = max(0, int(n.get("fatigue") or 0) - max(1, 1 + rel // 40))
+                n["morale"] = min(100, int(n.get("morale") or 50) + max(1, 1 + rel // 50))
+                player["needs"] = n
+                if rng.random() < 0.22:
+                    notes.append("  › ขวัญอุ่นขึ้นเล็กน้อย…")
+            except Exception:
+                pass
+        elif action == ACT_BUFF:
             boost = max(1, int(round((base // 3) * rel_pow)))
             player["bonus_atk"] = int(player.get("bonus_atk") or 0) + boost
             pend = list(player.get("party_call_active") or [])
@@ -811,6 +1022,10 @@ def party_member_turns(
             player["party_call_active"] = pend
             notes.append(f"  › {name} ซุ่มเสริมพลัง (ชั่วคราว)")
         else:
+            # attack (default)
+            finish_mult = 1.0
+            if mon_ratio <= 0.25:
+                finish_mult = 1.12 + (0.08 if mon.get("elite") or mon.get("boss") else 0.0)
             kmult = {
                 "player": 1.15,
                 "beast": 1.2,
@@ -820,18 +1035,17 @@ def party_member_turns(
                 "hell_god": 1.4,
                 "spirit": 0.95,
             }.get(kind, 1.0)
-            dmg = max(
-                1,
-                int(
-                    round(
-                        base
-                        * kmult
-                        * rel_pow
-                        * finish_mult
-                        * (0.85 + rng.random() * 0.55)
-                    )
-                ),
+            pipe_m, pipe_meta = assist_pipeline_mult(player, mon, reg, kind=kind)
+            raw = (
+                base
+                * kmult
+                * rel_pow
+                * finish_mult
+                * pipe_m
+                * (0.85 + rng.random() * 0.55)
             )
+            cap = max(2.0, float(base) * ASSIST_HIT_SOFT_CAP_MULT * rel_pow)
+            dmg = max(1, int(round(min(raw, cap))))
             mon["hp"] = int(mon.get("hp", 0)) - dmg
             try:
                 from game.domain.narrative import narrate
@@ -843,10 +1057,15 @@ def party_member_turns(
                     notes.append(f"  › {name} ซุ่มโจมตี → {dmg}")
             except Exception:
                 notes.append(f"  › {name} ซุ่มโจมตี → {dmg}")
+            if (
+                reg is not None
+                and float(pipe_meta.get("final") or 1.0) >= 1.04
+                and rng.random() < 0.12
+            ):
+                notes.append("  › จังหวะซุ่มสอดกับฝีมือคุณ…")
             if int(mon.get("hp", 0)) <= 0:
                 notes.append(f"  › {name} ปิดงาน!")
                 break
-        # tiny relationship from fighting together
         if rng.random() < 0.10:
             adjust_relationship(player, mid, 1)
     if not acted_any:
@@ -1169,9 +1388,11 @@ def soft_party_discovery_lines() -> List[str]:
     return [
         " สหายไม่ใช่ซื้อจากร้าน — เงาในโลกอาจยอมร่วมทาง",
         " ลองสำรวจ/เข้าหาเมื่อรู้สึกว่าถูกจ้อง… ยื่นมือแล้วรอการยอมรับ",
-        " ในทีม: ซุ่มช่วยโจมตีอัตโน — ยิ่งสัมพันธ์สูง ยิ่งบ่อย/แรง (ไม่เสียมานา)",
-        " สร้างสัมพันธ์: ให้ของขวัญ/เงินมีค่า (Y) — แต่ละตนชอบต่างกัน ต้องสังเกต",
-        " ไม่อยู่ในทีม: สัมพันธ์ลดช้ามาก · เชิญกลับได้จากรายชื่อรู้จัก",
+        " ในทีม: ซุ่มช่วยอัตโน — ยิ่งสัมพันธ์สหายสูง ยิ่งบ่อย (ไม่เสียมานา)",
+        " สร้างสัมพันธ์สหาย: ให้ของขวัญ/เงิน (Y) — ชอบอะไรต้องสังเกต",
+        " ไม่อยู่ในทีม: bond ลดช้ามาก · เชิญกลับได้จากรายชื่อรู้จัก",
+        " สัมพันธ์สหาย ≠ เรโซแนนซ์เรลิก (คอรัส/ภาระเทพ) — คนละชั้น",
+        " อ่านสหาย (Y→6): soft ตามชั้นประเมิน — ไม่โชว์ ATK/HP",
     ]
 
 

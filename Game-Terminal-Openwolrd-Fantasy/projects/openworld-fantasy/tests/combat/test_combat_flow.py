@@ -24,12 +24,14 @@ def test_pick_monster_seeded(reg, make_player):
 
 def test_world_enemy_mods_scale(reg, make_player):
     p = make_player()
+    # WO-Mon-3: non-boss world mult is clamped (hp ≤1.65, atk ≤1.55)
     p["world_modifiers"] = {"enemy_hp_mult": 2.0, "enemy_atk_mult": 1.5}
     mon = pick_monster(reg, "dark_forest", random.Random(1))
     base_hp = mon["hp"]
     scaled = apply_world_enemy_mods(mon, p)
     assert scaled["hp"] >= base_hp
-    assert scaled["hp"] >= int(base_hp * 1.9)
+    assert scaled["hp"] >= int(base_hp * 1.55)  # within soft clamp
+    assert scaled["hp"] <= int(base_hp * 1.65) + 1
 
 
 def test_player_can_damage_and_win(reg, make_player):

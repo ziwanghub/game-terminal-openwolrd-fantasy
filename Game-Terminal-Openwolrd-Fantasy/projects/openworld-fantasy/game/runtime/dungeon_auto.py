@@ -63,6 +63,13 @@ DEFAULT_AUTO_PREFS: Dict[str, Any] = {
     "auto_avoid_relic_echo": True,
     # WO-039: soft-skip/avoid faction mini-moments when faction score very cold
     "auto_avoid_cold_faction": True,
+    # WO-PARTY-5 Auto Party Care
+    "party_care": True,
+    "party_gift": True,
+    "party_gift_bond_below": 42,
+    "party_gift_cooldown": 6,
+    "party_min_food_keep": 2,
+    "party_min_hp_pots_keep": 1,
 }
 
 
@@ -105,6 +112,21 @@ def ensure_auto_prefs(player: MutableMapping[str, Any]) -> Dict[str, Any]:
     out["auto_equip_relics"] = bool(out.get("auto_equip_relics", False))
     out["auto_avoid_relic_echo"] = bool(out.get("auto_avoid_relic_echo", True))
     out["auto_avoid_cold_faction"] = bool(out.get("auto_avoid_cold_faction", True))
+    # WO-PARTY-5
+    out["party_care"] = bool(out.get("party_care", True))
+    out["party_gift"] = bool(out.get("party_gift", True))
+    out["party_gift_bond_below"] = int(
+        max(10, min(80, int(out.get("party_gift_bond_below") or 42)))
+    )
+    out["party_gift_cooldown"] = int(
+        max(2, min(30, int(out.get("party_gift_cooldown") or 6)))
+    )
+    out["party_min_food_keep"] = int(
+        max(0, min(12, int(out.get("party_min_food_keep") or 2)))
+    )
+    out["party_min_hp_pots_keep"] = int(
+        max(0, min(8, int(out.get("party_min_hp_pots_keep") or 1)))
+    )
     player["auto_prefs"] = out
     return out
 
@@ -160,26 +182,30 @@ def skill_plan_labels(
 
 
 def count_food(player: Mapping[str, Any], reg: DataRegistry) -> int:
+    from game.domain.bag_stack import qty_at
+
     n = 0
-    for iid in player.get("inventory_ids") or []:
+    for i, iid in enumerate(player.get("inventory_ids") or []):
         it = (reg.items or {}).get(str(iid)) or {}
         if is_food_item(it):
-            n += 1
+            n += qty_at(player, i)
     return n
 
 
 def count_potions(
     player: Mapping[str, Any], reg: DataRegistry, *, kind: str = "hp"
 ) -> int:
+    from game.domain.bag_stack import qty_at
+
     n = 0
-    for iid in player.get("inventory_ids") or []:
+    for i, iid in enumerate(player.get("inventory_ids") or []):
         it = (reg.items or {}).get(str(iid)) or {}
         s = str(iid).lower()
         if kind == "hp" and ("potion_hp" in s or it.get("heal_hp")):
-            n += 1
+            n += qty_at(player, i)
         elif kind == "mp" and ("potion_mana" in s or "potion_mp" in s or it.get("heal_mana") and not it.get("heal_hp")):
             if "potion_mana" in s or "mana" in s:
-                n += 1
+                n += qty_at(player, i)
     return n
 
 
@@ -537,6 +563,14 @@ def apply_auto_regen(
 
 
 def _remove_inv_index(player: MutableMapping[str, Any], reg: DataRegistry, idx: int) -> None:
+    """Remove one unit at bag index (WO-INV-1 stack-aware)."""
+    try:
+        from game.domain.bag_stack import remove_units_at
+
+        if remove_units_at(player, idx, reg, amount=1) is not None:
+            return
+    except Exception:
+        pass
     try:
         from game.domain.rarity import remove_inventory_at_index
 
@@ -544,12 +578,16 @@ def _remove_inv_index(player: MutableMapping[str, Any], reg: DataRegistry, idx: 
     except Exception:
         ids = list(player.get("inventory_ids") or [])
         rar = list(player.get("inventory_rarities") or [])
+        qtys = list(player.get("inventory_qty") or [])
         if 0 <= idx < len(ids):
             ids.pop(idx)
             player["inventory_ids"] = ids
         if 0 <= idx < len(rar):
             rar.pop(idx)
             player["inventory_rarities"] = rar
+        if 0 <= idx < len(qtys):
+            qtys.pop(idx)
+            player["inventory_qty"] = qtys
 
 
 def use_items_by_thresholds(
@@ -810,6 +848,14 @@ def _one_auto_tick(
         from game.domain.party import tick_relationship_decay
 
         tick_relationship_decay(player, ticks=1)
+    except Exception:
+        pass
+    # WO-PARTY-5: soft auto gift / protect bond (no dismiss/recruit)
+    try:
+        from game.runtime.party_auto import auto_party_care
+
+        for n in auto_party_care(player, reg, context="dungeon"):
+            lines.append(n)
     except Exception:
         pass
 

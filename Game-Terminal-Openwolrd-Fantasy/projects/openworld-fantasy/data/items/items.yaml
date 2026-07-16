@@ -4,7 +4,7 @@
   desc: ยาฟื้นเลือดเล็กน้อย ใช้ในสนามหรือไฟต์
   kind: consumable
   heal_hp: 30
-  price_world: 18  # WO-021 early sink softer
+  price_world: 18
 - id: potion_hp
   rarity: common
   name: ยา HP
@@ -1180,7 +1180,6 @@
   def: 11
   mdef: 2
   latent_hp_pct: 0.02
-
 - id: cave_crystal_shard
   rarity: uncommon
   name: เศษคริสตัลถ้ำ
@@ -1199,8 +1198,6 @@
   kind: material
   desc: วัสดุป่า · ยา/คราฟ
   price_world: 15
-
-# IC1 pack B — soft loadout variety (2026-07-14 plan phase)
 - id: iron_kite_shield
   code: sh003
   rarity: uncommon
@@ -1247,7 +1244,8 @@
   sockets: 1
   price_world: 150
   desc: ธนูสองมือ · ระยะ soft
-  tags: [wind]
+  tags:
+  - wind
   latent_atk_pct: 0.018
   latent_crit: 0.6
 - id: marsh_reed_staff
@@ -1264,7 +1262,9 @@
   sockets: 1
   price_world: 130
   desc: staff สองมือ · มานา
-  tags: [nature, water]
+  tags:
+  - nature
+  - water
   latent_atk_pct: 0.008
 - id: cave_miner_helm
   code: ar_hd5
@@ -1296,9 +1296,8 @@
   def: 6
   mdef: 5
   latent_hp_pct: 0.028
-  tags: [nature]
-
-# IC3 mon-line mats / craft outputs
+  tags:
+  - nature
 - id: chitin_plate_mat
   rarity: uncommon
   name: แผ่นไคติน
@@ -1351,7 +1350,8 @@
   def: 7
   mdef: 3
   latent_hp_pct: 0.03
-  tags: [nature]
+  tags:
+  - nature
 - id: bone_circlet
   code: ar_hd6
   rarity: uncommon
@@ -1368,7 +1368,8 @@
   latent_hp_pct: 0.025
   bias:
     status_resist: slight
-  tags: [shadow]
+  tags:
+  - shadow
 - id: quill_bow
   code: bw002
   rarity: uncommon
@@ -1382,7 +1383,8 @@
   sockets: 1
   price_world: 145
   desc: ธนูเบา · ลม
-  tags: [wind]
+  tags:
+  - wind
   latent_atk_pct: 0.015
   latent_crit: 0.7
 - id: fang_charm
@@ -1398,8 +1400,6 @@
   atk: 2
   desc: แอค · คมแผ่ว
   latent_crit: 0.5
-
-# IC4 mid-late · boss exclusives
 - id: titan_plate
   code: ar_bd8
   rarity: sacred
@@ -1448,7 +1448,8 @@
   mdef: 12
   latent_hp_pct: 0.03
   set_id: umbra_court
-  tags: [shadow]
+  tags:
+  - shadow
   bias:
     guard_arcane: strong
 - id: umbra_steps
@@ -1466,7 +1467,8 @@
   mdef: 5
   latent_hp_pct: 0.02
   set_id: umbra_court
-  tags: [shadow]
+  tags:
+  - shadow
   bias:
     atb: slight_fast
 - id: sunscourge_blade
@@ -1483,7 +1485,8 @@
   sockets: 2
   price_world: 650
   desc: อาวุธบอสทราย · ไฟ
-  tags: [fire]
+  tags:
+  - fire
   set_id: sun_scourge
   latent_atk_pct: 0.03
   latent_crit: 1.0
@@ -1501,7 +1504,8 @@
   mdef: 10
   latent_hp_pct: 0.035
   set_id: sun_scourge
-  tags: [fire]
+  tags:
+  - fire
   desc: ลำตัว · เซ็ตสุริยะ
 - id: hydra_scale_mail
   code: ar_bd10
@@ -1517,7 +1521,9 @@
   mdef: 9
   latent_hp_pct: 0.04
   set_id: mist_hydra
-  tags: [water, nature]
+  tags:
+  - water
+  - nature
   desc: เกราะบอสหมอก
 - id: hydra_fang
   code: dg003
@@ -1533,7 +1539,8 @@
   sockets: 1
   price_world: 320
   set_id: mist_hydra
-  tags: [water]
+  tags:
+  - water
   desc: มีดเขี้ยว · เซ็ตไฮดรา
   latent_crit: 0.9
 - id: prism_staff
@@ -1550,7 +1557,9 @@
   sockets: 2
   price_world: 700
   set_id: prism_court
-  tags: [arcane, lightning]
+  tags:
+  - arcane
+  - lightning
   desc: staff บอสผลึก
   latent_atk_pct: 0.02
 - id: prism_ring
@@ -1565,7 +1574,8 @@
   price_world: 350
   max_mana: 12
   set_id: prism_court
-  tags: [arcane]
+  tags:
+  - arcane
   desc: แอค · เซ็ตปริซึม
 - id: void_herald_cloak
   code: ar_bd11
@@ -1581,7 +1591,9 @@
   mdef: 14
   latent_hp_pct: 0.045
   set_id: void_herald
-  tags: [shadow, arcane]
+  tags:
+  - shadow
+  - arcane
   desc: เกราะบอส void
 - id: void_sigil
   code: ac007
@@ -1596,7 +1608,8 @@
   atk: 4
   max_mana: 10
   set_id: void_herald
-  tags: [shadow]
+  tags:
+  - shadow
   desc: แอค · เซ็ต void
 - id: oracle_tome_focus
   code: of001
@@ -1613,7 +1626,9 @@
   max_mana: 20
   mdef: 8
   set_id: ruin_oracle
-  tags: [arcane, holy]
+  tags:
+  - arcane
+  - holy
   desc: โฟกัสมือรอง · บอสเมือง
 - id: oracle_sash
   code: ar_lg7
@@ -1629,7 +1644,8 @@
   mdef: 7
   latent_hp_pct: 0.025
   set_id: ruin_oracle
-  tags: [arcane]
+  tags:
+  - arcane
   desc: ขา · เซ็ต oracle
 - id: mid_steel_glaive
   code: sp003
@@ -1661,7 +1677,6 @@
   bias:
     atb: fast
   desc: เท้า mid · เร็ว
-
 - id: void_filament
   rarity: rare
   name: เส้นใยสุญญะ
@@ -1687,7 +1702,9 @@
   atk: 19
   sockets: 2
   price_world: 520
-  tags: [shadow, arcane]
+  tags:
+  - shadow
+  - arcane
   desc: mid-late อาวุธ void (ไม่ใช่บอสเต็ม)
   latent_atk_pct: 0.025
   latent_crit: 0.85
@@ -1705,10 +1722,9 @@
   mdef: 12
   max_mana: 10
   latent_hp_pct: 0.035
-  tags: [arcane]
+  tags:
+  - arcane
   desc: mid-late เกราะผลึก
-
-# IC6 polish economy / soft sinks
 - id: travel_pass_city
   rarity: common
   name: บัตรทางเมือง
@@ -1728,9 +1744,6 @@
   heal_mana: 15
   desc: ฟื้น MP เล็ก · sink เงิน
   price_world: 35
-
-
-# SK-R5 lite — skill rank soft essence (no guaranteed upgrade)
 - id: essence_skill_whisper
   rarity: rare
   name: เศษกระซิบท่า
@@ -1747,8 +1760,6 @@
   skill_rank_nudge: true
   skill_rank_nudge_bonus: 0.18
   price_world: 180
-
-# WO-023.5 — Divine Burden content (rare drop/quest only — not bulk shop)
 - id: relic_storm_fang
   code: rl_st1
   rarity: legendary
@@ -1763,7 +1774,9 @@
   price_world: 720
   price_heaven: 2
   divine_burden: true
-  tags: [storm, holy]
+  tags:
+  - storm
+  - holy
   desc: เรลิกสายฟ้า — คมร้องในมือผู้ไม่พร้อม
   latent_atk_pct: 0.04
   latent_crit: 1.2
@@ -1782,7 +1795,9 @@
   price_hell: 3
   divine_burden: true
   force_burden: true
-  tags: [fire, hell]
+  tags:
+  - fire
+  - hell
   desc: เรลิกนรก — ความร้อนแผ่แม้ยังไม่ชัก
   latent_atk_pct: 0.05
 - id: relic_aegis_sky
@@ -1800,7 +1815,9 @@
   price_world: 800
   price_heaven: 2
   divine_burden: true
-  tags: [holy, sky]
+  tags:
+  - holy
+  - sky
   desc: เรลิกคุ้มครอง — หนักเกินคนธรรมดา
   latent_hp_pct: 0.05
 - id: relic_void_whisper_ring
@@ -1817,10 +1834,11 @@
   sockets: 0
   price_world: 540
   divine_burden: true
-  tags: [shadow, arcane]
+  tags:
+  - shadow
+  - arcane
   desc: เรลิกเงียบ — จิตสั่นเมื่อสวม
   latent_crit: 0.8
-# WO-042 — Relic content for Infernal/Echo Soft Bonds (not shop)
 - id: relic_hell_brand_charm
   code: rl_hb1
   rarity: legendary
@@ -1836,7 +1854,10 @@
   price_world: 560
   price_hell: 2
   divine_burden: true
-  tags: [hell, fire, blood]
+  tags:
+  - hell
+  - fire
+  - blood
   desc: เรลิกนรกชิ้นเล็ก — ร้อนคุ้นเมื่อคู่ดาบเถ้า · เปิด Infernal Bond
   latent_atk_pct: 0.02
   latent_crit: 0.6
@@ -1855,11 +1876,14 @@
   sockets: 1
   price_world: 760
   divine_burden: true
-  tags: [shadow, void, ancient, echo]
+  tags:
+  - shadow
+  - void
+  - ancient
+  - echo
   desc: เรลิกเงาโบราณ — สั่นคู่แหวนสุญญะ · เปิด Echo Bond
   latent_hp_pct: 0.03
   latent_crit: 0.5
-# WO-043 — third pieces enable Soft Chorus (3 same lean) · not shop
 - id: relic_divine_laurel
   code: rl_dl1
   rarity: legendary
@@ -1875,7 +1899,10 @@
   price_world: 520
   price_heaven: 1
   divine_burden: true
-  tags: [holy, sky, storm]
+  tags:
+  - holy
+  - sky
+  - storm
   desc: เรลิกศีรษะสายสวรรค์ — คู่เขี้ยว+เกราะ → Soft Chorus เทพ
   latent_hp_pct: 0.02
 - id: relic_hell_ash_greaves
@@ -1893,7 +1920,10 @@
   price_world: 580
   price_hell: 2
   divine_burden: true
-  tags: [hell, fire, blood]
+  tags:
+  - hell
+  - fire
+  - blood
   desc: เรลิกนรกขา — คู่ดาบ+เครื่องราง → Soft Chorus มาร
   latent_atk_pct: 0.02
 - id: relic_echo_sandals
@@ -1910,6 +1940,461 @@
   sockets: 0
   price_world: 500
   divine_burden: true
-  tags: [shadow, void, ancient, echo]
+  tags:
+  - shadow
+  - void
+  - ancient
+  - echo
   desc: เรลิกเท้าเงา — คู่แหวน+ผ้าคลุม → Soft Chorus เงา
   latent_crit: 0.4
+- id: mid_forest_thorn_blade
+  name: ดาบหนามดง
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  rarity: uncommon
+  atk: 11
+  code: sw_f1
+  material: wood
+  weight_class: medium
+  tags:
+  - nature
+  - forest
+  set_id: forest_thorn
+  element_bias:
+  - nature
+  price_world: 180
+  sockets: 1
+  desc: ใบมีดจากหนามดง — ไม้ชื้นกับเหล็กบาง แนวธรรมชาติเบา · เซ็ตหนามดง
+- id: mid_forest_bark_mail
+  name: เกราะเปลือกดง
+  kind: equipment
+  slot: body
+  rarity: uncommon
+  mdef: 4
+  code: ar_f1
+  material: wood
+  weight_class: medium
+  tags:
+  - nature
+  - forest
+  set_id: forest_thorn
+  element_bias:
+  - nature
+  price_world: 160
+  sockets: 1
+  desc: เปลือกต้นชั้นในผูกเป็นเกราะ — กลิ่นมอส · แนวดง · เซ็ตหนามดง
+  def: 9
+- id: mid_forest_moss_charm
+  name: เครื่องรางมอส
+  kind: equipment
+  slot: acc_1
+  rarity: uncommon
+  max_hp: 12
+  code: ac_f1
+  tags:
+  - nature
+  - forest
+  set_id: forest_thorn
+  element_bias:
+  - nature
+  price_world: 90
+  sockets: 0
+  desc: มอสเขียวชุ่มเกาะวง — ชีพแผ่วขึ้น · แนวดง · เซ็ตหนามดง
+- id: mid_cave_shadow_fang
+  name: เขี้ยวเงาถ้ำ
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  rarity: uncommon
+  atk: 12
+  code: sw_c1
+  material: bone
+  weight_class: light
+  tags:
+  - shadow
+  - cave
+  set_id: cave_shade
+  element_bias:
+  - shadow
+  price_world: 190
+  sockets: 1
+  desc: เขี้ยวค้างคาวเงาขัดคม — เบาและมืด · แนวถ้ำ · เซ็ตเงาถ้ำ
+- id: mid_cave_bat_cloak
+  name: เสื้อคลุมค้างคาว
+  kind: equipment
+  slot: body
+  rarity: uncommon
+  mdef: 7
+  code: ar_c1
+  tags:
+  - shadow
+  - cave
+  set_id: cave_shade
+  element_bias:
+  - shadow
+  price_world: 170
+  sockets: 1
+  desc: ปีกหนังบางเย็บคลุม — กลืนแสงแผ่ว · แนวถ้ำ · เซ็ตเงาถ้ำ
+  def: 7
+- id: mid_cave_echo_band
+  name: แหวนเสียงสะท้อน
+  kind: equipment
+  slot: acc_1
+  rarity: uncommon
+  max_mana: 10
+  code: ac_c1
+  tags:
+  - shadow
+  - cave
+  set_id: cave_shade
+  element_bias:
+  - shadow
+  price_world: 95
+  sockets: 0
+  desc: แหวนหินสะท้อนเสียงถ้ำ — มานาแผ่ว · แนวเงา · เซ็ตเงาถ้ำ
+- id: mid_desert_sun_scimitar
+  name: ดาบโค้งแดด
+  kind: equipment
+  slot: main_hand
+  grip: one_hand
+  rarity: uncommon
+  atk: 13
+  code: sw_d1
+  material: metal
+  weight_class: medium
+  tags:
+  - fire
+  - desert
+  set_id: desert_sun
+  element_bias:
+  - fire
+  price_world: 200
+  sockets: 1
+  desc: ดาบโค้งอบร้อนกลางวัน — คมแดด · แนวไฟเบา · เซ็ตแดดทะเลทราย
+- id: mid_desert_sand_wrap
+  name: ผ้าพันทราย
+  kind: equipment
+  slot: body
+  rarity: uncommon
+  mdef: 5
+  code: ar_d1
+  tags:
+  - fire
+  - desert
+  set_id: desert_sun
+  element_bias:
+  - fire
+  price_world: 165
+  sockets: 1
+  desc: ผ้าห่อทรายหนา — กันลมร้อน · แนวทะเลทราย · เซ็ตแดดทะเลทราย
+  def: 8
+- id: mid_desert_heat_charm
+  name: เครื่องรางร้อน
+  kind: equipment
+  slot: acc_1
+  rarity: uncommon
+  atk: 2
+  max_hp: 8
+  code: ac_d1
+  tags:
+  - fire
+  - desert
+  set_id: desert_sun
+  element_bias:
+  - fire
+  price_world: 100
+  sockets: 0
+  desc: ผลึกร้อนในฝ่ามือ — กระตุ้นคม · แนวไฟ · เซ็ตแดดทะเลทราย
+- id: mid_marsh_reed_spear
+  name: หอกกกหนอง
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  rarity: uncommon
+  atk: 14
+  code: sp_m1
+  material: wood
+  weight_class: medium
+  tags:
+  - water
+  - nature
+  - marsh
+  set_id: marsh_mist
+  element_bias:
+  - water
+  - nature
+  price_world: 210
+  sockets: 1
+  allow_off_hand: false
+  desc: ลำกกแข็งผูกปลาย — ชื้นและยาว · แนวหนอง · เซ็ตหมอกหนอง
+- id: mid_marsh_fog_veil
+  name: ผ้าคลุมหมอก
+  kind: equipment
+  slot: body
+  rarity: uncommon
+  mdef: 9
+  code: ar_m1
+  tags:
+  - water
+  - marsh
+  set_id: marsh_mist
+  element_bias:
+  - water
+  price_world: 175
+  sockets: 1
+  desc: ผ้าบางกลืนหมอก — ม่านเวทชื้น · แนวน้ำ · เซ็ตหมอกหนอง
+  def: 6
+- id: mid_marsh_leech_ring
+  name: แหวนปลิง
+  kind: equipment
+  slot: acc_1
+  rarity: uncommon
+  max_hp: 14
+  code: ac_m1
+  tags:
+  - water
+  - marsh
+  set_id: marsh_mist
+  element_bias:
+  - water
+  price_world: 95
+  sockets: 0
+  desc: วงเล็กดูดชื้น — ชีพแน่นขึ้น · แนวหนอง · เซ็ตหมอกหนอง
+- id: mid_ridge_stone_axe
+  name: ขวานหินผา
+  kind: equipment
+  slot: main_hand
+  grip: two_hand
+  rarity: uncommon
+  atk: 15
+  code: ax_r1
+  material: stone
+  weight_class: heavy
+  tags:
+  - earth
+  - mountain
+  set_id: ridge_stone
+  element_bias:
+  - earth
+  price_world: 220
+  sockets: 1
+  desc: หัวหินผาสันเขา — หนักและมั่น · แนวดิน · เซ็ตหินผา
+- id: mid_ridge_slate_plate
+  name: เกราะแผ่นหิน
+  kind: equipment
+  slot: body
+  rarity: uncommon
+  mdef: 3
+  code: ar_r1
+  material: stone
+  weight_class: heavy
+  tags:
+  - earth
+  - mountain
+  set_id: ridge_stone
+  element_bias:
+  - earth
+  price_world: 190
+  sockets: 1
+  desc: แผ่นหินซ้อนชั้น — รับกระแทก · แนวเขา · เซ็ตหินผา
+  def: 12
+- id: mid_ridge_iron_band
+  name: สายรัดเหล็กผา
+  kind: equipment
+  slot: acc_1
+  rarity: uncommon
+  max_hp: 10
+  code: ac_r1
+  tags:
+  - earth
+  - mountain
+  set_id: ridge_stone
+  element_bias:
+  - earth
+  price_world: 100
+  sockets: 0
+  desc: สายเหล็กยึดข้อมือ — มั่นคง · แนวดิน · เซ็ตหินผา
+  def: 3
+
+# --- WO-Shop-2 identity content (2–4 per shop tone) ---
+- id: shop_merchant_road_tea
+  name: ชาริมทางพ่อค้าเร่
+  kind: consumable
+  rarity: common
+  tags:
+  - shop
+  - merchant
+  - travel
+  heal_mana: 12
+  apply_status: focus
+  price_world: 22
+  desc: ชาอุ่นจากรถพ่อค้าเร่ — ฟื้นสมาธิแผ่ว · โทนเดินทาง
+- id: shop_merchant_mixed_ration
+  name: เสบียงคละทาง
+  kind: consumable
+  rarity: common
+  tags:
+  - shop
+  - merchant
+  - food
+  food_tier: 2
+  heal_hp: 18
+  price_world: 26
+  desc: ขนมปังกับผลไม้อบ — พ่อค้าเร่จัดให้ · โทนเสบียงถนน
+- id: shop_armory_whetstone
+  name: หินลับคมโรงตี
+  kind: material
+  rarity: common
+  tags:
+  - shop
+  - armory
+  - upgrade
+  price_world: 35
+  desc: หินลับจากร้านอาวุธเมือง — เตรียมอัปคม · โทนโรงตี
+- id: shop_armory_temper_oil
+  name: น้ำมันชุบเหล็ก
+  kind: material
+  rarity: uncommon
+  tags:
+  - shop
+  - armory
+  - upgrade
+  price_world: 48
+  desc: น้ำมันชุบคมจากทั่งเมือง — กลิ่นโลหะ · โทนอาวุธ
+- id: shop_armory_rivet_pack
+  name: ชุดหมุดเกราะ
+  kind: material
+  rarity: common
+  tags:
+  - shop
+  - armory
+  - repair
+  price_world: 30
+  desc: หมุดเหล็กเล็ก ๆ — ซ่อมแผ่นเกราะแผ่ว · โทนโรงตี
+- id: shop_rare_crystal_lens
+  name: เลนส์ผลึกตลาด
+  kind: material
+  rarity: uncommon
+  tags:
+  - shop
+  - rare
+  - crystal
+  price_world: 70
+  desc: ผลึกตัดแสงจากตลาดวัสดุ — ใช้คราฟ/ประเมินแผ่ว · โทนผลึก
+- id: shop_rare_prism_vial
+  name: ขวดเศษปริซึม
+  kind: material
+  rarity: rare
+  tags:
+  - shop
+  - rare
+  - crystal
+  price_world: 95
+  desc: เศษปริซึมในขวดมืด — หายากปานกลาง · โทนตลาดวัสดุ
+- id: shop_rare_bound_scroll
+  name: ม้วนผูกวัตถุดิบ
+  kind: material
+  rarity: uncommon
+  tags:
+  - shop
+  - rare
+  - scroll
+  price_world: 60
+  desc: ม้วนผูกมัด mat — กลิ่นหมึกและฝุ่น · โทนแลกหายาก
+- id: shop_celestial_prayer_bead
+  name: ลูกประคำสวรรค์
+  kind: consumable
+  rarity: rare
+  tags:
+  - shop
+  - celestial
+  - blessing
+  heal_hp: 35
+  heal_mana: 25
+  apply_status: ward
+  price_heaven: 4
+  desc: ลูกประคำอุ่นมือ — ตลาดสวรรค์ · โทนพรเบา
+- id: shop_celestial_soft_laurel
+  name: พวงหรีดแผ่วฟ้า
+  kind: consumable
+  rarity: sacred
+  tags:
+  - shop
+  - celestial
+  - blessing
+  heal_hp: 50
+  apply_status: regen
+  price_heaven: 6
+  desc: ใบไม้เงินบาง — พรแผ่วไม่หนัก · โทนสวรรค์ (ไม่ใช่ Divine pack)
+- id: shop_celestial_light_vial
+  name: ขวดแสงอ่อน
+  kind: consumable
+  rarity: uncommon
+  tags:
+  - shop
+  - celestial
+  heal_mana: 30
+  price_heaven: 3
+  desc: แสงนุ่มในขวดแก้ว — sink สวรรค์เบา · โทนตลาดฟ้า
+- id: shop_infernal_ember_vial
+  name: ขวดเถ้าคุกรุ่น
+  kind: consumable
+  rarity: rare
+  tags:
+  - shop
+  - infernal
+  - hell
+  apply_status: might
+  price_hell: 3
+  desc: เถ้าคุกรุ่นใต้ฝา — ตลาดนรก · โทนไฟมืด
+- id: shop_infernal_void_token
+  name: เหรียญสุญญะดำ
+  kind: material
+  rarity: rare
+  tags:
+  - shop
+  - infernal
+  - void
+  price_hell: 3
+  desc: เหรียญดำเงา — แลกพิธีเบา · โทนนรก/สุญญะ
+- id: shop_infernal_smoke_oil
+  name: น้ำมันควันมาร
+  kind: consumable
+  rarity: uncommon
+  tags:
+  - shop
+  - infernal
+  apply_status: ward
+  price_hell: 2
+  desc: น้ำมันควันข้น — ปกป้องแผ่ว · โทนตลาดนรก
+- id: shop_legend_memory_fragment
+  name: เศษความทรงจำตำนาน
+  kind: material
+  rarity: legendary
+  tags:
+  - shop
+  - legend
+  price_world: 400
+  desc: เศษเรื่องเก่าในศาลาตำนาน — stock เบา · ไม่ใช่ Divine dump
+- id: shop_legend_soft_seal
+  name: ตราผนึกตำนานแผ่ว
+  kind: consumable
+  rarity: legendary
+  tags:
+  - shop
+  - legend
+  heal_hp: 40
+  heal_mana: 20
+  price_world: 350
+  desc: ตราผนึกเก่า — ศาลาตำนานวางขายเบา · โทนตำนาน
+- id: shop_legend_echo_thread
+  name: เส้นด้ายเสียงสะท้อน
+  kind: material
+  rarity: legendary
+  tags:
+  - shop
+  - legend
+  - echo
+  price_world: 380
+  desc: ด้ายบางก้องเสียง — ศาลาตำนาน · stock เบา

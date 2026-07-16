@@ -24,15 +24,23 @@ def test_no_duplicate_monsters_in_area_pools():
 
 
 def test_elite_weights_capped():
+    """WO-Mon-1: elite may be higher than old cap 4, but not dominate pool."""
     reg = DataRegistry.load(DATA_DIR)
     for aid, a in reg.areas.items():
-        for x in a.get("monster_pools") or []:
+        pools = a.get("monster_pools") or []
+        total = sum(int(x.get("weight") or 0) for x in pools if isinstance(x, dict))
+        elite_w = 0
+        for x in pools:
             if not isinstance(x, dict):
                 continue
             mid = x.get("id")
             mon = reg.monsters.get(mid) or {}
             if mon.get("elite"):
-                assert int(x.get("weight") or 99) <= 4, f"{aid} {mid}"
+                w = int(x.get("weight") or 99)
+                assert w <= 12, f"{aid} {mid} weight {w}"
+                elite_w += w
+        if total > 0:
+            assert elite_w / total <= 0.20, f"{aid} elite share {elite_w}/{total}"
 
 
 def test_all_non_boss_mons_in_some_pool():

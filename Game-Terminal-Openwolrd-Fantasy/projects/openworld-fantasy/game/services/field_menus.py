@@ -468,9 +468,10 @@ def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
             io.write_line(line)
         io.write_line(" 1. ปลดสมาชิก")
         io.write_line(" 2. สหายที่รู้จัก — เชิญกลับ")
-        io.write_line(" 3. ให้ของขวัญจากกระเป๋า  (เพิ่มสัมพันธ์ · ชอบอะไรสังเกตเอง)")
+        io.write_line(" 3. ให้ของขวัญจากกระเป๋า  (เพิ่มสัมพันธ์สหาย)")
         io.write_line(" 4. มอบของมีค่า (เงินโลก/สวรรค์/นรก)")
-        io.write_line(" 5. ใบ้: หาสหาย / สัมพันธ์ (soft)")
+        io.write_line(" 5. ใบ้: หาสหาย / สัมพันธ์สหาย (soft)")
+        io.write_line(" 6. อ่านสหาย (soft appraisal)")
         io.write_line(" 0. กลับ")
         ch = io.read_line("เลือก: ").strip()
         if ch in ("0", ""):
@@ -504,7 +505,7 @@ def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
                 rel = get_relationship(player, str(k.get("id")))
                 io.write_line(
                     f"  {i}. {k.get('name')} · {k.get('kind_label')} · {st} · "
-                    f"[{relationship_bar(rel)}] {soft_relationship_label(rel)}"
+                    f"สัมพันธ์สหาย [{relationship_bar(rel)}] {soft_relationship_label(rel)}"
                 )
             io.write_line("  0. กลับ")
             pick = io.read_line("เชิญหมายเลข: ").strip()
@@ -589,9 +590,32 @@ def _party_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
             io.write_line()
             for line in soft_party_discovery_lines():
                 io.write_line(line)
-            io.write_line(" · ให้ของ/เงินมีค่า → สัมพันธ์ขึ้น (แต่ละตนชอบต่างกัน)")
-            io.write_line(" · ไม่อยู่ในทีม → สัมพันธ์ลดช้ามาก")
+            io.write_line(" · ให้ของ/เงินมีค่า → สัมพันธ์สหายขึ้น (แต่ละตนชอบต่างกัน)")
+            io.write_line(" · ไม่อยู่ในทีม → bond ลดช้ามาก")
             io.write_line(" · ไฟต์: ซุ่มช่วยอัตโน · ยิ่งสนิทยิ่งบ่อย")
+            io.read_line("Enter...")
+        elif ch == "6":
+            # WO-PARTY-6: soft companion appraisal
+            if party_size(player) <= 0:
+                io.write_line("ไม่มีใครในทีมให้อ่าน")
+                continue
+            party = list(player.get("party") or [])
+            for i, m in enumerate(party, 1):
+                io.write_line(f"  {i}. {m.get('name')}")
+            try:
+                mi = int(io.read_line("อ่านหมายเลข: ").strip()) - 1
+            except Exception:
+                continue
+            if mi < 0 or mi >= len(party):
+                io.write_line("นอกช่วง")
+                continue
+            try:
+                from game.domain.appraisal import appraise_companion_soft
+
+                for line in appraise_companion_soft(player, party[mi], reg):
+                    io.write_line(line)
+            except Exception as exc:
+                io.write_line(f"(อ่านสหาย) {exc}")
             io.read_line("Enter...")
 
 
@@ -666,6 +690,27 @@ def _stat_allocate_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> No
     from game.domain.progression import ALLOCATE_KEYS, format_alloc_menu_lines
     from game.ui_terminal.layout import render_box
 
+    # WO-052: auto growth mode — view only
+    try:
+        from game.domain.auto_growth import (
+            activate_auto_growth_if_needed,
+            format_auto_growth_panel,
+            is_manual_p_locked,
+        )
+
+        if is_manual_p_locked(player):
+            phase_notes = activate_auto_growth_if_needed(player, reg)
+            io.write_line()
+            io.write_line(render_box(format_auto_growth_panel(player), double=False))
+            if phase_notes:
+                io.write_line()
+                for ln in phase_notes[:6]:
+                    io.write_line(ln if str(ln).startswith(" ") else f" {ln}")
+            io.read_line("\n  Enter...")
+            return
+    except Exception:
+        pass
+
     while True:
         io.write_line()
         io.write_line(render_box(format_alloc_panel(player), double=False))
@@ -677,6 +722,7 @@ def _stat_allocate_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> No
                         " ไม่มีแต้มคงเหลือ",
                         "---",
                         " เลเวลอัพเพื่อได้แต้มใหม่",
+                        " (หลัง Lv30 พลังจะไหลเอง)",
                         " 0  กลับ",
                     ],
                     double=False,

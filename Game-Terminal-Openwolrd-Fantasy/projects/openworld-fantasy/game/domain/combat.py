@@ -95,6 +95,9 @@ def pick_monster(
     _copy_mon_loot_fields(mon, base)
     if base.get("boss"):
         mon["boss"] = True
+    # snapshot pre-elite for WO-Mon-3 clamps
+    hp_pre_elite = int(mon["hp"])
+    atk_pre_elite = int(mon["atk"])
     if base.get("elite"):
         mon["elite"] = True
         # S1: elites hit slightly harder / tankier before rarity roll
@@ -104,6 +107,10 @@ def pick_monster(
         mon["xp_mult"] = float(mon.get("xp_mult") or 1.0) * 1.25
     if base.get("tags"):
         mon["tags"] = list(base.get("tags") or [])
+    # WO-Mon-2: carry soft weakness catalog
+    for wk in ("weak_to", "weakness_lite", "soft_weak"):
+        if base.get(wk) is not None:
+            mon[wk] = list(base.get(wk) or []) if not isinstance(base.get(wk), str) else [base.get(wk)]
     # MI1–MI2: intel flags (tier / can_flee / never_flee)
     try:
         from game.domain.monster_ai import attach_monster_intel_fields
@@ -113,18 +120,37 @@ def pick_monster(
         pass
     # roll enemy rarity and scale
     try:
-        from game.domain.rarity import apply_rarity_to_enemy, roll_enemy_rarity
+        from game.domain.rarity import apply_rarity_to_enemy, roll_enemy_rarity, tier_rank
 
         area_tier = int(area.get("world_tier") or area.get("tier") or 1)
         if base.get("elite") and not base.get("rarity"):
-            rid = "uncommon" if rng.random() < 0.55 else "rare"
+            # WO-Mon-3: elite rarity ceiling — uncommon often, rare soft (no higher roll)
+            rid = "uncommon" if rng.random() < 0.70 else "rare"
+        elif base.get("elite") and base.get("rarity"):
+            rid = str(base.get("rarity"))
+            # clamp elite catalog rarity to rare max for threat (sacred+ → rare display soft)
+            try:
+                if tier_rank(reg, rid) > 3:  # > rare
+                    rid = "rare"
+            except Exception:
+                pass
         else:
             rid = base.get("rarity") or roll_enemy_rarity(
                 reg, rng, boss=False, area_tier=area_tier
             )
+            # WO-Mon-3: early areas (tier≤2) soft-cap enemy rarity
+            if area_tier <= 2:
+                try:
+                    if tier_rank(reg, str(rid)) > 3:
+                        rid = "rare"
+                except Exception:
+                    pass
         mon = apply_rarity_to_enemy(mon, reg, str(rid))
         # rarity helper re-dicts; re-assert loot fields
         _copy_mon_loot_fields(mon, base)
+        for wk in ("weak_to", "weakness_lite", "soft_weak"):
+            if base.get(wk) is not None:
+                mon[wk] = list(base.get(wk) or []) if not isinstance(base.get(wk), str) else [base.get(wk)]
         if base.get("elite"):
             mon["elite"] = True
             # soft elite label if rarity display didn't mark special
@@ -132,6 +158,9 @@ def pick_monster(
             shown = str(mon.get("name") or "")
             if "◆" not in shown and "★" not in shown and "เถื่อน" not in shown:
                 mon["name"] = f"◆ {bn}" if bn else shown
+        # WO-Mon-3: clamp total scale vs pre-elite baseline (non-boss)
+        if not mon.get("boss"):
+            mon = _clamp_spawn_stats(mon, hp_pre_elite, atk_pre_elite, elite=bool(mon.get("elite")))
         try:
             from game.domain.monster_ai import attach_monster_intel_fields
 
@@ -143,6 +172,46 @@ def pick_monster(
         if base.get("elite"):
             mon["elite"] = True
             mon["name"] = f"◆ {mon.get('base_name') or mon.get('name')}"
+    return mon
+
+
+def _clamp_spawn_stats(
+    mon: Dict[str, Any],
+    base_hp: int,
+    base_atk: int,
+    *,
+    elite: bool = False,
+) -> Dict[str, Any]:
+    """
+    WO-Mon-3: prevent elite+rarity+level stacking from insane spikes.
+    Soft caps relative to pre-elite snapshot.
+    """
+    mon = dict(mon)
+    max_hp_mult = 2.15 if elite else 1.85
+    max_atk_mult = 1.95 if elite else 1.70
+    min_hp_mult = 0.85
+    min_atk_mult = 0.85
+    bhp = max(1, int(base_hp))
+    batk = max(1, int(base_atk))
+    hp = int(mon.get("hp") or bhp)
+    atk = int(mon.get("atk") or batk)
+    hp = max(int(bhp * min_hp_mult), min(int(bhp * max_hp_mult + 0.5), hp))
+    atk = max(int(batk * min_atk_mult), min(int(batk * max_atk_mult + 0.5), atk))
+    mon["hp"] = hp
+    mon["max_hp"] = hp
+    mon["atk"] = atk
+    # scale profile powers softly toward atk
+    profiles = []
+    for p in mon.get("attack_profiles") or []:
+        p = dict(p)
+        if "power" in p:
+            pw = int(p["power"] or atk)
+            # keep power near atk band
+            lo, hi = max(1, int(atk * 0.75)), max(2, int(atk * 1.45))
+            p["power"] = max(lo, min(hi, pw))
+        profiles.append(p)
+    if profiles:
+        mon["attack_profiles"] = profiles
     return mon
 
 
@@ -163,6 +232,10 @@ def apply_world_enemy_mods(mon: Dict[str, Any], player: Mapping[str, Any]) -> Di
     mods = player.get("world_modifiers") or {}
     hp_m = float(mods.get("enemy_hp_mult", 1.0))
     atk_m = float(mods.get("enemy_atk_mult", 1.0))
+    # WO-Mon-3: soft clamp world mult for non-boss (avoid brutal stacks)
+    if not mon.get("boss"):
+        hp_m = max(0.75, min(1.65, hp_m))
+        atk_m = max(0.75, min(1.55, atk_m))
     mon = dict(mon)
     mon["hp"] = max(1, int(round(int(mon.get("hp", 1)) * hp_m)))
     mon["max_hp"] = max(1, int(round(int(mon.get("max_hp", mon["hp"])) * hp_m)))
@@ -215,139 +288,47 @@ def player_attack_damage(
     power_override: Optional[int] = None,
     elements_override: Optional[Sequence[str]] = None,
 ) -> Tuple[int, str]:
-    # SK-R2: ensure skill is rank-scaled when id known
-    if skill and not skill.get("_skill_rank") and skill.get("id"):
-        try:
-            from game.domain.skill_rank import scale_skill_for_player
+    """
+    WO-050: thin wrapper → damage_pipeline.resolve_player_outbound.
+    Legacy callers keep (dmg, flavor) contract.
+    """
+    from game.domain.damage_pipeline import resolve_player_outbound
 
-            skill = scale_skill_for_player(
-                player, skill, reg, skill_id=str(skill.get("id"))
-            )
-        except Exception:
-            pass
-    if skill and skill.get("heal") and power_override is None:
-        return 0, "heal"
-    # buff/debuff-only may have low/zero power
-    try:
-        from game.domain.skill_slots import normalize_slot
-
-        if skill and normalize_slot(skill) == "buff" and power_override is None:
-            return 0, "buff"
-    except Exception:
-        pass
-    base = int(power_override if power_override is not None else (skill or {}).get("power", 8))
-    base += int(player.get("bonus_atk", 0))
-    try:
-        from game.domain.status_fx import active_status_mods
-
-        base += int(active_status_mods(player, reg).get("atk_flat") or 0)
-    except Exception:
-        pass
-    # DD0–DD1: damage_class scales with class-linked powers (hidden)
-    sk_elems = list(
-        elements_override
-        if elements_override is not None
-        else (skill or {}).get("elements")
-        or ["physical"]
+    result = resolve_player_outbound(
+        player,
+        monster,
+        reg,
+        area_id,
+        skill,
+        rng,
+        power_override=power_override,
+        elements_override=elements_override,
     )
-    try:
-        from game.domain.damage_class import outbound_power_bonus, resolve_damage_class
-
-        dclass = resolve_damage_class(skill, elements=sk_elems, reg=reg)
-        base += int(outbound_power_bonus(player, dclass, reg))
-    except Exception:
-        if any(e in sk_elems for e in ("arcane", "fire", "water", "holy", "lightning", "shadow")):
-            base += int(float(player.get("power_mag", 0)) * 0.35)
-    base += rng.randint(0, 5)
-    elems = list(sk_elems)
-    for t in player.get("gear_tags") or []:
-        if t not in elems:
-            elems.append(str(t))
-    em = reg.element_mult(elems, list(monster.get("elements") or []))
-    mon_st = [s.get("id") if isinstance(s, dict) else s for s in (monster.get("statuses") or [])]
-    if "freeze" in mon_st and ("lightning" in elems or "fire" in elems):
-        em *= 1.35
-    mult = _mastery_mult(player, area_id) * em
-    if player.get("blessing_turns", 0) > 0:
-        mult += 0.12
-    # speed slight damage variance edge
-    mult += min(0.12, float(player.get("power_spd", 5)) / 200.0)
-    # N2: hunger soft ATK mult (hidden)
-    try:
-        from game.domain.needs import combat_needs_mults
-
-        mult *= float(combat_needs_mults(player).get("atk_mult") or 1.0)
-    except Exception:
-        pass
-    # food buff status atk
-    try:
-        from game.domain.status_fx import active_status_mods
-
-        am = active_status_mods(player, reg)
-        mult *= float(am.get("atk_mult") or 1.0)
-    except Exception:
-        pass
-    dmg = max(1, int(base * mult))
-    # crit from attack investment + latent (never show formula)
-    crit_chance = float(player.get("crit_chance", 5))
-    luck = float(player.get("luck_score") or 0.0)
-    crit_chance = min(55.0, crit_chance * (1.0 + luck * 0.3))
-    flavor = ""
-    if rng.random() * 100 < crit_chance:
-        dmg = int(dmg * 1.45)
-        flavor = " (คริ!)"
-    if em >= 1.25:
-        flavor += " (ได้ผลดี!)"
-    elif em <= 0.85:
-        flavor += " (ต้านทาน...)"
-    # S1: soft class label once in a while via elements (no numbers)
-    try:
-        from game.domain.damage_class import resolve_damage_class, soft_class_label
-
-        dc = resolve_damage_class(skill, elements=elems, reg=reg)
-        # only append short class cue when not already flavored heavily
-        if dc and flavor.count("(") < 2 and rng.random() < 0.35:
-            sn = soft_class_label(dc, reg)
-            if sn:
-                flavor += f" ·{sn}"
-    except Exception:
-        pass
-    return dmg, flavor
+    return result.as_tuple()
 
 
 def apply_incoming_damage(
     player: MutableMapping[str, Any],
     raw_dmg: int,
     rng: random.Random,
+    *,
+    dmg_class: str = "physical",
+    reg: Any = None,
 ) -> Tuple[int, str]:
     """
-    Speed soft dodge / partial mitigate. Luck biases slightly.
-    Never reveal percentages to player — only flavor.
+    WO-050: thin wrapper → damage_pipeline.resolve_player_inbound.
+    Speed soft dodge / grade defense soft. Flavor only — no %.
     """
-    dmg = max(0, int(raw_dmg))
-    if dmg <= 0:
-        return 0, ""
-    dodge = float(player.get("dodge_chance") or 3.0)
-    luck = float(player.get("luck_score") or 0.0)
-    dodge = min(40.0, max(0.0, dodge * (1.0 + luck * 0.25)))
-    try:
-        from game.domain.needs import combat_needs_mults
+    from game.domain.damage_pipeline import resolve_player_inbound
 
-        nm = combat_needs_mults(player)
-        dodge *= float(nm.get("dodge_mult") or 1.0)
-        dmg = max(0, int(round(dmg * float(nm.get("incoming_mult") or 1.0))))
-    except Exception:
-        pass
-    roll = rng.random() * 100
-    if roll < dodge * 0.35:
-        return 0, " (หลบพ้น!)"
-    if roll < dodge:
-        reduced = max(1, int(dmg * 0.55))
-        return reduced, " (รับได้เบาลง)"
-    # soft def flat
-    def_b = int(player.get("alloc_def_bonus") or 0)
-    dmg = max(1, dmg - def_b // 8)
-    return dmg, ""
+    result = resolve_player_inbound(
+        player,
+        raw_dmg,
+        rng,
+        dmg_class=dmg_class,
+        reg=reg,
+    )
+    return result.as_tuple()
 
 
 def apply_on_hit_cards(
@@ -406,9 +387,10 @@ def pick_monster_attack(
 
 
 def monster_raw_damage(monster: Mapping[str, Any], profile: Mapping[str, Any], rng: random.Random) -> int:
-    power = int(profile.get("power") or monster.get("atk", 8))
-    dmg = power + rng.randint(-2, 4)
-    return max(1, dmg)
+    """WO-050: via damage_pipeline (backend raw; defense grade on inbound)."""
+    from game.domain.damage_pipeline import resolve_monster_outbound
+
+    return int(resolve_monster_outbound(monster, profile, rng).amount)
 
 
 def apply_status_to_monster(
@@ -511,6 +493,24 @@ def resolve_victory(
         bump_stat(player, "combats", 1)
         if monster.get("boss"):
             bump_stat(player, "boss_kills", 1)
+    except Exception:
+        pass
+    # WO-052: automatic growth pulse on combat victory (Lv30+)
+    try:
+        from game.domain.auto_growth import is_auto_growth_mode, pulse_auto_growth
+
+        if is_auto_growth_mode(player):
+            mag = 1.25 if monster.get("boss") else (1.0 if monster.get("elite") else 0.85)
+            for gn in pulse_auto_growth(player, "combat", reg=reg, magnitude=mag, rng=rng):
+                lines.append(gn)
+    except Exception:
+        pass
+    # WO-054: soft identity journal + clear fight flags
+    try:
+        from game.domain.combat_identity import on_fight_end_identity
+
+        for ln in on_fight_end_identity(player, monster, victory=True, rng=rng):
+            lines.append(ln)
     except Exception:
         pass
 

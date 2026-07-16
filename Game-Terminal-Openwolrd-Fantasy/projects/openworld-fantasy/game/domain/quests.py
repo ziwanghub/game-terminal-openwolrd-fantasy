@@ -228,6 +228,15 @@ def complete_quest(
             bump_stat(player, "xp_gained_total", summary["gained"])
         except Exception:
             pass
+    # WO-052: quest completion fuels auto growth (Lv30+)
+    try:
+        from game.domain.auto_growth import is_auto_growth_mode, pulse_auto_growth
+
+        if is_auto_growth_mode(player):
+            for gn in pulse_auto_growth(player, "quest", reg=reg, magnitude=1.2):
+                lines.append(gn)
+    except Exception:
+        pass
     money = int(q.get("reward_money", 0))
     if money:
         money_m = float((player.get("world_modifiers") or {}).get("money_mult", 1.0))
@@ -252,6 +261,27 @@ def complete_quest(
     for iid in q.get("reward_items") or []:
         name = add_item(player, str(iid), reg)
         lines.append(f"  ได้ {name}")
+    # WO-Shop-5: shop reputation reward (soft label, no raw number)
+    try:
+        shop_id = str(q.get("shop_id") or q.get("reward_shop_id") or "")
+        rep_amt = int(q.get("reward_shop_rep") or q.get("shop_rep") or 0)
+        if shop_id and rep_amt > 0:
+            from game.domain.shop_experience import (
+                bump_shop_rep,
+                get_shop_rep,
+                shop_rep_soft_label,
+            )
+
+            bump_shop_rep(player, shop_id, amount=max(5, min(15, rep_amt)), reason="quest")
+            sname = shop_id
+            sdef = (getattr(reg, "shops", None) or {}).get(shop_id) or {}
+            if sdef.get("name"):
+                sname = str(sdef["name"])
+            lines.append(
+                f"  ความคุ้น「{sname}」ดีขึ้น 〔{shop_rep_soft_label(get_shop_rep(player, shop_id))}〕"
+            )
+    except Exception:
+        pass
     # L3: sealed chest + hidden flags
     try:
         from game.domain.chest_loot import apply_reward_block

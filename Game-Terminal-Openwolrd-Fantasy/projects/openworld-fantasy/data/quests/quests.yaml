@@ -835,3 +835,94 @@
   reward_chest_chance: 0.55
   unlock_level: 4
   depends_on: [board_regular, sealed_whisper]
+
+# ── WO-Shop-5: shop reputation micro-quests ──
+- id: shop_merchant_road_favor
+  name: บุญรถเร่
+  description: สำรวจ 3 ครั้งในป่า/ทะเลทราย/เขา — ทางที่พ่อค้าเร่ใช้
+  type: explore_area
+  area: dark_forest
+  target: 3
+  reward_xp: 70
+  reward_money: 35
+  reward_items: [shop_merchant_road_tea, traveler_ration]
+  shop_id: traveling_merchant
+  reward_shop_rep: 10
+  unlock_level: 1
+  soft_hint: ช่วยทางรถเร่ · ความคุ้นพ่อค้าเร่ดีขึ้น
+
+- id: shop_armory_rare_mats
+  name: วัสดุให้โรงตี
+  description: นำ rare_mat 3 ชิ้นไปส่งที่ร้านอาวุธเมือง
+  type: deliver_item
+  item: rare_mat
+  target: 3
+  shop_id: city_armory
+  reward_xp: 100
+  reward_money: 50
+  reward_items: [shop_armory_whetstone, upgrade_mat]
+  reward_shop_rep: 14
+  unlock_level: 2
+  depends_on: [first_blood]
+  soft_hint: ส่ง mat หายากที่ร้านอาวุธ — ราคา/ชั้นของดีขึ้น
+
+- id: shop_rare_crystal_run
+  name: ผลึกให้ตลาด
+  description: นำ crystal_dust 4 ชิ้นไปส่งตลาดวัสดุหายาก
+  type: deliver_item
+  item: crystal_dust
+  target: 4
+  shop_id: rare_exchange
+  reward_xp: 110
+  reward_money: 55
+  reward_items: [shop_rare_crystal_lens, rare_mat]
+  reward_shop_rep: 12
+  unlock_level: 3
+  depends_on: [first_blood]
+  soft_hint: ผลึกที่ตลาดวัสดุ · เปิดชั้น mat ดีขึ้น
+
+- id: shop_celestial_blessing_walk
+  name: ทางโคมสวรรค์
+  description: สำรวจเมืองโบราณ 3 ครั้ง (ทางตลาดสวรรค์)
+  type: explore_area
+  area: ancient_city
+  target: 3
+  reward_xp: 80
+  reward_money: 30
+  reward_money_heaven: 2
+  reward_items: [shop_celestial_light_vial]
+  shop_id: celestial_bazaar
+  reward_shop_rep: 9
+  unlock_level: 2
+  soft_hint: โคมและ blessing · ความคุ้นตลาดสวรรค์
+
+- id: shop_infernal_ash_favor
+  name: เถ้าให้ตลาดนรก
+  description: นำ void_ash 2 ชิ้นไปส่งตลาดนรก
+  type: deliver_item
+  item: void_ash
+  target: 2
+  shop_id: infernal_market
+  reward_xp: 95
+  reward_money: 40
+  reward_money_hell: 2
+  reward_items: [shop_infernal_ember_vial]
+  reward_shop_rep: 11
+  unlock_level: 3
+  depends_on: [first_blood]
+  soft_hint: เถ้าสุญญะที่ตลาดนรก · ระวังมือ
+
+- id: shop_legend_listen
+  name: ฟังศาลา
+  description: สำรวจเมืองโบราณ 2 ครั้ง แล้วแวะศาลาตำนาน
+  type: explore_area
+  area: ancient_city
+  target: 2
+  reward_xp: 90
+  reward_money: 45
+  reward_items: [shop_legend_echo_thread]
+  shop_id: legend_pavilion
+  reward_shop_rep: 10
+  unlock_level: 4
+  depends_on: [market_first_sale]
+  soft_hint: ศาลาเงียบจำคนที่ฟัง

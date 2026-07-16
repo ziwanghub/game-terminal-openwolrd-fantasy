@@ -59,6 +59,9 @@ def _normalize_stock(
                 "id": str(entry["id"]),
                 "rarity": entry.get("rarity"),
                 "price_override": entry.get("price"),
+                "min_rep": entry.get("min_rep"),
+                "always_show": entry.get("always_show") or entry.get("rep_free"),
+                "rep_free": entry.get("rep_free"),
             }
         else:
             continue
@@ -78,26 +81,65 @@ def shop_rank_window(shop: Optional[Any]) -> Tuple[int, int]:
     )
 
 
+def shop_id_of_safe(shop: Optional[Any]) -> str:
+    if not shop:
+        return ""
+    return str(shop.get("id") or "")
+
+
 def _price_tuple(
     it: Dict[str, Any],
     reg: DataRegistry,
     player: Dict[str, Any],
     rarity: Optional[str],
+    *,
+    shop: Optional[Dict[str, Any]] = None,
+    shop_id: str = "",
 ) -> Tuple[str, int]:
     if it.get("price_heaven"):
         base = int(it["price_heaven"])
         from game.domain.rarity import rarity_price_mult
 
         mult = rarity_price_mult(reg, rarity or "common") if rarity else 1.0
-        return "money_heaven", max(1, int(round(base * mult)))
-    if it.get("price_hell"):
+        price = max(1, int(round(base * mult)))
+    elif it.get("price_hell"):
         base = int(it["price_hell"])
         from game.domain.rarity import rarity_price_mult
 
         mult = rarity_price_mult(reg, rarity or "common") if rarity else 1.0
-        return "money_hell", max(1, int(round(base * mult)))
-    base = int(it.get("price_world", 50))
-    return "money_world", scaled_price(base, reg, player, rarity=rarity)
+        price = max(1, int(round(base * mult)))
+        # WO-Shop-3 dynamic on specialty currency too
+        try:
+            from game.domain.shop_experience import apply_dynamic_to_price
+
+            price = apply_dynamic_to_price(
+                price, player, shop, side="buy", shop_id=shop_id
+            )
+        except Exception:
+            pass
+        return "money_hell", price
+    else:
+        base = int(it.get("price_world", 50))
+        price = scaled_price(base, reg, player, rarity=rarity)
+        try:
+            from game.domain.shop_experience import apply_dynamic_to_price
+
+            price = apply_dynamic_to_price(
+                price, player, shop, side="buy", shop_id=shop_id
+            )
+        except Exception:
+            pass
+        return "money_world", price
+    # heaven path
+    try:
+        from game.domain.shop_experience import apply_dynamic_to_price
+
+        price = apply_dynamic_to_price(
+            price, player, shop, side="buy", shop_id=shop_id
+        )
+    except Exception:
+        pass
+    return "money_heaven", price
 
 
 def _resolve_buy_rarity(reg: DataRegistry, iid: str, forced: Optional[str]) -> str:
@@ -137,11 +179,13 @@ def _eligible_buy_rows(
     min_rk: int,
     max_rk: int,
     category: Optional[str] = None,
+    shop: Optional[Dict[str, Any]] = None,
+    shop_id: str = "",
 ) -> List[Tuple[str, str, int, Dict[str, Any], str, str]]:
     """
     Build buy rows: (iid, currency, price, it, rarity, bag_cat)
     """
-    from game.domain.rarity import display_item_name, tier_rank
+    from game.domain.rarity import tier_rank
 
     rows: List[Tuple[str, str, int, Dict[str, Any], str, str]] = []
     for entry in stock:
@@ -155,17 +199,32 @@ def _eligible_buy_rows(
         rk = tier_rank(reg, rid)
         if rk < min_rk or rk > max_rk:
             continue
+        # WO-Shop-4: reputation stock gate (uncommon/rare unlock)
+        try:
+            from game.domain.shop_experience import get_shop_rep, stock_unlocked_for_rep
+
+            rep = get_shop_rep(player, shop_id or shop_id_of_safe(shop))
+            if not stock_unlocked_for_rep(rid, rep, entry=entry, player=player):
+                continue
+        except Exception:
+            pass
         cat = _stock_item_category(reg, iid)
         if category and cat != category:
             continue
-        cur, price = _price_tuple(it, reg, player, rid)
+        cur, price = _price_tuple(
+            it, reg, player, rid, shop=shop, shop_id=shop_id
+        )
         if entry.get("price_override") is not None:
             price = int(entry["price_override"])
         rows.append((iid, cur, price, it, rid, cat))
-    # sort within category: food tier then name
+    # sort: category soft order already filtered · then price · name
     def _sk(r: Tuple[str, str, int, Dict[str, Any], str, str]) -> Tuple:
         it = r[3]
-        return (int(it.get("food_tier") or 99), str(it.get("name") or r[0]))
+        return (
+            int(it.get("food_tier") or 99),
+            int(r[2]),  # price asc — cheaper first, easier to scan
+            str(it.get("name") or r[0]),
+        )
 
     rows.sort(key=_sk)
     return rows
@@ -177,10 +236,20 @@ def _count_stock_by_category(
     stock: Sequence[Dict[str, Any]],
     min_rk: int,
     max_rk: int,
+    *,
+    shop: Optional[Dict[str, Any]] = None,
+    shop_id: str = "",
 ) -> Dict[str, int]:
     counts = {c: 0 for c in SHOP_CAT_ORDER}
     for row in _eligible_buy_rows(
-        player, reg, stock, min_rk=min_rk, max_rk=max_rk, category=None
+        player,
+        reg,
+        stock,
+        min_rk=min_rk,
+        max_rk=max_rk,
+        category=None,
+        shop=shop,
+        shop_id=shop_id,
     ):
         cat = row[5]
         if cat not in counts:
@@ -248,6 +317,10 @@ def _buy_row_detail(
     return " · ".join(str(b) for b in bits if b)
 
 
+# WO-Shop-1: page size for long stock lists
+SHOP_BUY_PAGE = 10
+
+
 def _buy_from_rows(
     player: Dict[str, Any],
     reg: DataRegistry,
@@ -271,99 +344,148 @@ def _buy_from_rows(
         return
 
     short_label = str(cat_label).split("(")[0].strip()
-    lines: List[str] = [
-        f" ซื้อ · {short_label}",
-        "---",
-        f" เงินคุณ  โลก {player.get('money_world', 0)}"
-        f"  ·  สวรรค์ {player.get('money_heaven', 0)}"
-        f"  ·  นรก {player.get('money_hell', 0)}",
-        "---",
-        " รายการ",
-    ]
-    for i, (iid, cur, price, it, rid, cat) in enumerate(rows, 1):
-        shown = display_item_name(str(it.get("name") or iid), rid, reg)
-        detail = _buy_row_detail(it, cat)
-        lines.append(f"  {i}. {shown}")
-        price_line = f"      {price} {_currency_name(cur)}"
-        if detail:
-            price_line += f"  ·  {detail}"
-        lines.append(price_line)
-        if i < len(rows):
-            lines.append("")
-    lines.extend(
-        [
-            "---",
-            f"  0  กลับหมวด",
-            "---",
-            f" พิมพ์ 1–{len(rows)} เพื่อซื้อ",
-        ]
-    )
-    io.write_line()
-    io.write_line(render_box(lines, double=False))
-    ch = io.read_line(f"\n  ซื้อหมายเลข (1–{len(rows)} · 0 กลับ): ").strip()
-    if ch in ("0", ""):
-        return
-    try:
-        idx = int(ch) - 1
-        if idx < 0 or idx >= len(rows):
-            io.write_line("  หมายเลขนอกช่วง")
-            return
-        iid, cur, price, it, rid, _cat = rows[idx]
-    except Exception:
-        io.write_line("  พิมพ์เลขเท่านั้น")
-        return
-    flags = player.get("flags") or {}
-    if flags.get("shop_discount"):
-        price = max(1, int(price * (1.0 - float(flags["shop_discount"]))))
-    if flags.get("shop_surcharge"):
-        price = max(1, int(price * (1.0 + float(flags["shop_surcharge"]))))
-    shown = display_item_name(str(it.get("name") or iid), rid, reg)
-    have = int(player.get(cur, 0) or 0)
-    if have < price:
-        io.write_line()
-        io.write_line(
-            render_box(
-                [
-                    " เงินไม่พอ",
-                    "---",
-                    f" ต้องการ  {price} {_currency_name(cur)}",
-                    f" มีอยู่    {have} {_currency_name(cur)}",
-                ],
-                double=False,
-            )
-        )
-        return
-    # soft confirm for equipment / expensive
-    conf_need = _cat == "equipment" or price >= 80
-    if conf_need:
-        conf = io.read_line(
-            f"  ซื้อ「{shown}」 {price} {_currency_name(cur)}? (y/n): "
-        ).strip().lower()
-        if conf not in ("y", "yes", "ใช่", "1"):
-            io.write_line("  ยกเลิก")
-            return
-    player[cur] = have - price
-    name = add_item(player, iid, reg, rarity=rid)
-    try:
-        from game.domain.stats import bump_stat
+    page = 0
+    page_size = SHOP_BUY_PAGE
+    n_pages = max(1, (len(rows) + page_size - 1) // page_size)
 
-        bump_stat(player, "shop_purchases", 1)
-    except Exception:
-        pass
-    result = [
-        " ซื้อสำเร็จ",
-        "---",
-        f" ได้  {name}",
-        f" จ่าย {price} {_currency_name(cur)}  ·  เหลือ {player.get(cur, 0)}",
-    ]
-    if _cat == "food":
-        result.append(" → กระเป๋าหมวด「อาหาร」(5/I → 2)")
-    elif _cat == "equipment":
-        result.append(" → กระเป๋าหมวด「อุปกรณ์」· สวมที่ เกียร์")
-    elif _cat == "healing":
-        result.append(" → กระเป๋าหมวด「รักษา」")
-    io.write_line()
-    io.write_line(render_box(result, double=False))
+    while True:
+        start = page * page_size
+        chunk = rows[start : start + page_size]
+        lines: List[str] = [
+            f" ซื้อ · {short_label}",
+            "---",
+            f" เงินคุณ  โลก {player.get('money_world', 0)}"
+            f"  ·  สวรรค์ {player.get('money_heaven', 0)}"
+            f"  ·  นรก {player.get('money_hell', 0)}",
+            "---",
+            f" รายการ  {len(rows)} ชิ้น"
+            + (f"  ·  หน้า {page + 1}/{n_pages}" if n_pages > 1 else ""),
+            "---",
+        ]
+        for j, (iid, cur, price, it, rid, cat) in enumerate(chunk):
+            i = start + j + 1
+            shown = display_item_name(str(it.get("name") or iid), rid, reg)
+            detail = _buy_row_detail(it, cat)
+            lines.append(f"  {i}. {shown}")
+            price_line = f"      {price} {_currency_name(cur)}"
+            if detail:
+                price_line += f"  ·  {detail}"
+            lines.append(price_line)
+            if j < len(chunk) - 1:
+                lines.append("")
+        lines.append("---")
+        if n_pages > 1:
+            nav = []
+            if page > 0:
+                nav.append("P ก่อนหน้า")
+            if page + 1 < n_pages:
+                nav.append("N ถัดไป")
+            if nav:
+                lines.append("  " + "  ·  ".join(nav))
+        lines.extend(
+            [
+                "  0  กลับหมวด",
+                "---",
+                f" พิมพ์ {start + 1}–{start + len(chunk)} เพื่อซื้อ",
+            ]
+        )
+        io.write_line()
+        io.write_line(render_box(lines, double=False))
+        prompt = f"\n  ซื้อหมายเลข ({start + 1}–{start + len(chunk)}"
+        if n_pages > 1:
+            prompt += " · N/P หน้า"
+        prompt += " · 0 กลับ): "
+        ch = io.read_line(prompt).strip().lower()
+        if ch in ("0", ""):
+            return
+        if ch in ("n", "next", ">", "ถัดไป") and page + 1 < n_pages:
+            page += 1
+            continue
+        if ch in ("p", "prev", "<", "ก่อน") and page > 0:
+            page -= 1
+            continue
+        try:
+            idx = int(ch) - 1
+            if idx < 0 or idx >= len(rows):
+                io.write_line("  หมายเลขนอกช่วง")
+                continue
+            iid, cur, price, it, rid, _cat = rows[idx]
+        except Exception:
+            io.write_line("  พิมพ์เลข / N / P / 0")
+            continue
+        flags = player.get("flags") or {}
+        if flags.get("shop_discount"):
+            price = max(1, int(price * (1.0 - float(flags["shop_discount"]))))
+        if flags.get("shop_surcharge"):
+            price = max(1, int(price * (1.0 + float(flags["shop_surcharge"]))))
+        shown = display_item_name(str(it.get("name") or iid), rid, reg)
+        have = int(player.get(cur, 0) or 0)
+        if have < price:
+            io.write_line()
+            io.write_line(
+                render_box(
+                    [
+                        " เงินไม่พอ",
+                        "---",
+                        f" ต้องการ  {price} {_currency_name(cur)}",
+                        f" มีอยู่    {have} {_currency_name(cur)}",
+                    ],
+                    double=False,
+                )
+            )
+            continue
+        # soft confirm for equipment / expensive
+        conf_need = _cat == "equipment" or price >= 80
+        if conf_need:
+            conf = io.read_line(
+                f"  ซื้อ「{shown}」 {price} {_currency_name(cur)}? (y/n): "
+            ).strip().lower()
+            if conf not in ("y", "yes", "ใช่", "1"):
+                io.write_line("  ยกเลิก")
+                continue
+        # WO-INV-1: refuse purchase when bag cannot accept (before charging)
+        from game.domain.bag_stack import can_accept_item
+
+        if not can_accept_item(player, str(iid), reg, rarity=str(rid)):
+            io.write_line("  กระเป๋าเต็ม — ขาย/ทิ้งของก่อน แล้วค่อยซื้อ")
+            continue
+        name = add_item(player, iid, reg, rarity=rid)
+        if not name:
+            io.write_line("  กระเป๋าเต็ม — ซื้อไม่สำเร็จ")
+            continue
+        player[cur] = have - price
+        try:
+            from game.domain.stats import bump_stat
+
+            bump_stat(player, "shop_purchases", 1)
+        except Exception:
+            pass
+        try:
+            from game.domain.shop_experience import bump_shop_rep, shop_rep_soft_label, get_shop_rep
+
+            sid = str(player.get("_shop_active_id") or "")
+            bump_shop_rep(player, sid, amount=2, reason="buy")
+            _rep_note = shop_rep_soft_label(get_shop_rep(player, sid))
+        except Exception:
+            _rep_note = ""
+        result = [
+            " ซื้อสำเร็จ",
+            "---",
+            f" ได้  {name}",
+            f" จ่าย {price} {_currency_name(cur)}  ·  เหลือ {player.get(cur, 0)}",
+        ]
+        if _rep_note:
+            result.append(f" ความคุ้นร้าน: 〔{_rep_note}〕")
+        if _cat == "food":
+            result.append(" → กระเป๋าหมวด「อาหาร」(5/I → 2)")
+        elif _cat == "equipment":
+            result.append(" → กระเป๋าหมวด「อุปกรณ์」· สวมที่ เกียร์")
+        elif _cat == "healing":
+            result.append(" → กระเป๋าหมวด「รักษา」")
+        io.write_line()
+        io.write_line(render_box(result, double=False))
+        # stay on list for multi-buy
+        continue
 
 
 def _buy_browse(
@@ -374,28 +496,38 @@ def _buy_browse(
     *,
     min_rk: int,
     max_rk: int,
+    shop: Optional[Dict[str, Any]] = None,
+    shop_id: str = "",
 ) -> None:
     """Category-first buy menu — เลือกหมวดก่อน แล้วค่อยเลือกชิ้น."""
     from game.ui_terminal.layout import render_box
+    from game.domain.shop_experience import category_order_for_shop, specialty_hint
 
+    cat_order = category_order_for_shop(shop_id, shop)
     while True:
-        counts = _count_stock_by_category(player, reg, stock, min_rk, max_rk)
+        counts = _count_stock_by_category(
+            player, reg, stock, min_rk, max_rk, shop=shop, shop_id=shop_id
+        )
         total = sum(counts.values())
         lines: List[str] = [
             " ซื้อ · เลือกหมวด",
             "---",
             f" สินค้าในร้านนี้ ~{total} ชิ้น",
-            "---",
         ]
+        hint = specialty_hint(shop, shop_id)
+        if hint:
+            lines.append(f" {hint}")
+        lines.append("---")
         menu: List[Tuple[str, str]] = []  # key, cat_id
         n = 0
-        for cat in SHOP_CAT_ORDER:
+        for cat in cat_order:
             c = counts.get(cat, 0)
             if c <= 0:
                 continue
             n += 1
             label = SHOP_CAT_LABELS.get(cat, cat)
-            lines.append(f"  {n}  {label}  ({c})")
+            featured = " ★" if n == 1 else ""
+            lines.append(f"  {n}  {label}  ({c}){featured}")
             menu.append((str(n), cat))
         if not menu:
             lines.append("  (ร้านนี้ไม่มีสินค้าในช่วงระดับ)")
@@ -406,7 +538,8 @@ def _buy_browse(
         lines.extend(
             [
                 "---",
-                "  A  ดูทั้งหมด (รายการยาว)",
+                "  ★ = หมวดเด่นของร้านนี้",
+                "  เลือกหมวดก่อน (แนะนำ) · A = ทั้งหมดแบบแบ่งหน้า",
                 "  0  กลับหน้าร้าน",
             ]
         )
@@ -417,7 +550,14 @@ def _buy_browse(
             return
         if ch in ("a", "all", "ทั้งหมด"):
             rows = _eligible_buy_rows(
-                player, reg, stock, min_rk=min_rk, max_rk=max_rk, category=None
+                player,
+                reg,
+                stock,
+                min_rk=min_rk,
+                max_rk=max_rk,
+                category=None,
+                shop=shop,
+                shop_id=shop_id,
             )
             _buy_from_rows(player, reg, io, rows, cat_label="ทั้งหมด")
             continue
@@ -440,11 +580,40 @@ def _buy_browse(
             io.write_line("  เลือกหมายเลขหมวด")
             continue
         rows = _eligible_buy_rows(
-            player, reg, stock, min_rk=min_rk, max_rk=max_rk, category=cat_id
+            player,
+            reg,
+            stock,
+            min_rk=min_rk,
+            max_rk=max_rk,
+            category=cat_id,
+            shop=shop,
+            shop_id=shop_id,
         )
         _buy_from_rows(
             player, reg, io, rows, cat_label=SHOP_CAT_LABELS.get(cat_id, cat_id)
         )
+
+
+# WO-Shop-2: default soft tone if shop yaml omits tone
+SHOP_TONE_DEFAULTS: Dict[str, str] = {
+    "traveling_merchant": "รถเร่ริมทาง — ยา อาหาร เสบียงเดินทาง",
+    "city_armory": "โรงตีเมือง — อาวุธ เกราะ และวัสดุอัปเกรด",
+    "celestial_bazaar": "แสงบางและพรแผ่ว — เครื่องราง / blessing",
+    "infernal_market": "เถ้าและสัญญา — สัญญานรก / สุญญะ",
+    "rare_exchange": "ผลึก ม้วน และ mat หายาก — ไม่ขายเกียร์",
+    "legend_pavilion": "ศาลาเงียบ — รับซื้อแรงก์สูง · ตำนานเบา",
+}
+
+
+def shop_tone_line(shop: Optional[Dict[str, Any]], shop_id: str = "") -> str:
+    """Soft identity line for hub (never % or prices)."""
+    if shop:
+        for key in ("tone", "soft_hint", "flavor", "identity"):
+            raw = shop.get(key)
+            if raw:
+                return str(raw).strip()
+    sid = str(shop_id or (shop or {}).get("id") or "")
+    return SHOP_TONE_DEFAULTS.get(sid, "ร้านระบบ — ซื้อขายของใช้ทั่วไป")
 
 
 def format_shop_hub_lines(
@@ -456,24 +625,52 @@ def format_shop_hub_lines(
     min_rk: int,
     max_rk: int,
     specialty: bool,
+    tone: str = "",
+    shop_id: str = "",
+    greeting: str = "",
+    specialty_line: str = "",
+    market_day: str = "",
+    rep_label: str = "",
+    rep_hint: str = "",
 ) -> List[str]:
     """Sectioned shop front desk for box UI."""
     from game.domain.rarity import rarity_label
+    from game.domain.shop_experience import category_order_for_shop
 
     lines: List[str] = [
         f" ร้าน · {title}",
         "---",
+    ]
+    if greeting:
+        lines.append(f" {greeting}")
+        lines.append("---")
+    tone_txt = (tone or "").strip() or shop_tone_line(None, shop_id)
+    if tone_txt:
+        lines.append(f" โทน  {tone_txt}")
+    if specialty_line:
+        lines.append(f" เด่น  {specialty_line}")
+    if rep_label:
+        lines.append(f" ความคุ้น  〔{rep_label}〕")
+    if market_day:
+        lines.append(f" วันนี้  {market_day}")
+    if rep_hint:
+        lines.append(f" ใบ้  {rep_hint}")
+    if tone_txt or specialty_line or market_day or rep_label:
+        lines.append("---")
+    lines.append(
         f" เงิน  โลก {player.get('money_world', 0)}"
         f"  ·  สวรรค์ {player.get('money_heaven', 0)}"
-        f"  ·  นรก {player.get('money_hell', 0)}",
-    ]
+        f"  ·  นรก {player.get('money_hell', 0)}"
+    )
     if specialty:
         lo = rarity_label(reg, _rank_to_id(reg, min_rk))
         hi = rarity_label(reg, _rank_to_id(reg, max_rk))
         lines.append(f" ระดับที่รับ  {lo} – {hi}")
     lines.append("---")
-    lines.append(" สต็อกตามหมวด")
-    counts = _count_stock_by_category(player, reg, stock, min_rk, max_rk)
+    lines.append(" สต็อกตามหมวด (เรียงตามโทนร้าน)")
+    counts = _count_stock_by_category(
+        player, reg, stock, min_rk, max_rk, shop_id=shop_id
+    )
     short = {
         "food": "อาหาร",
         "healing": "ยา",
@@ -483,19 +680,30 @@ def format_shop_hub_lines(
         "other": "อื่นๆ",
     }
     any_stock = False
-    for c in SHOP_CAT_ORDER:
+    first = True
+    for c in category_order_for_shop(shop_id):
         n = int(counts.get(c, 0) or 0)
         if n <= 0:
             continue
         any_stock = True
-        lines.append(f"  · {short.get(c, c):<8}  {n} ชิ้น")
+        star = " ★" if first else ""
+        first = False
+        lines.append(f"  · {short.get(c, c):<8}  {n} ชิ้น{star}")
     if not any_stock:
         lines.append("  (ว่าง)")
     lines.append("---")
     lines.append(" หมายเหตุ soft")
-    lines.append("  · ขายไม่ต่ำกว่าพื้น · ภาษีสูงขึ้นตามระดับของ")
+    lines.append("  · ราคาขยับตามความคุ้นร้าน/วัน (ไม่โชว์ % · ไม่เกินแผ่ว)")
+    lines.append("  · คุ้นขึ้น → ราคาดีขึ้น · ของหายากเปิดมากขึ้น")
+    lines.append("  · เศษ/mat มีพื้นรับซื้อ · เลือกหมวดก่อน")
+    lines.append("  · การ์ดไม่ขายที่นี่ — ดรอปจากมอน/หีบเท่านั้น")
+    if not any_stock:
+        lines.append("  · ร้านนี้รับซื้อเป็นหลัก (stock ระบบเบา/ว่าง)")
     lines.append("---")
-    lines.append("  1 / B   ซื้อ (เลือกหมวดก่อน)")
+    if any_stock:
+        lines.append("  1 / B   ซื้อ (เลือกหมวดก่อน)")
+    else:
+        lines.append("  1 / B   (ไม่มีของขายระบบ)")
     lines.append("  2 / S   ขาย (เลือกหมวดจากกระเป๋า)")
     lines.append("  0       ออก")
     return lines
@@ -508,31 +716,95 @@ def run_shop(
     shop_id: str = "traveling_merchant",
 ) -> None:
     from game.ui_terminal.layout import render_box
+    from game.domain.shop_experience import (
+        pick_greeting,
+        specialty_hint,
+        soft_market_day_line,
+        ensure_shop_rep,
+        get_shop_rep,
+        shop_rep_soft_label,
+        rep_progress_hint,
+        KNOWN_SHOP_IDS,
+    )
 
-    shop = reg.shops.get(shop_id) or {}
+    shop = dict(reg.shops.get(shop_id) or {})
+    shop["id"] = shop_id
     title = str(shop.get("name") or shop_id)
-    stock = _normalize_stock(shop if shop else None, reg=reg)
+    # seed rep for known shops
+    ensure_shop_rep(player, list(KNOWN_SHOP_IDS) + [shop_id])
+    # WO-Shop-5: try deliver-item quests for this shop on enter
+    try:
+        from game.domain.shop_rep_content import try_deliver_shop_quests, friend_bonus_lines
+
+        for ln in try_deliver_shop_quests(player, reg, shop_id):
+            io.write_line(ln)
+    except Exception:
+        pass
+    # WO-Shop-6: Anima warmth when rep high
+    try:
+        from game.domain.shop_experience import shop_anima_warmth_on_visit
+
+        for ln in shop_anima_warmth_on_visit(player, shop_id, reg=reg):
+            io.write_line(ln)
+    except Exception:
+        pass
+    # WO-Shop-1/2: buy_stock false → no system catalog
+    if shop.get("buy_stock") is False:
+        stock = []
+    else:
+        stock = _normalize_stock(shop if shop else None, reg=reg)
     min_rk, max_rk = shop_rank_window(shop)
     specialty = min_rk > 1 or max_rk < 8
+    tone = shop_tone_line(shop, shop_id)
+    player["_shop_active_id"] = shop_id
+    greet = pick_greeting(shop, shop_id, player=player)
+    spec = specialty_hint(shop, shop_id)
+    day_line = soft_market_day_line(player)
+    rep_v = get_shop_rep(player, shop_id)
+    rep_lab = shop_rep_soft_label(rep_v)
+    rep_h = rep_progress_hint(player, shop_id)
 
     while True:
-        io.write_line()
-        io.write_line(
-            render_box(
-                format_shop_hub_lines(
-                    player,
-                    reg,
-                    title=title,
-                    stock=stock,
-                    min_rk=min_rk,
-                    max_rk=max_rk,
-                    specialty=specialty,
-                ),
-                double=False,
-            )
+        # refresh soft lines each loop (rep may change)
+        greet = pick_greeting(shop, shop_id, player=player)
+        rep_v = get_shop_rep(player, shop_id)
+        rep_lab = shop_rep_soft_label(rep_v)
+        rep_h = rep_progress_hint(player, shop_id)
+        try:
+            from game.domain.shop_rep_content import friend_bonus_lines
+            from game.domain.shop_experience import integration_hub_lines
+
+            friend_bits = friend_bonus_lines(player, shop_id)
+            integ = integration_hub_lines(player, shop_id)
+            if friend_bits and rep_h:
+                rep_h = rep_h + " · ลูกค้าประจำ"
+        except Exception:
+            friend_bits = []
+            integ = []
+        hub_lines = format_shop_hub_lines(
+            player,
+            reg,
+            title=title,
+            stock=stock,
+            min_rk=min_rk,
+            max_rk=max_rk,
+            specialty=specialty,
+            tone=tone,
+            shop_id=shop_id,
+            greeting=greet,
+            specialty_line=spec,
+            market_day=day_line,
+            rep_label=rep_lab,
+            rep_hint=rep_h,
         )
+        extra = list(friend_bits[:1]) + list(integ[:2])
+        for fb in extra:
+            hub_lines.insert(min(7, len(hub_lines)), fb)
+        io.write_line()
+        io.write_line(render_box(hub_lines, double=False))
         top = io.read_line("\n  เลือก (1 ซื้อ · 2 ขาย · 0 ออก): ").strip().lower()
         if top in ("0", "", "q"):
+            player.pop("_shop_active_id", None)
             break
         if top in ("2", "s", "sell", "ขาย"):
             _run_sell(player, reg, io, shop=shop)
@@ -540,7 +812,16 @@ def run_shop(
         if top not in ("1", "b", "buy", "ซื้อ"):
             io.write_line("  พิมพ์ 1=ซื้อ · 2=ขาย · 0=ออก")
             continue
-        _buy_browse(player, reg, io, stock, min_rk=min_rk, max_rk=max_rk)
+        _buy_browse(
+            player,
+            reg,
+            io,
+            stock,
+            min_rk=min_rk,
+            max_rk=max_rk,
+            shop=shop,
+            shop_id=shop_id,
+        )
 
 
 def _rank_to_id(reg: DataRegistry, rank: int) -> str:
@@ -548,6 +829,54 @@ def _rank_to_id(reg: DataRegistry, rank: int) -> str:
         if int(t.get("rank") or 0) == rank:
             return str(t.get("id"))
     return "common"
+
+
+def _confirm_and_bulk_sell(
+    player: Dict[str, Any],
+    reg: DataRegistry,
+    io: IO,
+    *,
+    shop: Optional[Dict[str, Any]] = None,
+    category: Optional[str] = None,
+    common_only: bool = False,
+    label: str = "",
+) -> None:
+    """WO-INV bulk sell with preview + y/n confirm."""
+    from game.domain.bag_sell import execute_bulk_sell, preview_bulk_sell
+
+    prev = preview_bulk_sell(
+        player, reg, category=category, common_only=common_only, shop=shop
+    )
+    units = int(prev.get("units") or 0)
+    slots = int(prev.get("slots") or 0)
+    by_cur = dict(prev.get("by_cur") or {})
+    if units <= 0:
+        io.write_line("  ไม่มีของที่ขายแบบกลุ่มได้ (เรลิก/unique/หีบ/rare+ ถูกกัน)")
+        return
+    gold_bits = []
+    for cur, amt in by_cur.items():
+        gold_bits.append(f"{amt} {_currency_name(cur)}")
+    gold_txt = " · ".join(gold_bits) if gold_bits else "0"
+    lab = label or ("common" if common_only else "หมวด")
+    io.write_line(f"\n── ขายกลุ่ม · {lab} ──")
+    io.write_line(f"  {slots} ช่อง · {units} ชิ้น · ได้ประมาณ {gold_txt}")
+    io.write_line("  (ไม่ขายเรลิก · unique · หีบ · เกียร์ rare+)")
+    ans = io.read_line("ยืนยันขายกลุ่ม? (y=ตกลง / n=ยกเลิก): ").strip().lower()
+    if ans not in ("y", "yes", "ใช่", "1"):
+        io.write_line("  ยกเลิกขายกลุ่ม")
+        return
+    sold, gains, notes = execute_bulk_sell(
+        player, reg, category=category, common_only=common_only, shop=shop
+    )
+    if sold <= 0:
+        io.write_line("  ขายกลุ่มไม่สำเร็จ")
+        return
+    gain_bits = [f"+{v} {_currency_name(k)}" for k, v in gains.items()]
+    io.write_line(f"  ขายกลุ่มสำเร็จ · {sold} ชิ้น · {' · '.join(gain_bits)}")
+    for ln in notes[:6]:
+        io.write_line(f"   · {ln}")
+    if len(notes) > 6:
+        io.write_line(f"   · …อีก {len(notes) - 6} รายการ")
 
 
 def _run_sell(
@@ -584,7 +913,7 @@ def _run_sell(
         counts = count_bag_categories(player, reg)
         menu: List[Tuple[str, str]] = []
         n = 0
-        for cat in ("food", "healing", "equipment", "material", "other", "card"):
+        for cat in ("food", "healing", "equipment", "material", "other", "card", "relic"):
             c = int(counts.get(cat) or 0)
             if c <= 0:
                 continue
@@ -596,10 +925,17 @@ def _run_sell(
             io.write_line("  (ไม่มีของขาย)")
             return
         io.write_line("  A. ทั้งหมด")
+        io.write_line("  J. ขายขยะ common ทั้งกระเป๋า (ยืนยัน)")
         io.write_line("  0. กลับ")
         ch = io.read_line("หมวดขาย: ").strip().lower()
         if ch in ("0", ""):
             return
+        # WO-INV: bulk sell all common junk (any category)
+        if ch in ("j", "junk", "ขยะ"):
+            _confirm_and_bulk_sell(
+                player, reg, io, shop=shop, category=None, common_only=True, label="ขยะ common ทั้งกระเป๋า"
+            )
+            continue
         sell_cat: Optional[str] = None
         if ch in ("a", "all"):
             sell_cat = None
@@ -613,11 +949,16 @@ def _run_sell(
                 continue
 
         io.write_line("\n── รายการขาย ──")
+        io.write_line("  · การ์ดไม่ขายเป็นสินค้าในร้าน — ขายคืนได้ถูก (soft)")
         if min_rk > 1 or max_rk < 8:
             io.write_line(
                 f" ร้านรับเฉพาะระดับ {rarity_label(reg, _rank_to_id(reg, min_rk))}"
                 f"–{rarity_label(reg, _rank_to_id(reg, max_rk))}"
             )
+        from game.domain.bag_stack import qty_at
+        from game.domain.shop_experience import best_buyer_soft_line
+
+        cur_sid = str(shop.get("id") or player.get("_shop_active_id") or "")
         rows = []
         if sell_cat == "card":
             for i, cid in enumerate(player.get("card_bag") or []):
@@ -635,15 +976,45 @@ def _run_sell(
                 rid = rarity_of_inventory_index(player, i)
                 rk = tier_rank(reg, rid)
                 accepted = min_rk <= rk <= max_rk
+                # WO-Shop-6: legend soft-accepts relics even if rank edge
+                try:
+                    from game.domain.bag_sell import is_relic_item
+                    from game.domain.shop_experience import (
+                        legend_accepts_relic_sell,
+                        relic_legend_sell_price,
+                    )
+
+                    is_rel = is_relic_item(str(iid), it)
+                except Exception:
+                    is_rel = False
+                    legend_accepts_relic_sell = None  # type: ignore
+                    relic_legend_sell_price = None  # type: ignore
+                if is_rel and legend_accepts_relic_sell and legend_accepts_relic_sell(
+                    cur_sid, shop
+                ):
+                    accepted = True
                 base = int(
                     it.get("price_world")
                     or it.get("price_heaven")
                     or it.get("price_hell")
                     or 10
                 )
-                if it.get("price_heaven") and not it.get("price_world"):
+                if (
+                    is_rel
+                    and relic_legend_sell_price
+                    and legend_accepts_relic_sell
+                    and legend_accepts_relic_sell(cur_sid, shop)
+                ):
+                    cur = "money_world"
+                    price = int(
+                        relic_legend_sell_price(
+                            base, player, shop, rarity=str(rid)
+                        )
+                    )
+                    bd = {"tax_rate": 0.0, "net": price}
+                elif it.get("price_heaven") and not it.get("price_world"):
                     cur = "money_heaven"
-                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop)
+                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                     from game.domain.rarity import rarity_price_mult
 
                     buy = max(
@@ -654,33 +1025,78 @@ def _run_sell(
                     cur = "money_hell"
                     from game.domain.rarity import rarity_price_mult
 
-                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop)
+                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                     buy = max(
                         1, int(round(int(it["price_hell"]) * rarity_price_mult(reg, rid)))
                     )
                     price = max(1, int(round(buy * 0.4 * (1.0 - float(bd["tax_rate"])))))
                 else:
                     cur = "money_world"
-                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop)
+                    bd = sell_breakdown(base, reg, player, rarity=rid, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                     price = int(bd["net"])
                 shown = display_item_name(str(it.get("name") or iid), rid, reg)
+                q = qty_at(player, i)
+                if q > 1:
+                    shown = f"{shown} x{q}"
                 if not accepted:
                     io.write_line(f"  · {shown} — ร้านไม่รับระดับนี้")
                     continue
                 tax_pct = int(float(bd.get("tax_rate") or 0) * 100) if cur == "money_world" else 0
+                extra = ""
+                if is_rel and legend_accepts_relic_sell and legend_accepts_relic_sell(
+                    cur_sid, shop
+                ):
+                    extra = " · เรลิก (รับเบา)"
                 io.write_line(
-                    f"  {len(rows) + 1}. {shown} → ได้ {price} {_currency_name(cur)}"
+                    f"  {len(rows) + 1}. {shown} → ได้ {price} {_currency_name(cur)}/ชิ้น"
                     + (f" (ภาษี ~{tax_pct}%)" if tax_pct else "")
+                    + extra
                 )
+                # WO-Shop-3: soft best-buyer for mats (no %)
+                if cat == "material" or str(it.get("kind") or "") == "material":
+                    hint = best_buyer_soft_line(
+                        str(iid), reg, current_shop_id=cur_sid, item=it
+                    )
+                    if hint:
+                        io.write_line(f"      · {hint}")
                 rows.append(("inv", i, iid, rid, cur, price))
 
+        if not rows and sell_cat != "card":
+            io.write_line("  (ไม่มีชิ้นที่ขายได้ในหมวดนี้)")
+            io.read_line("Enter...")
+            continue
         if not rows:
             io.write_line("  (ไม่มีชิ้นที่ขายได้ในหมวดนี้)")
             io.read_line("Enter...")
             continue
+        io.write_line("  B. ขายทั้งหมวดนี้ (ทั้ง stack · ยืนยัน)")
+        io.write_line("  C. ขายเฉพาะ common ในหมวด (ยืนยัน)")
         io.write_line("  0. กลับหมวด")
-        ch2 = io.read_line("ขายหมายเลข: ").strip()
+        ch2 = io.read_line("ขายหมายเลข / B / C: ").strip().lower()
         if ch2 in ("0", ""):
+            continue
+        # WO-INV bulk within category
+        if ch2 in ("b", "bulk", "ทั้งหมวด"):
+            _confirm_and_bulk_sell(
+                player,
+                reg,
+                io,
+                shop=shop,
+                category=sell_cat,
+                common_only=False,
+                label="ทั้งหมวด" if sell_cat else "ทั้งหมด (ยกเว้นของป้องกัน)",
+            )
+            continue
+        if ch2 in ("c", "common"):
+            _confirm_and_bulk_sell(
+                player,
+                reg,
+                io,
+                shop=shop,
+                category=sell_cat,
+                common_only=True,
+                label="common ในหมวด" if sell_cat else "common ทั้งถุง",
+            )
             continue
         try:
             pick = int(ch2) - 1
@@ -710,21 +1126,58 @@ def _run_sell(
                     continue
             rid_live = rarity_of_inventory_index(player, live_idx)
             rk = tier_rank(reg, rid_live)
-            if not (min_rk <= rk <= max_rk):
+            it = reg.items.get(iid) or {}
+            from game.domain.bag_sell import is_relic_item
+            from game.domain.shop_experience import (
+                legend_accepts_relic_sell,
+                relic_legend_sell_price,
+            )
+
+            is_rel = is_relic_item(str(iid), it)
+            legend_ok = is_rel and legend_accepts_relic_sell(
+                str(shop.get("id") or ""), shop
+            )
+            if not (min_rk <= rk <= max_rk) and not legend_ok:
                 io.write_line("ร้านไม่รับระดับนี้")
                 continue
-            it = reg.items.get(iid) or {}
             base = int(
                 it.get("price_world")
                 or it.get("price_heaven")
                 or it.get("price_hell")
                 or 10
             )
+            if legend_ok:
+                cur = "money_world"
+                price = int(
+                    relic_legend_sell_price(
+                        base, player, shop, rarity=str(rid_live)
+                    )
+                )
+                from game.domain.bag_stack import remove_units_at
+
+                removed = remove_units_at(player, live_idx, reg, amount=1)
+                if not removed:
+                    continue
+                player[cur] = int(player.get(cur, 0)) + price
+                shown = display_item_name(str(it.get("name") or iid), rid_live, reg)
+                io.write_line(f"ขาย {shown} ได้ {price} {_currency_name(cur)}")
+                io.write_line("  (เรลิก · ศาลารับเบา — ไม่ bulk)")
+                try:
+                    from game.domain.shop_experience import bump_shop_rep, get_shop_rep, shop_rep_soft_label
+
+                    sid = str(shop.get("id") or "")
+                    bump_shop_rep(player, sid, amount=2, reason="sell")
+                    io.write_line(
+                        f" ความคุ้นร้าน: 〔{shop_rep_soft_label(get_shop_rep(player, sid))}〕"
+                    )
+                except Exception:
+                    pass
+                continue
             if it.get("price_heaven") and not it.get("price_world"):
                 cur = "money_heaven"
                 from game.domain.rarity import rarity_price_mult
 
-                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop)
+                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                 buy = max(
                     1,
                     int(round(int(it["price_heaven"]) * rarity_price_mult(reg, rid_live))),
@@ -734,21 +1187,47 @@ def _run_sell(
                 cur = "money_hell"
                 from game.domain.rarity import rarity_price_mult
 
-                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop)
+                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                 buy = max(
                     1, int(round(int(it["price_hell"]) * rarity_price_mult(reg, rid_live)))
                 )
                 price = max(1, int(round(buy * 0.4 * (1.0 - float(bd["tax_rate"])))))
             else:
                 cur = "money_world"
-                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop)
+                bd = sell_breakdown(base, reg, player, rarity=rid_live, shop=shop, item_kind=str(it.get('kind') or ''), item_id=str(iid))
                 price = int(bd["net"])
-            removed = remove_inventory_at_index(player, live_idx, reg)
+            # WO-INV: sell one unit (not whole stack)
+            from game.domain.bag_stack import remove_units_at
+
+            removed = remove_units_at(player, live_idx, reg, amount=1)
             if not removed:
                 continue
             player[cur] = int(player.get(cur, 0)) + price
             shown = display_item_name(str(it.get("name") or iid), rid_live, reg)
             io.write_line(f"ขาย {shown} ได้ {price} {_currency_name(cur)}")
+            # WO-Shop-4: mat/sell builds shop reputation
+            try:
+                from game.domain.shop_experience import (
+                    bump_shop_rep,
+                    get_shop_rep,
+                    shop_rep_soft_label,
+                )
+
+                sid = str(shop.get("id") or player.get("_shop_active_id") or "")
+                is_mat = str(it.get("kind") or "") in ("material", "mat") or "mat" in str(
+                    iid
+                ).lower()
+                bump_shop_rep(
+                    player,
+                    sid,
+                    amount=2 if is_mat else 1,
+                    reason="sell_mat" if is_mat else "sell",
+                )
+                io.write_line(
+                    f" ความคุ้นร้าน: 〔{shop_rep_soft_label(get_shop_rep(player, sid))}〕"
+                )
+            except Exception:
+                pass
         try:
             from game.domain.stats import bump_stat
 

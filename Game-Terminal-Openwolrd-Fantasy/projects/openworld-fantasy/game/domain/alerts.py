@@ -1005,6 +1005,56 @@ def _build_legacy_burden_entries(relic_cat: Mapping[str, Dict[str, Any]]) -> Dic
     return out
 
 
+def _appraisal_catalog() -> Dict[str, Dict[str, Any]]:
+    """WO-051 Appraisal Soft Alerts."""
+    return {
+        "appraisal.read": {
+            "severity": SEV_INFO,
+            "source": "appraisal",
+            "title": "อ่านชั้น",
+            "body": "สมาธิประเมิน 〔{tier}〕 · เป้า{target} — soft อย่างเดียว",
+            "tags": ["appraisal", "soft"],
+            "throttle_key": "appraisal.read",
+            "throttle_ticks": 1,
+        },
+        "appraisal.grow": {
+            "severity": SEV_INFO,
+            "source": "appraisal",
+            "title": "ตาคมขึ้น",
+            "body": "อ่านชั้นได้ลึกขึ้น — ชั้น 〔{tier}〕",
+            "tags": ["appraisal", "growth"],
+            "throttle_key": "appraisal.grow",
+            "throttle_ticks": 4,
+        },
+    }
+
+
+def _party_catalog() -> Dict[str, Dict[str, Any]]:
+    """WO-PARTY-7 Soft Alerts for companion assist."""
+    return {
+        "party.assist_cleanse_ok": {
+            "severity": SEV_INFO,
+            "source": "party",
+            "title": "สหายชำระ",
+            "body": "「{name}」ชำระอาการ 〔{ailment}〕 ให้คุณ — soft",
+            "inline": " …「{name}」ชำระอาการให้คุณ",
+            "tags": ["party", "assist", "cleanse"],
+            "throttle_key": "party.assist_cleanse_ok",
+            "throttle_ticks": 2,
+        },
+        "party.assist_fail": {
+            "severity": SEV_INFO,
+            "source": "party",
+            "title": "ซุ่มแผ่ว",
+            "body": "「{name}」พยายามช่วย — แรงยังไม่พอ (bond/anima soft)",
+            "inline": " …「{name}」ช่วยไม่ทันจังหวะ",
+            "tags": ["party", "assist", "soft"],
+            "throttle_key": "party.assist_fail",
+            "throttle_ticks": 2,
+        },
+    }
+
+
 def get_catalog() -> Dict[str, Dict[str, Any]]:
     global _CATALOG
     if _CATALOG is None:
@@ -1015,6 +1065,8 @@ def get_catalog() -> Dict[str, Dict[str, Any]]:
         _CATALOG.update(_needs_catalog())
         _CATALOG.update(_anima_catalog())
         _CATALOG.update(_world_catalog())
+        _CATALOG.update(_appraisal_catalog())
+        _CATALOG.update(_party_catalog())
     else:
         if "relic.equip" not in _CATALOG:
             relic = _relic_catalog()
@@ -1026,6 +1078,10 @@ def get_catalog() -> Dict[str, Dict[str, Any]]:
             _CATALOG.update(_anima_catalog())
         if "world.divine_glance" not in _CATALOG:
             _CATALOG.update(_world_catalog())
+        if "appraisal.read" not in _CATALOG:
+            _CATALOG.update(_appraisal_catalog())
+        if "party.assist_cleanse_ok" not in _CATALOG:
+            _CATALOG.update(_party_catalog())
     return _CATALOG
 
 

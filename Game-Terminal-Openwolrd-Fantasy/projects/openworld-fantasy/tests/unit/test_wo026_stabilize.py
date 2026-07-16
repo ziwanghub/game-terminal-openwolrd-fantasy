@@ -12,9 +12,11 @@ from game.ui_terminal.help import CITY_ONBOARD_TIPS, TUTORIAL_PAGES, help_covers
 
 
 def test_tutorial_has_relic_page():
-    assert len(TUTORIAL_PAGES) >= 9
+    # Soft 6-page tutorial: relic burden is page 5/6
+    assert len(TUTORIAL_PAGES) == 6
     blob = "\n".join("\n".join(p) for p in TUTORIAL_PAGES)
     assert "เรลิก" in blob or "ภาระ" in blob
+    assert "ห้องทดสอบ" in blob or "G" in blob
     assert any("เรลิก" in t or "ภาระ" in t or "ห้องทดสอบ" in t for t in CITY_ONBOARD_TIPS)
 
 

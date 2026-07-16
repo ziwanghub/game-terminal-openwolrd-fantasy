@@ -1,6 +1,3 @@
-# Craft recipes — inputs_rarity: min grade per material (optional)
-# output_rarity: forced output grade; else inherits from requirements
-
 - id: craft_steel_blade
   name: หลอมดาบเหล็กกล้า
   station: forge
@@ -9,14 +6,13 @@
     upgrade_mat: 3
     rare_mat: 1
   inputs_rarity:
-    iron_sword: uncommon   # ต้องการดาบอย่างน้อยระดับ「สูง」
+    iron_sword: uncommon
     upgrade_mat: common
     rare_mat: common
   money: 120
   output: steel_blade
   output_rarity: uncommon
   unlock_level: 4
-
 - id: craft_iron_plate
   name: ตีเกราะเหล็ก
   station: forge
@@ -29,7 +25,6 @@
   output: iron_plate
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_shadow_dagger
   name: หลอมกริชเงา
   station: forge
@@ -44,7 +39,6 @@
   output: shadow_dagger
   output_rarity: rare
   unlock_level: 5
-
 - id: craft_mage_robe
   name: เย็บชุดคลุมเวทย์
   station: forge
@@ -58,7 +52,6 @@
   output: mage_robe
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_potion_bundle
   name: ชุดยาฉุกเฉิน
   station: camp
@@ -67,7 +60,6 @@
   money: 20
   output: potion_hp
   unlock_level: 1
-
 - id: craft_antidote
   name: ต้มยาแก้พิษ
   station: camp
@@ -77,7 +69,6 @@
   money: 15
   output: antidote
   unlock_level: 1
-
 - id: craft_card_fire
   name: จารึกการ์ดไฟ
   station: mystic
@@ -90,7 +81,6 @@
   output: card_fire
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_card_guard
   name: จารึกการ์ดม่านน้ำ
   station: mystic
@@ -103,7 +93,6 @@
   output: card_guard_water
   output_rarity: rare
   unlock_level: 4
-
 - id: craft_thorn_blade
   name: หลอมดาบหนามราชันย์
   station: forge
@@ -118,7 +107,6 @@
   output: thorn_blade
   output_rarity: sacred
   unlock_level: 8
-
 - id: craft_thorn_mail
   name: ตีเกราะหนาม
   station: forge
@@ -133,7 +121,6 @@
   output: thorn_mail
   output_rarity: sacred
   unlock_level: 8
-
 - id: craft_shadow_cloak
   name: เย็บผ้าคลุมเงา
   station: mystic
@@ -148,7 +135,6 @@
   output: shadow_cloak
   output_rarity: rare
   unlock_level: 6
-
 - id: craft_divine_ring
   name: หลอมวงแหวนศักดิ์สิทธิ์
   station: mystic
@@ -163,8 +149,6 @@
   output: silver_amulet
   output_rarity: sacred
   unlock_level: 12
-
-# bulk 1.13.9
 - id: craft_bandit_knife
   name: ลับมีดปล้น
   station: forge
@@ -175,7 +159,6 @@
   output: bandit_knife
   output_rarity: common
   unlock_level: 1
-
 - id: craft_dust_veil
   name: เย็บผ้าคลุมฝุ่น
   station: forge
@@ -186,7 +169,6 @@
   output: dust_veil
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_city_ration
   name: ห่อเสบียงเมือง
   station: camp
@@ -197,8 +179,6 @@
   output: traveler_ration
   output_rarity: common
   unlock_level: 1
-
-# ── K4: อาหาร / ยา tier สูง (camp) — ห้ามคราฟ unit / sealed chest ──
 - id: craft_hunter_ration
   name: ห่อเสบียงนักล่า
   station: camp
@@ -209,7 +189,6 @@
   output: hunter_ration
   output_rarity: common
   unlock_level: 2
-
 - id: craft_mana_brew
   name: ต้มยา Mana
   station: camp
@@ -220,7 +199,6 @@
   output: potion_mana
   output_rarity: common
   unlock_level: 2
-
 - id: craft_focus_tea
   name: ชงชาสมาธิ
   station: camp
@@ -231,7 +209,6 @@
   output: focus_tea
   output_rarity: common
   unlock_level: 3
-
 - id: craft_balm
   name: ผสมขี้ผึ้งฟื้นฟู
   station: camp
@@ -242,7 +219,6 @@
   output: balm_regen
   output_rarity: common
   unlock_level: 4
-
 - id: craft_trail_stew
   name: ต้มสตูว์ทางไกล
   station: camp
@@ -254,7 +230,6 @@
   output: trail_stew
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_tonic_might
   name: ต้มยาปลุกกำลัง
   station: camp
@@ -266,7 +241,6 @@
   output: tonic_might
   output_rarity: uncommon
   unlock_level: 6
-
 - id: craft_inn_feast
   name: จัดสำรับโรงเตี๊ยม
   station: camp
@@ -281,8 +255,6 @@
   output: inn_feast
   output_rarity: rare
   unlock_level: 9
-
-# G1 / mon-mat craft (1.25)
 - id: craft_scout_spear
   name: เหลาหอกลาด
   station: forge
@@ -293,7 +265,6 @@
   output: scout_spear
   output_rarity: common
   unlock_level: 2
-
 - id: craft_woodsman_axe
   name: ตีขวานตัดทาง
   station: forge
@@ -304,7 +275,6 @@
   output: woodsman_axe
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_hardened_boots
   name: เย็บรองเท้าหนังแข็ง
   station: forge
@@ -316,7 +286,6 @@
   output: hardened_boots
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_iron_greaves
   name: ตีสนับขาเหล็ก
   station: forge
@@ -328,7 +297,6 @@
   output: iron_greaves
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_antidote_stinger
   name: ต้มยาแก้พิษจากเหล็กใน
   station: camp
@@ -339,7 +307,6 @@
   output: antidote
   output_rarity: common
   unlock_level: 3
-
 - id: craft_leather_greaves_hide
   name: เย็บสนับขาจากหนังโทรล
   station: forge
@@ -350,7 +317,6 @@
   output: leather_greaves
   output_rarity: common
   unlock_level: 3
-
 - id: craft_chain_coif_stone
   name: ตีหมวกโซ่จากเศษหิน
   station: forge
@@ -361,7 +327,6 @@
   output: chain_coif
   output_rarity: uncommon
   unlock_level: 4
-
 - id: craft_mist_tea
   name: ชงชาจากน้ำค้างหมอก
   station: camp
@@ -372,8 +337,6 @@
   output: focus_tea
   output_rarity: common
   unlock_level: 4
-
-# IC1 / MC1 (1.28)
 - id: craft_ridge_spear
   name: เหลาหอกสันผา
   station: forge
@@ -385,7 +348,6 @@
   output: ridge_spear
   output_rarity: uncommon
   unlock_level: 4
-
 - id: craft_climber_boots
   name: เย็บรองเท้าปีนผา
   station: forge
@@ -397,7 +359,6 @@
   output: climber_boots
   output_rarity: uncommon
   unlock_level: 4
-
 - id: craft_desert_scimitar
   name: ลับดาบโค้งทราย
   station: forge
@@ -409,7 +370,6 @@
   output: desert_scimitar
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_dune_wraps
   name: พันขาเนินทราย
   station: camp
@@ -420,8 +380,6 @@
   output: dune_wraps
   output_rarity: uncommon
   unlock_level: 5
-
-# IC3-lite from IC2 mats
 - id: craft_bone_dagger
   name: ลับมีดกระดูก
   station: forge
@@ -433,7 +391,6 @@
   output: bone_dagger
   output_rarity: uncommon
   unlock_level: 2
-
 - id: craft_vine_wrap
   name: สานเกราะเถา
   station: forge
@@ -445,7 +402,6 @@
   output: vine_wrap_body
   output_rarity: uncommon
   unlock_level: 4
-
 - id: craft_cave_helm
   name: ตีหมวกขุดถ้ำ
   station: forge
@@ -456,7 +412,6 @@
   output: cave_miner_helm
   output_rarity: common
   unlock_level: 3
-
 - id: craft_kite_shield
   name: ตีโล่ว่าวเหล็ก
   station: forge
@@ -468,8 +423,6 @@
   output: iron_kite_shield
   output_rarity: uncommon
   unlock_level: 5
-
-# IC3 mon-line crafts
 - id: craft_balm_nature
   name: ต้มยาหม่องธรรมชาติ
   station: camp
@@ -481,7 +434,6 @@
   output: balm_nature
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_oil_shadow
   name: กลั่นน้ำมันเงา
   station: mystic
@@ -492,7 +444,6 @@
   output: oil_shadow
   output_rarity: uncommon
   unlock_level: 6
-
 - id: craft_chitin_vest
   name: ประกอบเกราะไคติน
   station: forge
@@ -504,7 +455,6 @@
   output: chitin_vest
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_bone_circlet
   name: ขึ้นรูปมงกระดูก
   station: mystic
@@ -515,7 +465,6 @@
   output: bone_circlet
   output_rarity: uncommon
   unlock_level: 6
-
 - id: craft_quill_bow
   name: ขึงธนูขนนก
   station: camp
@@ -527,7 +476,6 @@
   output: quill_bow
   output_rarity: uncommon
   unlock_level: 5
-
 - id: craft_fang_charm
   name: ร้อยเครื่องรางเขี้ยว
   station: camp
@@ -539,7 +487,6 @@
   output: fang_charm
   output_rarity: uncommon
   unlock_level: 3
-
 - id: craft_ent_tonic
   name: ต้มยาเปลือกเอนท์
   station: camp
@@ -550,7 +497,6 @@
   output: potion_hp
   output_rarity: common
   unlock_level: 2
-
 - id: craft_slime_antidote
   name: กลั่นยาจากแกนสไลม์
   station: camp
@@ -561,7 +507,6 @@
   output: antidote
   output_rarity: common
   unlock_level: 2
-
 - id: craft_mid_glaive
   name: หลอมง้าวเหล็กกลางทาง
   station: forge
@@ -573,7 +518,6 @@
   output: mid_steel_glaive
   output_rarity: rare
   unlock_level: 10
-
 - id: craft_storm_boots
   name: เย็บรองเท้าพายุกลาง
   station: forge
@@ -585,7 +529,6 @@
   output: mid_storm_boots
   output_rarity: rare
   unlock_level: 8
-
 - id: craft_late_void_edge
   name: หลอมคมสุญญะสายกลาง
   station: mystic
@@ -597,7 +540,6 @@
   output: late_void_edge
   output_rarity: sacred
   unlock_level: 14
-
 - id: craft_late_prism_veil
   name: ทอม่านปริซึมสายกลาง
   station: mystic
@@ -609,7 +551,6 @@
   output: late_prism_veil
   output_rarity: sacred
   unlock_level: 12
-
 - id: craft_repair_kit
   name: ประกอบชุดซ่อมพื้นฐาน
   station: camp
@@ -620,7 +561,6 @@
   output: repair_kit_basic
   output_rarity: uncommon
   unlock_level: 1
-
 - id: craft_incense_bulk
   name: มัดธูปโฟกัส
   station: camp
@@ -631,8 +571,6 @@
   output: incense_focus_bulk
   output_rarity: uncommon
   unlock_level: 1
-
-
 - id: craft_essence_whisper
   name: กลั่นเศษกระซิบท่า
   station: mystic
@@ -644,3 +582,23 @@
   output: essence_skill_whisper
   output_rarity: rare
   unlock_level: 8
+- id: craft_mid_forest_blade
+  name: หลอมดาบหนามดง
+  station: forge
+  inputs:
+    upgrade_mat: 3
+    ent_bark: 2
+  money: 50
+  output: mid_forest_thorn_blade
+  output_rarity: uncommon
+  unlock_level: 6
+- id: craft_mid_cave_fang
+  name: หลอมเขี้ยวเงาถ้ำ
+  station: forge
+  inputs:
+    upgrade_mat: 3
+    rare_mat: 1
+  money: 55
+  output: mid_cave_shadow_fang
+  output_rarity: uncommon
+  unlock_level: 7

@@ -49,7 +49,7 @@ def main() -> int:
         "hotfixes_applied": [
             "burden drain medium-soft (no flat -2 crush field)",
             "fit_rank //4",
-            "tutorial page 9 + onboard tips",
+            "tutorial soft 6 pages + onboard tips",
             "god summary burden bits",
             "chamber enter tips",
         ],

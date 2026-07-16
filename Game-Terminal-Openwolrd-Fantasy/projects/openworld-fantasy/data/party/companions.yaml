@@ -38,6 +38,7 @@ templates:
     rarity: common
     name: ภูตหมอก
     kind: spirit
+    role: support
     tier: 0
     min_level: 5
     affinity_need: 0.15
@@ -51,6 +52,7 @@ templates:
   - id: beast_forest
     name: หมาป่ารอยเท้า
     kind: beast
+    role: attack
     tier: 0
     min_level: 4
     affinity_need: 0.1
@@ -269,6 +271,7 @@ templates:
   - id: spirit_leaf
     name: ภูตใบไม้
     kind: spirit
+    role: support_nature
     tier: 0
     min_level: 3
     affinity_need: 0.12
@@ -276,7 +279,7 @@ templates:
     bonus_atk: 1
     bonus_max_hp: 6
     call_mana: 3
-    flavor: ใบไม้หมุนรอบข้อเท้า
+    flavor: ใบไม้หมุนรอบข้อเท้า — ชำระพิษเบา
 
   - id: beast_boar
     name: หมูป่ารอยเขี้ยว

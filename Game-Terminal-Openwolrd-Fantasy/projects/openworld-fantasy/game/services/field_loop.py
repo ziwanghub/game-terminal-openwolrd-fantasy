@@ -392,6 +392,8 @@ def run_field(
             tick_relationship_decay(player, ticks=1)
         except Exception:
             pass
+        # WO-PARTY-5: soft party care on field time (rare path via auto not field IO spam)
+        # Field loop is interactive — only decay here; auto_party_care runs in auto paths
         try:
             from game.domain.intelligence import tick_intel_recovery
 
@@ -448,6 +450,19 @@ def run_field(
             maybe_onboarding_tip(player, io, area_id=area_id)
         except Exception:
             pass
+        # WO-048: temple pressure soft (once)
+        try:
+            from game.domain.stat_grades import can_temple_unlock, grade_revealed
+
+            if (
+                can_temple_unlock(player)
+                and not grade_revealed(player)
+                and not player.get("_temple_field_hint_done")
+            ):
+                player["_temple_field_hint_done"] = True
+                io.write_line("  …พลังตัน — เมืองโบราณมีวิหาร · ตัวละครกด W ปลดเกรด")
+        except Exception:
+            pass
         # boss hint
         ok_boss, boss_msg = can_challenge_boss(player, reg, area_id)
         boss_line = ""
@@ -468,7 +483,7 @@ def run_field(
             )
         )
         ch = io.read_line(
-            "\n  เลือก (R/E/H/M/O ดูแล · เลขเมนู / เลขเป้า / 0 ออก): "
+            "\n  เลือก (R/E/H/M/O ดูแล · U อารีน่า · เลขเมนู / เลขเป้า / 0 ออก): "
         ).strip()
 
         # verb + target commands (f_mn02, upgrade_sw001, …)
@@ -525,6 +540,14 @@ def run_field(
             from game.services.field_actions import do_travel
 
             do_travel(player, reg, io, rng)
+        elif ch in ("u", "U", "arena", "อารีน่า", "ลาน"):
+            # WO-Arena-1: city arena (ancient_city / crystal_peak)
+            try:
+                from game.services.arena_session import run_arena_menu
+
+                run_arena_menu(player, reg, io, rng)
+            except Exception as e:
+                io.write_line(f"  อารีน่ายังเงียบ ({e})")
         elif ch in ("5", "i", "I"):
             # Mode Shell: PERSONAL hub (bag · status · quests · points)
             from game.services.personal_hub import run_personal_hub

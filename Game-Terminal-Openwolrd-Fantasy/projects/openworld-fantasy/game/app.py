@@ -42,36 +42,44 @@ def render_main_menu() -> str:
     return render_box(lines, double=False)
 
 
-def pick_world(reg: DataRegistry, io) -> str:
+def pick_world(reg: DataRegistry, io):
     """
     World picker — simple catalog list (default).
+    Returns world_id, or None if user cancels (0 / q / empty).
     WO-002 theme/custom path only if WORLD_THEME_UX_ENABLED.
     """
+    from typing import Optional
+
     from game.config import WORLD_THEME_UX_ENABLED
 
     if WORLD_THEME_UX_ENABLED:
         wid = pick_world_interactive(reg, io)
         if wid:
             return wid
-        rows = list_world_menu_rows(reg)
-        return str(rows[0]["id"]) if rows else "default"
+        # cancel theme/custom flow → back (do not force first world)
+        return None
 
     # Simple original path
     rows = list_world_menu_rows(reg)
     if not rows:
-        return "default"
+        io.write_line("  ยังไม่มีโลกใน data")
+        return None
     io.write_line()
     io.write_line(render_box(format_world_picker_lines(reg), double=False))
     n = len(rows)
-    raw = io.read_line(f"\n  เลือกโลก (1–{n}): ").strip()
+    raw = io.read_line(f"\n  เลือกโลก (1–{n} · 0=ย้อนกลับ): ").strip()
     if raw in ("", "0", "q", "Q"):
-        return str(rows[0]["id"])
+        io.write_line("  ย้อนกลับเมนูหลัก")
+        return None
     try:
         idx = int(raw) - 1
-        return str(rows[max(0, min(n - 1, idx))]["id"])
     except Exception:
-        io.write_line(" (ใช้เลขไม่ถูกต้อง — เลือกโลกแรก)")
-        return str(rows[0]["id"])
+        io.write_line(f"  เลขไม่ถูกต้อง — พิมพ์ 1–{n} หรือ 0 ย้อนกลับ")
+        return None
+    if idx < 0 or idx >= n:
+        io.write_line(f"  นอกช่วง — พิมพ์ 1–{n} หรือ 0 ย้อนกลับ")
+        return None
+    return str(rows[idx]["id"])
 
 
 def run() -> None:
@@ -99,6 +107,8 @@ def run() -> None:
                 continue
             try:
                 world_id = pick_world(reg, io)
+                if not world_id:
+                    continue
                 wname = (reg.worlds.get(world_id) or {}).get("name") or world_id
                 try:
                     from game.domain.world_meta import set_client_pointer, host_status
@@ -181,6 +191,8 @@ def run() -> None:
             if reg is None:
                 reg = get_registry()
             world_id = pick_world(reg, io)
+            if not world_id:
+                continue
             saves = list_saves(world_id)
             if not saves:
                 io.write_line()
@@ -197,9 +209,26 @@ def run() -> None:
                 render_box(format_save_picker_lines(world_id, wname), double=False)
             )
             try:
-                raw = io.read_line(f"\n  เลือกตัวละคร (1–{len(saves)}): ").strip()
-                idx = int(raw) - 1
-                meta = saves[max(0, min(len(saves) - 1, idx))]
+                raw = io.read_line(
+                    f"\n  เลือกตัวละคร (1–{len(saves)} · 0=ย้อนกลับ): "
+                ).strip()
+                # UX: always allow leave character list (main menu / world flow)
+                if raw in ("0", "q", "Q", ""):
+                    io.write_line("  ย้อนกลับเมนูหลัก")
+                    continue
+                try:
+                    idx = int(raw) - 1
+                except ValueError:
+                    io.write_line(
+                        f"  เลขไม่ถูกต้อง — พิมพ์ 1–{len(saves)} หรือ 0 ย้อนกลับ"
+                    )
+                    continue
+                if idx < 0 or idx >= len(saves):
+                    io.write_line(
+                        f"  นอกช่วง — พิมพ์ 1–{len(saves)} หรือ 0 ย้อนกลับ"
+                    )
+                    continue
+                meta = saves[idx]
                 player = load_player(meta["path"])
                 player["world_id"] = world_id
                 if not player.get("world_modifiers"):
@@ -214,6 +243,8 @@ def run() -> None:
             if reg is None:
                 continue
             world_id = pick_world(reg, io)
+            if not world_id:
+                continue
             io.write_line()
             for line in format_ranking_lines(world_id, reg):
                 io.write_line(line)
@@ -233,6 +264,8 @@ def run() -> None:
             if reg is None:
                 reg = get_registry()
             world_id = pick_world(reg, io)
+            if not world_id:
+                continue
             from game.domain.world_meta import (
                 format_host_status_lines,
                 refresh_world_index,

@@ -414,7 +414,9 @@ def count_materials_min_rarity(
     min_rarity: str,
     reg: DataRegistry,
 ) -> int:
-    """Count inventory pieces of item_id with rarity rank >= min_rarity."""
+    """Count inventory units of item_id with rarity rank >= min_rarity (WO-INV-1 qty)."""
+    from game.domain.bag_stack import qty_at
+
     need = tier_rank(reg, min_rarity)
     ids = list(player.get("inventory_ids") or [])
     rares = list(player.get("inventory_rarities") or [])
@@ -424,7 +426,7 @@ def count_materials_min_rarity(
             continue
         rid = rares[i] if i < len(rares) else "common"
         if tier_rank(reg, str(rid)) >= need:
-            n += 1
+            n += qty_at(player, i)
     return n
 
 
@@ -433,25 +435,43 @@ def remove_inventory_at_index(
     index: int,
     reg: DataRegistry,
 ) -> Optional[Tuple[str, str]]:
-    """Remove inventory slot by index. Returns (item_id, rarity) or None."""
+    """Remove entire inventory *slot* by index (all qty). Returns (item_id, rarity) or None."""
     ids = list(player.get("inventory_ids") or [])
     rares = list(player.get("inventory_rarities") or [])
     if index < 0 or index >= len(ids):
         return None
     iid = ids.pop(index)
     rid = rares.pop(index) if index < len(rares) else "common"
-    # if rares shorter, trim
     while len(rares) > len(ids):
         rares.pop()
     player["inventory_ids"] = ids
     player["inventory_rarities"] = rares
+    # WO-INV-1: parallel qty
+    qtys = list(player.get("inventory_qty") or [])
+    if index < len(qtys):
+        qtys.pop(index)
+    player["inventory_qty"] = qtys[: len(ids)] if qtys else []
+    # instance layer
+    items = list(player.get("inventory_items") or [])
+    if index < len(items):
+        items.pop(index)
+        player["inventory_items"] = items
     name = (reg.items.get(iid) or {}).get("name", iid)
     inv = list(player.get("inventory") or [])
-    for j, line in enumerate(inv):
-        if str(line).startswith(str(name)):
-            inv.pop(j)
-            break
+    if index < len(inv):
+        inv.pop(index)
+    else:
+        for j, line in enumerate(inv):
+            if str(line).startswith(str(name)):
+                inv.pop(j)
+                break
     player["inventory"] = inv
+    try:
+        from game.domain.bag_stack import ensure_inventory_qty
+
+        ensure_inventory_qty(player)
+    except Exception:
+        pass
     return str(iid), str(rid)
 
 
@@ -462,12 +482,11 @@ def remove_materials_min_rarity(
     min_rarity: str,
     reg: DataRegistry,
 ) -> bool:
-    """Remove `count` matching items of sufficient rarity (highest first optional)."""
-    from game.domain.equipment import remove_inventory_id
+    """Remove `count` units of matching items of sufficient rarity (prefer lower rank)."""
+    from game.domain.bag_stack import qty_at, remove_units_at
 
     need = tier_rank(reg, min_rarity)
     left = int(count)
-    # collect indices matching, prefer lowest sufficient rarity first (save better mats)
     while left > 0:
         ids = list(player.get("inventory_ids") or [])
         rares = list(player.get("inventory_rarities") or [])
@@ -483,21 +502,9 @@ def remove_materials_min_rarity(
                 best_i = i
         if best_i < 0:
             return False
-        # remove by rotating to use remove_inventory_id on that exact instance:
-        # temporarily put chosen id at first occurrence of sufficient rarity
-        target_id = ids[best_i]
-        # swap chosen to a removable position: remove by rebuilding
-        new_ids = ids[:best_i] + ids[best_i + 1 :]
-        new_rares = rares[:best_i] + rares[best_i + 1 :] if best_i < len(rares) else rares
-        player["inventory_ids"] = new_ids
-        player["inventory_rarities"] = new_rares
-        # sync display inventory names
-        name = (reg.items.get(target_id) or {}).get("name", target_id)
-        inv = list(player.get("inventory") or [])
-        for j, line in enumerate(inv):
-            if str(line).startswith(str(name)):
-                inv.pop(j)
-                break
-        player["inventory"] = inv
-        left -= 1
+        take = min(left, qty_at(player, best_i))
+        res = remove_units_at(player, best_i, reg, amount=take)
+        if not res:
+            return False
+        left -= int(res[2])
     return True

@@ -1,12 +1,13 @@
 # ดรอปมอนสเตอร์ (per-monster table)
 
-**สถานะ:** D1–D2 **done** · world pack **1.26** · runtime hotfix **1.27**  
+**สถานะ:** D1–D2 **done** · mon pack **2.09** (~98 มอน) · loot identity **2.10 (WO-ITEM-1)**  
 **โค้ด:** `game/domain/monster_drops.py` · `build_combat_loot_table` · `pick_monster` / `spawn_boss`  
 **หลัก:** โครงแบบ RO · **soft rate ไม่โชว์ %** · ชื่อของโลกเรา (ไม่ copy RO)  
-**แผนเติมมอนใหม่ (แบ่งเฟส):** [`MONSTER_CONTENT_PLAN.md`](MONSTER_CONTENT_PLAN.md) · **MC0–MC6**
+**แผนเติมมอน:** [`MONSTER_CONTENT_PLAN.md`](MONSTER_CONTENT_PLAN.md) · diversity [`MONSTER_DIVERSITY_WO.md`](MONSTER_DIVERSITY_WO.md)
 
 **1.27:** ตารางดรอปต้องถูก copy จาก YAML ตอน spawn — มิฉะนั้น loot หลังชนะไม่เห็น `drops`  
-**มอนใหม่ทุกตัว (MC1+):** ต้องมี `drops` (+ `card_id` ตามแผน) ตั้งแต่เพิ่ม — ดูกฎแพ็กใน MONSTER_CONTENT_PLAN
+**มอนทุกตัว:** ต้องมี `drops` + `card_id`  
+**2.10:** ตารางมอนหนา → ลด generic mat/ยา · soft source hint บน loot note
 
 ---
 
@@ -58,4 +59,4 @@
 | รอยแยก | ละออง/คลาน/เวทย์ · void_ash |
 | บอสทั้ง 8 | table หนา + sealed chest soft |
 
-**ทุกตัว (41)** มี `drops` และ/หรือ `card_id`
+**ทุกตัว (~98)** มี `drops` + `card_id` (อัป 2.09+)

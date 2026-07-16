@@ -23,7 +23,7 @@ python3 -m pytest -q
 ต้องการ Python 3.9+ · `pip install -e ".[dev]"` (PyYAML, pytest)
 
 **เวอร์ชันเกม:** ดู `Game-Terminal-Openwolrd-Fantasy/projects/openworld-fantasy/game/config.py`  
-(ปัจจุบัน: `1.48.0-alpha` · `solo-polish-post-cm` — Skill Rank · Combo Mind · MI)
+(ปัจจุบัน: `2.10.0-alpha` · `wo-item-1-4-loot-economy` — loot identity · mid gear · economy · set)
 
 ## CI
 

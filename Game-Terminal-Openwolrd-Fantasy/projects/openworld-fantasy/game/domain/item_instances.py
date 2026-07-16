@@ -61,6 +61,7 @@ def make_instance(
         "upgrade": int(upgrade or 0),
         "sockets": socks,
         "location": location,
+        "qty": 1,  # WO-INV-1: stack units (equipment stays 1)
     }
 
 
@@ -297,18 +298,21 @@ def sync_legacy_from_instances(
     player: MutableMapping[str, Any],
     reg: Optional[DataRegistry] = None,
 ) -> None:
-    """Write inventory_ids / rarities / inventory names from inventory_items."""
+    """Write inventory_ids / rarities / qty / inventory names from inventory_items."""
     from game.domain.rarity import display_item_name
 
     items = list(player.get("inventory_items") or [])
     ids: List[str] = []
     rares: List[str] = []
+    qtys: List[int] = []
     names: List[str] = []
     for inst in items:
         tid = str(inst.get("template_id") or "")
         rid = str(inst.get("rarity") or "common")
+        q = max(1, int(inst.get("qty") or 1))
         ids.append(tid)
         rares.append(rid)
+        qtys.append(q)
         if reg is not None:
             nm = (reg.items.get(tid) or {}).get("name") or tid
             names.append(display_item_name(str(nm), rid, reg))
@@ -316,6 +320,7 @@ def sync_legacy_from_instances(
             names.append(tid)
     player["inventory_ids"] = ids
     player["inventory_rarities"] = rares
+    player["inventory_qty"] = qtys
     player["inventory"] = names
     player["inventory_source"] = "instances"
 

@@ -76,7 +76,15 @@ def _bag_cap(player: Mapping[str, Any]) -> int:
 
 
 def bag_used(player: Mapping[str, Any]) -> int:
-    return len(list(player.get("inventory_ids") or []))
+    """Slot count (stacks + cards) — aligned with bag_count / soft cap (WO-INV-1)."""
+    try:
+        from game.domain.bag_stack import bag_slots_used
+
+        return bag_slots_used(player)
+    except Exception:
+        return len(list(player.get("inventory_ids") or [])) + len(
+            list(player.get("card_bag") or [])
+        )
 
 
 def bag_free_slots(player: Mapping[str, Any]) -> int:
@@ -103,11 +111,21 @@ def _item_def(reg: DataRegistry, iid: str) -> Dict[str, Any]:
     return dict((reg.items or {}).get(str(iid)) or {"id": iid, "name": iid})
 
 
-def _is_protected_item(it: Mapping[str, Any], iid: str) -> bool:
-    """Never auto-drop these."""
+def _is_protected_item(it: Mapping[str, Any], iid: str, rarity: str = "common") -> bool:
+    """Never auto-drop/sell these (WO-INV junk rules)."""
     kind = str(it.get("kind") or "").lower()
+    try:
+        from game.domain.bag_sell import is_relic_item
+
+        if is_relic_item(str(iid), it):
+            return True
+    except Exception:
+        if str(iid).startswith("relic_") or it.get("divine_burden"):
+            return True
     if kind in ("weapon", "armor", "accessory", "relic", "key", "quest"):
-        return True
+        # common/uncommon bag equipment (kind=equipment) handled below
+        if kind in ("weapon", "armor", "accessory", "relic"):
+            return True
     if it.get("unique") or it.get("quest") or it.get("soulbound"):
         return True
     if is_food_item(it):
@@ -115,10 +133,15 @@ def _is_protected_item(it: Mapping[str, Any], iid: str) -> bool:
     if it.get("heal_hp") or it.get("heal_mana"):
         return True
     sid = str(iid).lower()
-    if "potion" in sid or "key" in sid or "shard" in sid and "escape" in sid:
+    if "potion" in sid or "key" in sid or ("shard" in sid and "escape" in sid):
         return True
     if it.get("clear_status") or it.get("clear_all_debuffs"):
         return True
+    # rare+ gear protected (kind equipment with slot)
+    rar = str(rarity or "common").lower()
+    if kind == "equipment" or it.get("slot"):
+        if rar not in ("common", "uncommon", ""):
+            return True
     return False
 
 
@@ -126,8 +149,9 @@ def _junk_score(it: Mapping[str, Any], iid: str, rarity: str) -> int:
     """
     Higher = more droppable.
     Prefer common materials / low price trash.
+    Common equipment = mild junk; rare+ / relic protected.
     """
-    if _is_protected_item(it, iid):
+    if _is_protected_item(it, iid, rarity):
         return -1
     rar = str(rarity or it.get("rarity") or "common").lower()
     rar_rank = {
@@ -142,6 +166,9 @@ def _junk_score(it: Mapping[str, Any], iid: str, rarity: str) -> int:
     }.get(rar, 10)
     kind = str(it.get("kind") or "").lower()
     kind_b = 15 if kind in ("material", "mat", "junk", "scrap") else 5
+    # common gear is sellable junk but lower priority than scrap mats
+    if kind == "equipment" or it.get("slot"):
+        kind_b = 8 if rar in ("common", "") else 3
     price = int(it.get("price_world") or 0)
     price_b = 10 if price < 30 else (5 if price < 80 else 0)
     name = str(it.get("name") or iid).lower()
@@ -167,6 +194,14 @@ def find_junk_drop_candidates(
         sc = _junk_score(it, str(iid), rar)
         if sc < 0:
             continue
+        # never auto-touch chests
+        try:
+            from game.domain.chest_loot import is_chest_item
+
+            if is_chest_item(it):
+                continue
+        except Exception:
+            pass
         nm = str(it.get("name") or iid)
         out.append((sc, i, str(iid), nm))
     out.sort(key=lambda x: (-x[0], -x[1]))  # high score first; stable high index drop
@@ -174,6 +209,7 @@ def find_junk_drop_candidates(
 
 
 def _remove_inventory_at(player: MutableMapping[str, Any], idx: int, reg: DataRegistry) -> None:
+    """Remove whole bag *slot* (all qty in stack) — used to free space."""
     try:
         from game.domain.rarity import remove_inventory_at_index
 
@@ -182,15 +218,19 @@ def _remove_inventory_at(player: MutableMapping[str, Any], idx: int, reg: DataRe
         ids = list(player.get("inventory_ids") or [])
         rar = list(player.get("inventory_rarities") or [])
         inv = list(player.get("inventory") or [])
+        qtys = list(player.get("inventory_qty") or [])
         if 0 <= idx < len(ids):
             ids.pop(idx)
         if 0 <= idx < len(rar):
             rar.pop(idx)
         if 0 <= idx < len(inv):
             inv.pop(idx)
+        if 0 <= idx < len(qtys):
+            qtys.pop(idx)
         player["inventory_ids"] = ids
         player["inventory_rarities"] = rar
         player["inventory"] = inv
+        player["inventory_qty"] = qtys
 
 
 def _junk_sell_gold(
@@ -207,7 +247,19 @@ def _junk_sell_gold(
     try:
         from game.domain.balance import sell_price
 
-        return max(1, int(sell_price(base, reg, player, rarity=rarity or "common")))
+        return max(
+            1,
+            int(
+                sell_price(
+                    base,
+                    reg,
+                    player,
+                    rarity=rarity or "common",
+                    item_kind=str(it.get("kind") or ""),
+                    item_id=str(iid),
+                )
+            ),
+        )
     except Exception:
         return max(1, int(base * 0.25) or 1)
 
@@ -252,9 +304,14 @@ def auto_free_bag_space(
             nm = str(_item_def(reg, iid).get("name") or iid)
         rar = str(rars[idx] if idx < len(rars) else "common")
 
+        # WO-INV-1: free a *slot* — sell/drop the whole stack of this junk row
+        from game.domain.bag_stack import qty_at
+
+        stack_q = max(1, qty_at(player, idx))
         if do_sell:
-            gold = _junk_sell_gold(player, reg, str(iid), rar)
-            _remove_inventory_at(player, idx, reg)
+            gold_each = _junk_sell_gold(player, reg, str(iid), rar)
+            gold = gold_each * stack_q
+            _remove_inventory_at(player, idx, reg)  # whole slot
             player["money_world"] = int(player.get("money_world") or 0) + gold
             try:
                 from game.domain.stats import bump_stat
@@ -263,15 +320,17 @@ def auto_free_bag_space(
             except Exception:
                 pass
             actions += 1
-            msg = f"  ออโต้กระเป๋า: ขาย「{nm}」+{gold} โลก (หาที่ว่าง)"
+            qty_note = f" x{stack_q}" if stack_q > 1 else ""
+            msg = f"  ออโต้กระเป๋า: ขาย「{nm}」{qty_note}+{gold} โลก (หาที่ว่าง)"
             notes.append(msg)
             append_auto_care_note(player, msg)
             continue
 
-        # drop path
+        # drop path — whole stack to free one slot
         _remove_inventory_at(player, idx, reg)
         actions += 1
-        msg = f"  ออโต้กระเป๋า: ทิ้ง「{nm}」เพื่อหาที่ว่าง"
+        qty_note = f" x{stack_q}" if stack_q > 1 else ""
+        msg = f"  ออโต้กระเป๋า: ทิ้ง「{nm}」{qty_note}เพื่อหาที่ว่าง"
         notes.append(msg)
         append_auto_care_note(player, msg)
     return notes
@@ -460,6 +519,14 @@ def auto_manage_inventory(
     ensure_needs(player)
     used = auto_use_consumables(player, reg, force=force_consumables)
     notes.extend(used)
+
+    # WO-PARTY-5: party soft care (gift when bond cool) after bag care
+    try:
+        from game.runtime.party_auto import auto_party_care
+
+        notes.extend(auto_party_care(player, reg, context=context or "inv"))
+    except Exception:
+        pass
 
     if context and notes and context not in ("", "auto"):
         # optional prefix once

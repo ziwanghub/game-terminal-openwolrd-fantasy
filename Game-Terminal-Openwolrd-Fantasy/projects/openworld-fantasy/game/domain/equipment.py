@@ -378,16 +378,33 @@ def add_item(
     reg: DataRegistry,
     *,
     rarity: Optional[str] = None,
+    amount: int = 1,
 ) -> str:
+    """
+    Add item to bag (WO-INV-1: true stack + soft cap harden).
+
+    - Stackable (consumable/material/food/…): same id+rarity merges qty.
+    - New slot required only when no stack exists / non-stackable.
+    - Soft cap: when slots full and a new slot is needed, returns "" and does not add.
+    - Returns display name on success; "" if full; "ไม่พบ…" if missing template.
+    """
+    from game.domain.bag_stack import (
+        can_accept_item,
+        ensure_inventory_qty,
+        find_stack_index,
+        is_stackable_item,
+        set_qty_at,
+        qty_at,
+    )
     from game.domain.rarity import (
         append_item_rarity,
         ensure_inventory_rarity,
-        format_rarity_tag,
         item_default_rarity,
     )
 
     ensure_gear_fields(player)
     ensure_inventory_rarity(player)
+    ensure_inventory_qty(player)
     it = item_by_id(reg, item_id)
     if not it:
         return f"ไม่พบไอเทม {item_id}"
@@ -396,19 +413,34 @@ def add_item(
 
     rid = str(rarity or item_default_rarity(it, reg))
     shown = display_item_name(str(it.get("name", item_id)), rid, reg)
+    n_add = max(1, int(amount or 1))
+
     if kind == "card" or item_id in reg.cards:
+        if not can_accept_item(player, item_id, reg, rarity=rid, amount=n_add):
+            return ""
         bag = list(player.get("card_bag") or [])
-        bag.append(item_id)
-        player["card_bag"] = bag
-        # legacy display list
-        cards = list(player.get("cards") or [])
-        cards.append(shown)
-        player["cards"] = cards
-        # cards bag rarities optional parallel
-        cr = list(player.get("card_rarities") or [])
-        cr.append(rid)
-        player["card_rarities"] = cr
-    else:
+        for _ in range(n_add):
+            if not can_accept_item(player, item_id, reg, rarity=rid):
+                break
+            bag.append(item_id)
+            player["card_bag"] = bag
+            cards = list(player.get("cards") or [])
+            cards.append(shown)
+            player["cards"] = cards
+            cr = list(player.get("card_rarities") or [])
+            cr.append(rid)
+            player["card_rarities"] = cr
+        return shown
+
+    # ── True stack path (consumable / material / food / …) ──
+    if is_stackable_item(item_id, reg, it):
+        idx = find_stack_index(player, item_id, rid)
+        if idx >= 0:
+            set_qty_at(player, idx, qty_at(player, idx) + n_add)
+            return shown
+        # need new slot
+        if not can_accept_item(player, item_id, reg, rarity=rid, amount=n_add):
+            return ""
         ids = list(player.get("inventory_ids") or [])
         ids.append(item_id)
         player["inventory_ids"] = ids
@@ -416,50 +448,67 @@ def add_item(
         inv = list(player.get("inventory") or [])
         inv.append(shown)
         player["inventory"] = inv
-        # instance layer (owned piece)
+        ensure_inventory_qty(player)
+        qtys = list(player.get("inventory_qty") or [])
+        if qtys:
+            qtys[-1] = n_add
+            player["inventory_qty"] = qtys
         try:
-            from game.domain.item_instances import append_instance, ensure_item_instances
+            from game.domain.item_instances import ensure_item_instances, make_instance
 
-            # append_instance re-syncs lists — avoid double-append by only ensuring if already tracked
             items = list(player.get("inventory_items") or [])
             if len(items) == len(ids) - 1:
-                from game.domain.item_instances import make_instance, sync_legacy_from_instances
+                inst = make_instance(item_id, player, reg, rarity=rid, location="bag")
+                inst["qty"] = n_add
+                items.append(inst)
+                player["inventory_items"] = items
+            else:
+                player["inventory_items"] = []
+                ensure_item_instances(player, reg)
+                items = list(player.get("inventory_items") or [])
+                if items:
+                    items[-1]["qty"] = n_add
+                    player["inventory_items"] = items
+        except Exception:
+            pass
+        ensure_inventory_qty(player)
+        return shown
 
-                items.append(
-                    make_instance(item_id, player, reg, rarity=rid, location="bag")
-                )
+    # ── Non-stackable (equipment etc.): one unit = one slot ──
+    for i in range(n_add):
+        if not can_accept_item(player, item_id, reg, rarity=rid):
+            return shown if i > 0 else ""
+        ids = list(player.get("inventory_ids") or [])
+        ids.append(item_id)
+        player["inventory_ids"] = ids
+        append_item_rarity(player, rid)
+        inv = list(player.get("inventory") or [])
+        inv.append(shown)
+        player["inventory"] = inv
+        ensure_inventory_qty(player)
+        try:
+            from game.domain.item_instances import ensure_item_instances, make_instance
+
+            items = list(player.get("inventory_items") or [])
+            if len(items) == len(ids) - 1:
+                inst = make_instance(item_id, player, reg, rarity=rid, location="bag")
+                inst["qty"] = 1
+                items.append(inst)
                 player["inventory_items"] = items
             else:
                 player["inventory_items"] = []
                 ensure_item_instances(player, reg)
         except Exception:
             pass
+    ensure_inventory_qty(player)
     return shown
 
 
 def remove_inventory_id(player: MutableMapping[str, Any], item_id: str, reg: DataRegistry) -> bool:
-    from game.domain.rarity import ensure_inventory_rarity, pop_item_rarity_at
+    """Remove one unit of item_id (WO-INV-1: decrements stack qty first)."""
+    from game.domain.bag_stack import remove_one_unit
 
-    ids = list(player.get("inventory_ids") or [])
-    if item_id not in ids:
-        return False
-    idx = ids.index(item_id)
-    ids.pop(idx)
-    player["inventory_ids"] = ids
-    ensure_inventory_rarity(player)
-    pop_item_rarity_at(player, idx)
-    name = (reg.items.get(item_id) or {}).get("name", item_id)
-    inv = list(player.get("inventory") or [])
-    # remove first display line that starts with name
-    for i, line in enumerate(inv):
-        if str(line).startswith(str(name)):
-            inv.pop(i)
-            break
-    else:
-        if name in inv:
-            inv.remove(name)
-    player["inventory"] = inv
-    return True
+    return remove_one_unit(player, item_id, reg)
 
 
 def recompute_stats(player: MutableMapping[str, Any], reg: DataRegistry) -> None:
@@ -666,13 +715,25 @@ def recompute_stats(player: MutableMapping[str, Any], reg: DataRegistry) -> None
 
     # --- set bonuses (count across all slots) ---
     set_counts: Dict[str, int] = {}
+    # WO-ITEM-4: collect element_bias from equipped pieces
+    element_bias_counts: Dict[str, int] = {}
     for slot in EQUIP_SLOTS:
         eid = (player.get("equip_ids") or {}).get(slot)
         if not eid:
             continue
-        sid = (reg.items.get(eid) or {}).get("set_id")
+        it = reg.items.get(eid) or {}
+        sid = it.get("set_id")
         if sid:
             set_counts[str(sid)] = set_counts.get(str(sid), 0) + 1
+        bias = it.get("element_bias") or it.get("elements") or []
+        if isinstance(bias, str):
+            bias = [bias]
+        for el in bias:
+            el = str(el).lower().strip()
+            if el:
+                element_bias_counts[el] = element_bias_counts.get(el, 0) + 1
+                if el not in tags:
+                    tags.append(el)
 
     active_sets: List[str] = []
     set_flavors: List[str] = []
@@ -689,9 +750,21 @@ def recompute_stats(player: MutableMapping[str, Any], reg: DataRegistry) -> None
             max_hp += int(bon.get("max_hp", 0))
             max_mana += int(bon.get("max_mana", 0))
             pressure += int(bon.get("pressure", 0))
+            # WO-ITEM-4: set def/mdef soft if present
+            equip_def += float(bon.get("def", 0) or 0)
+            equip_mdef += float(bon.get("mdef", 0) or 0)
             for t in sdef.get("grant_tags") or []:
                 if t not in tags:
                     tags.append(str(t))
+            # set element_bias → gear tags for combat soft
+            eb = bon.get("element_bias")
+            if eb:
+                if isinstance(eb, str):
+                    eb = [eb]
+                for el in eb:
+                    el = str(el).lower()
+                    if el and el not in tags:
+                        tags.append(el)
             for sk in sdef.get("grant_skills") or []:
                 if sk not in skills and sk not in progression:
                     progression.append(str(sk))
@@ -711,6 +784,12 @@ def recompute_stats(player: MutableMapping[str, Any], reg: DataRegistry) -> None
             nm = str(sdef.get("name") or set_id)
             partial_sets.append(f"{nm} · เศษเซ็ต ({cnt}/{need})")
             set_flavors.append(f"เศษของ{nm}สั่นเบา — ยังไม่เต็มวง")
+
+    player["gear_element_bias"] = dict(element_bias_counts)
+    if element_bias_counts:
+        top_el = max(element_bias_counts.items(), key=lambda kv: kv[1])[0]
+        player["gear_primary_element"] = top_el
+        soft_notes.append(f"ธาตุเกียร์เอน 〔{top_el}〕")
 
     # preserve HP/mana ratios roughly when max changes
     old_max_hp = max(1, int(player.get("max_hp", max_hp)))
@@ -1197,7 +1276,14 @@ def sell_equipped_slot(
     it = reg.items.get(eid) or {}
     rid = equip_rarity_for_slot(player, slot)
     base = int(it.get("price_world") or 40)
-    pay = sell_price(base, reg, player, rarity=rid)
+    pay = sell_price(
+        base,
+        reg,
+        player,
+        rarity=rid,
+        item_kind=str(it.get("kind") or "equipment"),
+        item_id=str(eid),
+    )
     # return socket cards first
     for cid in (player.get("sockets") or {}).get(slot) or []:
         if cid:
@@ -1329,7 +1415,9 @@ def gear_attack_bonus_elements(player: Mapping[str, Any]) -> List[str]:
 
 
 def count_materials(player: Mapping[str, Any], mat_id: str) -> int:
-    return sum(1 for x in (player.get("inventory_ids") or []) if x == mat_id)
+    from game.domain.bag_stack import count_item_units
+
+    return count_item_units(player, mat_id)
 
 
 def consume_materials(player: MutableMapping[str, Any], mat_id: str, n: int, reg: DataRegistry) -> bool:
@@ -1363,7 +1451,8 @@ def upgrade_cost(
     r_mult = 0.92 + rk * 0.08
     # Early curve (playtest: first upgrade reachable ~40–80 world gold on common)
     if nxt == 1:
-        money = int(40 * acc * r_mult)
+        # WO-ITEM-3: slight money sink on first upgrades
+        money = int(48 * acc * r_mult)
         um = 1
         rm = 1 if rk >= 6 else 0
     elif nxt == 2:

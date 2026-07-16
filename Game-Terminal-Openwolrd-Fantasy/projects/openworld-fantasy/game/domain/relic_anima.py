@@ -238,12 +238,22 @@ def evaluate_relic_bonds(
 
 def sync_bond_state(player: MutableMapping[str, Any], reg: DataRegistry) -> Dict[str, Any]:
     """Cache bond evaluation on player for ticks / auto."""
+    prev_mode = str(player.get("_relic_bond_mode") or BOND_NONE)
     bond = evaluate_relic_bonds(player, reg)
     player["_relic_bond_mode"] = bond.get("mode") or BOND_NONE
     player["_relic_bond_faction"] = bond.get("faction")
     player["_relic_bond_count"] = int(bond.get("count") or 0)
     player["_relic_bond_factions"] = list(bond.get("factions") or [])
     player["_relic_bond_soft_cap"] = bool(bond.get("soft_cap"))
+    # WO-053: journal when bond mode changes to meaningful state
+    try:
+        mode = str(bond.get("mode") or BOND_NONE)
+        if mode != prev_mode and mode in (BOND_RESONANCE, BOND_CHORUS, BOND_TENSION):
+            from game.domain.personal_system import note_bond_story
+
+            note_bond_story(player, mode, str(bond.get("faction") or ""))
+    except Exception:
+        pass
     return bond
 
 

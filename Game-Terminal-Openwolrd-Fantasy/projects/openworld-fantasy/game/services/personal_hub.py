@@ -113,10 +113,17 @@ def run_personal_hub(
         if not player.get("_hub_relic_banner_done"):
             player["_hub_relic_banner_done"] = True
             io.write_line(
-                "  ใบ้: V=ประเมินตัวเอง · G=ห้องเรลิก · A=Policy · X=playtest"
+                "  ใบ้: V=เรื่องของฉัน · W=วิหาร · G=ห้องเรลิก · A=Policy · X=playtest"
             )
+        try:
+            from game.domain.stat_grades import can_temple_unlock, grade_revealed
+
+            if can_temple_unlock(player) and not grade_revealed(player):
+                io.write_line("  …พลังตัน · กด W เข้าวิหารปลดเกรด")
+        except Exception:
+            pass
         ch = io.read_line(
-            "\n  เลือก (V=ประเมิน · R/E/H/M/A · X · G · 1–6 · 0 กลับ): "
+            "\n  เลือก (V=เรื่องของฉัน · W=วิหาร · R/E/H/M/A · X · G · 1–6 · 0 กลับ): "
         ).strip()
         if ch in ("0", "", "q", "Q"):
             try:
@@ -126,14 +133,70 @@ def run_personal_hub(
             except Exception:
                 pass
             break
-        # WO-035: self assess (soft core facets)
-        if ch in ("v", "V", "assess", "ประเมิน", "self"):
-            from game.domain.stat_arch import self_assess_lines
+        # WO-053: Personal Narrative 「เรื่องของฉัน」 (+ optional deep appraisal)
+        if ch in (
+            "v",
+            "V",
+            "assess",
+            "ประเมิน",
+            "self",
+            "story",
+            "me",
+            "เรื่อง",
+            "ตัวตน",
+        ):
+            from game.domain.personal_system import (
+                format_personal_narrative_panel,
+                maybe_seed_opening_journal,
+            )
+
+            maybe_seed_opening_journal(player)
+            player["_personal_seen_v"] = True
+            io.write_line()
+            io.write_line(
+                render_box(
+                    format_personal_narrative_panel(player, reg),
+                    double=False,
+                )
+            )
+            sub = io.read_line(
+                "  d=อ่านชั้นลึก · a=ประเมิน soft เดิม · Enter=กลับ: "
+            ).strip().lower()
+            if sub in ("d", "deep", "appraise", "อ่าน"):
+                try:
+                    from game.domain.appraisal import run_appraisal
+
+                    deep, growth = run_appraisal(
+                        player, target="self", reg=reg, paid=True
+                    )
+                    io.write_line()
+                    box = list(deep)
+                    if growth:
+                        box.append(growth)
+                    io.write_line(render_box(box, double=False))
+                except Exception:
+                    io.write_line(" …อ่านชั้นลึกไม่ได้ตอนนี้")
+                io.read_line("Enter...")
+            elif sub in ("a", "assess", "v2", "soft"):
+                from game.domain.stat_arch import self_assess_lines
+
+                io.write_line()
+                io.write_line(
+                    render_box(
+                        self_assess_lines(player, force=True, reg=reg),
+                        double=False,
+                    )
+                )
+                io.read_line("Enter...")
+            continue
+        # WO-048: Temple unlock (letter grade + soft desc)
+        if ch in ("w", "W", "temple", "วิหาร", "ปลด"):
+            from game.domain.stat_grades import temple_unlock
 
             io.write_line()
             io.write_line(
                 render_box(
-                    self_assess_lines(player, force=True, reg=reg),
+                    [" วิหาร · ปลดเผยเกรด", "---", *temple_unlock(player, reg)],
                     double=False,
                 )
             )

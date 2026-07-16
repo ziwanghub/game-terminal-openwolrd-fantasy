@@ -33,11 +33,11 @@ def field_exit_script(
 ) -> List[str]:
     """Build a field-loop script that ends with ``0`` (auto-save exit).
 
-    Tutorial is 8 Enter pages when ``include_tutorial`` is True (1.38+).
+    Tutorial is 6 Enter pages when ``include_tutorial`` is True (soft rewrite).
     """
     lines: List[str] = []
     if include_tutorial:
-        lines.extend(["", "", "", "", "", "", "", ""])  # 8 tutorial pages
+        lines.extend(["", "", "", "", "", ""])  # 6 soft tutorial pages
     lines.extend(actions)
     if not lines or lines[-1] != "0":
         lines.append("0")

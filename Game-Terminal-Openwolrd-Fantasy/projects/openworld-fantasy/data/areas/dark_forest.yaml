@@ -1,38 +1,48 @@
 id: dark_forest
 name: ป่ามืด
-climate: [temperate, dark, wet]
+climate:
+- temperate
+- dark
+- wet
 world_tier: 1
 unlock_level: 1
-connections: [cave_shadow, mountain_rock, mist_marsh]
-# K3 craft stations at this area
-stations: [camp]
+connections:
+- cave_shadow
+- mountain_rock
+- mist_marsh
+stations:
+- camp
 mastery_start: 15
 ambient:
   hp_regen: 3
   mana_regen: 2
 monster_pools:
-  - id: goblin_hunter
-    weight: 40
-  - id: forest_wolf
-    weight: 40
-  - id: wood_ent
-    weight: 17
-  - id: forest_wraith
-    weight: 10
-  - id: moss_sprite
-    weight: 13
-  - id: forest_boar
-    weight: 14
-  - id: forest_mantrap
-    weight: 11
-  - id: forest_hornet
-    weight: 10
-  - id: elite_forest_alpha_wolf
-    weight: 4
-
+- id: goblin_hunter
+  weight: 22
+- id: forest_wolf
+  weight: 22
+- id: wood_ent
+  weight: 16
+- id: forest_wraith
+  weight: 12
+- id: moss_sprite
+  weight: 14
+- id: forest_boar
+  weight: 14
+- id: forest_mantrap
+  weight: 13
+- id: forest_hornet
+  weight: 12
+- id: elite_forest_alpha_wolf
+  weight: 9
+- id: forest_spore_cap
+  weight: 11
+- id: forest_vine_lurker
+  weight: 10
+- id: elite_forest_spore_king
+  weight: 6
 boss_id: boss_forest_king
 boss_unlock_level: 5
-# WO-029 soft loop copy (UI/help — not formulas)
 loop_soft:
-  - "ป่ามืด: สำรวจ·ล่า · เควสเสียงในพุ่ม/เฝ้าทางราก · บอสเมื่อพร้อม"
-  - "เรลิก: น้ำหนักวายุหลังแชมป์ป่า — ลองห้อง G ก่อนใส่จริง"
+- 'ป่ามืด: สำรวจ·ล่า · เควสเสียงในพุ่ม/เฝ้าทางราก · บอสเมื่อพร้อม'
+- 'เรลิก: น้ำหนักวายุหลังแชมป์ป่า — ลองห้อง G ก่อนใส่จริง'

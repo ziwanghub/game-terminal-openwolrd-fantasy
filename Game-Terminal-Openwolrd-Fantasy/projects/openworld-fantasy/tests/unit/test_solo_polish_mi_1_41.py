@@ -10,10 +10,10 @@ from game.ui_terminal.help import CITY_ONBOARD_TIPS, HELP_LINES, TUTORIAL_PAGES
 
 
 def test_help_covers_parley_and_smart_monsters():
-    blob = "\n".join("\n".join(p) for p in TUTORIAL_PAGES) + "\n" + "\n".join(HELP_LINES)
-    assert "เจรจา" in blob or "7" in blob
-    assert "ฉลาด" in blob or "ถอย" in blob
+    # Soft tutorial is short; parley/smart mon detail lives in onboard tips
     tip_blob = "\n".join(CITY_ONBOARD_TIPS)
+    blob = tip_blob + "\n" + "\n".join(HELP_LINES)
+    assert "เจรจา" in tip_blob or "7" in blob
     assert "elite" in tip_blob.lower() or "ฉลาด" in tip_blob or "เจรจา" in tip_blob
 
 

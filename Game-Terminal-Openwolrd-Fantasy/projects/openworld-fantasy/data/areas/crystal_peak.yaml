@@ -1,41 +1,49 @@
 id: crystal_peak
 name: ยอดผลึก
-climate: [cold, crystal, holy_ground]
+climate:
+- cold
+- crystal
+- holy_ground
 world_tier: 3
 unlock_level: 10
-connections: [mist_marsh, mountain_rock, void_rift]
-stations: [camp, mystic]
+connections:
+- mist_marsh
+- mountain_rock
+- void_rift
+stations:
+- camp
+- mystic
 mastery_start: 8
 ambient:
   hp_regen: 1
   mana_regen: 5
 monster_pools:
-  - id: crystal_mite
-    weight: 34
-  - id: crystal_golem
-    weight: 25
-  - id: shard_imp
-    weight: 28
-  - id: prism_drake
-    weight: 15
-  - id: light_wraith
-    weight: 5
-  - id: peak_ice_sprite
-    weight: 12
-  - id: crystal_songbird
-    weight: 11
-  - id: elite_prism_sentinel
-    weight: 3
-  - id: crystal_shard_swarm
-    weight: 11
-  - id: crystal_echo_wraith
-    weight: 8
-  - id: elite_crystal_prism_guard
-    weight: 3
-
+- id: crystal_mite
+  weight: 22
+- id: crystal_golem
+  weight: 16
+- id: shard_imp
+  weight: 16
+- id: prism_drake
+  weight: 12
+- id: light_wraith
+  weight: 7
+- id: peak_ice_sprite
+  weight: 11
+- id: crystal_songbird
+  weight: 10
+- id: elite_prism_sentinel
+  weight: 6
+- id: crystal_shard_swarm
+  weight: 10
+- id: crystal_echo_wraith
+  weight: 8
+- id: elite_crystal_prism_guard
+  weight: 6
+- id: peak_hail_sprite
+  weight: 10
 boss_id: boss_prism_sovereign
 boss_unlock_level: 13
-# WO-032 soft loop
 loop_soft:
-  - "ยอดผลึก: เส้นทางผลึก·เก็บเศษ·เฝ้ายอดแสง แล้วค่อยหักปริซึม"
-  - "เรลิก: เกราะท้องฟ้าหลังหักปริซึม — ลองห้อง G ก่อนใส่จริง"
+- 'ยอดผลึก: เส้นทางผลึก·เก็บเศษ·เฝ้ายอดแสง แล้วค่อยหักปริซึม'
+- 'เรลิก: เกราะท้องฟ้าหลังหักปริซึม — ลองห้อง G ก่อนใส่จริง'

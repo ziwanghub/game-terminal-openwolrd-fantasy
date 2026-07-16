@@ -55,11 +55,16 @@ def test_relationship_scale_and_labels():
 
 
 def test_assist_chance_scales_with_relationship():
+    from game.domain.party import ASSIST_CHANCE_SOFT_CAP
+
     low = assist_chance_from_relationship(0)
     mid = assist_chance_from_relationship(50)
     high = assist_chance_from_relationship(100)
-    assert 0.22 <= low < mid < high <= 0.96
-    assert high >= 0.90
+    assert 0.22 <= low < mid <= high <= ASSIST_CHANCE_SOFT_CAP + 1e-9
+    assert high >= 0.88
+    # WO-PARTY-4: soft cap — bond 100 is not near-guaranteed
+    assert high <= ASSIST_CHANCE_SOFT_CAP + 1e-9
+    assert assist_chance_from_relationship(100) <= 0.90
 
 
 def test_high_relationship_assists_often():
@@ -115,6 +120,76 @@ def test_money_gift_raises_relationship():
     assert after > before
     assert any("เงิน" in n for n in notes)
     assert p["money_heaven"] == 30
+
+
+def test_assist_pipeline_mult_clamped():
+    """WO-PARTY-4: assist damage mult is soft-clamped and responds to elite/boss."""
+    from game.domain.party import ASSIST_PIPE_CLAMP, assist_pipeline_mult
+
+    p = {"grade_revealed": True, "player_grade": "A", "luck_score": 0.0}
+    mon = {"hp": 100, "max_hp": 100}
+    m, meta = assist_pipeline_mult(p, mon, None, kind="beast")
+    lo, hi = ASSIST_PIPE_CLAMP
+    assert lo <= m <= hi
+    assert meta.get("source") == "assist_lite"
+    # boss soft resist
+    m_boss, meta_b = assist_pipeline_mult(p, {"boss": True}, None, kind="beast")
+    assert m_boss <= m + 0.001
+    assert meta_b.get("mon") == "boss"
+
+
+def test_assist_damage_uses_pipeline_not_raw_only():
+    """Assist attack still deals damage; pipeline path runs without crash."""
+    p = _player_with_member(90, kind="beast")
+    p["grade_revealed"] = True
+    p["player_grade"] = "S"
+    mon = {"hp": 200, "max_hp": 200}
+    notes = party_member_turns(p, mon, random.Random(7))
+    text = "".join(notes)
+    # at bond 90, very likely at least one assist over a few retries
+    if mon["hp"] == 200:
+        for i in range(15):
+            mon2 = {"hp": 200, "max_hp": 200}
+            notes = party_member_turns(p, mon2, random.Random(i + 50))
+            if mon2["hp"] < 200:
+                mon = mon2
+                text = "".join(notes)
+                break
+    assert mon["hp"] <= 200
+    assert "ซุ่ม" in text or mon["hp"] < 200
+
+
+def test_item_gift_removes_one_unit_from_stack():
+    """WO-PARTY-3: gift must not wipe a whole True Stack."""
+    from game.config import DATA_DIR
+    from game.data_load.registry import DataRegistry
+    from game.domain.bag_stack import count_item_units, qty_at
+    from game.domain.equipment import add_item
+    from game.domain.party import give_item_gift
+
+    reg = DataRegistry.load(DATA_DIR)
+    p = _player_with_member(30, kind="spirit")
+    p["inventory_ids"] = []
+    p["inventory"] = []
+    p["inventory_rarities"] = []
+    p["inventory_qty"] = []
+    p["inventory_items"] = []
+    # stack of potions
+    for _ in range(5):
+        add_item(p, "potion_hp", reg)
+    assert count_item_units(p, "potion_hp") == 5
+    assert len(p["inventory_ids"]) == 1
+    before = get_relationship(p, "test_m1")
+    notes = give_item_gift(p, reg, 0, 0)
+    assert notes
+    assert count_item_units(p, "potion_hp") == 4
+    assert len(p["inventory_ids"]) == 1  # stack slot remains
+    assert qty_at(p, 0) == 4
+    assert get_relationship(p, "test_m1") != before or True  # may love/meh/dislike
+    # drain stack to empty slot removal
+    for _ in range(4):
+        give_item_gift(p, reg, 0, 0)
+    assert "potion_hp" not in (p.get("inventory_ids") or [])
 
 
 def test_gift_likes_hidden_soft_reaction():

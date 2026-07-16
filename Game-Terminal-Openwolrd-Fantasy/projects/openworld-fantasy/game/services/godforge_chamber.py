@@ -408,6 +408,13 @@ def spar_dummy(
 
     notes.append(f"  รวมแรงประมาณ {total_out} · spar สะสม {sess.get('spar_count', rounds)}")
     notes.append("  (ห้อง · ไม่ได้เงินโลก)")
+    # WO-Shop-6: spar win → soft shop reputation fame
+    try:
+        from game.domain.shop_experience import on_arena_or_spar_win
+
+        notes.extend(on_arena_or_spar_win(player, reg, source="spar", amount=10))
+    except Exception:
+        pass
     # mini summary after spar
     notes.extend(format_chamber_burden_summary(player, reg)[1:4])
     return notes

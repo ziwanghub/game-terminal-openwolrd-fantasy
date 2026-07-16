@@ -78,6 +78,20 @@ def grant_xp(
             recompute_stats(player, reg)
             player["hp"] = min(int(player["max_hp"]), int(player.get("hp", 0)) + 4 * levels_gained)
             player["mana"] = min(int(player["max_mana"]), int(player.get("mana", 0)) + 2 * levels_gained)
+            # WO-048: soft pressure toward temple unlock
+            try:
+                from game.domain.stat_grades import (
+                    can_temple_unlock,
+                    note_grade_pressure,
+                    temple_hint_lines,
+                )
+
+                note_grade_pressure(player, levels_gained)
+                if can_temple_unlock(player):
+                    for hl in temple_hint_lines(player)[:2]:
+                        notes.append(hl.strip() if str(hl).startswith(" ") else hl)
+            except Exception:
+                pass
         except Exception:
             player["max_hp"] = int(player.get("max_hp", 100)) + 6 * levels_gained
             player["hp"] = min(int(player["max_hp"]), int(player.get("hp", 0)) + 6 * levels_gained)

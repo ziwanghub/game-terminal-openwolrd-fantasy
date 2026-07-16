@@ -2,8 +2,8 @@
 
 **รูปแบบ:** 1–3 บรรทัดต่อเวอร์ชัน · รายละเอียดระบบอยู่ `ARCHITECTURE.md` + doc รายระบบ  
 **คิวงานค้าง:** `IMPROVEMENT_PLAN.md` · **Work Order:** `WO_BACKLOG.md`  
-**เวอร์ชันปัจจุบัน:** `1.94.0-alpha` (`wo047-human-feedback-feel`) — ดู `game/config.py`  
-**แผนยังไม่โค้ด (solo-first):** playtest มือ · hotfix · W4 online ระงับ  
+**เวอร์ชันปัจจุบัน:** `2.17.0-alpha` (`wo-arena-1`) — ดู `game/config.py`  
+**แผน (solo-first):** playtest อารีน่า · `docs/ARENA_WO1.md` · ร้านปิดที่ Shop-6  
 **WO backlog:** `WO_BACKLOG.md`  
 **แดชบอร์ด:** `python3 -m game.admin.dashboard` · `data/meta/system_dashboard.yaml`
 
@@ -11,6 +11,30 @@
 
 | เวอร์ชัน | สรุป |
 |----------|------|
+| **2.17.0** | **WO-Arena-1:** ทีม 1–4 · 3 รอบ · คะแนนกลยุทธ์ · Mystery · promote-by-score |
+| **2.16.0** | **WO-Shop-6 (final):** polish + Anima/Grade/Relic/Spar · ปิดระบบร้าน |
+| **2.15.0** | **WO-Shop-5:** soft shop events · deliver quests · friend VIP flavor |
+| **2.14.0** | **WO-Shop-4:** shop_rep 0–100 · ราคา±rep · stock unlock · dialogue ตามความคุ้น |
+| **2.13.0** | **WO-Shop-3:** dialogue/flavor · dynamic price เบา · best-buyer · หมวดตามโทน |
+| **2.12.0** | **WO-Shop-2:** โทนร้านชัด · content pack เบา · legend stock เบา · UI ใบ้โทน |
+| **2.11.0** | **WO-Shop-1:** junk 22% · mat cap ≤34% · identity stock · UI แบ่งหน้า · การ์ดยังแบน |
+| **2.10.1** | **WO-ITEM-5:** full-loop harness · generic loot soft-down · mid gear tone · sink คงนุ่ม |
+| **2.10.0** | **WO-ITEM-1–4:** loot identity · mid gear · economy sink · set/ธาตุ bias |
+| **2.09.0** | **WO-Mon-1–4:** pool diversity · profiles ครบ · weakness S+ · balance clamp · +15 mon |
+| **2.08.0** | **WO-PARTY-7:** Priority assist engine · cleanse soft · role lean |
+| **2.07.0** | **WO-PARTY-6:** อ่านสหาย soft · UI สัมพันธ์สหาย ≠ เรโซแนนซ์เรลิก |
+| **2.06.0** | **WO-PARTY-5:** Auto party care (soft gift) · Needs soft ซุ่ม/แบ่งอาหาร |
+| **2.05.0** | **WO-PARTY-4:** Assist pipeline lite (grade/identity) · chance soft-cap 90% |
+| **2.04.0** | **WO-PARTY-3:** Gift หัก 1 unit (stack-safe) · PARTY_INVENTORY doc truth |
+| **2.03.0** | **WO-INV:** Organize hub(O) · Bulk sell(B/C/J) · Relic tab(R) · junk protect |
+| **2.02.0** | **WO-INV-1:** True stack (consumable/mat/food) + soft cap harden · auto/UI qty |
+| **2.01.0** | **WO-054:** Soft Combat Identity + Weakness Lite (SS+) |
+| **2.00.0** | **WO-053:** Personal System full — เรื่องของฉัน + Soft Journal |
+| **1.99.0** | **WO-052:** Cut P @30 + Automatic Growth (grade/quest/anima) |
+| **1.98.0** | **WO-051:** Appraisal Skill S–SSS (soft read self/enemy) |
+| **1.97.0** | **WO-050:** Damage Pipeline v1 (adapter) + Grade Soft Mult |
+| **1.96.0** | **WO-049:** Grade Surface UI + Axis Tier Soft (ต้น/กลาง/ปลาย/พิเศษ) |
+| **1.95.0** | **WO-048:** Hidden Grade + Temple unlock + Soft P (letter grades) |
 | **1.94.0** | **WO-047:** Human Feedback + Feel Polish · synergy tone · DNA lock |
 | **1.93.0** | **WO-046:** Relic × Moment/Area Soft Synergy · foresight · auto · spar |
 | **1.92.0** | **WO-045:** Playtest Polish รอบใหญ่ · DNA lock lite · foresight/moment tone |

@@ -83,6 +83,13 @@
 | [WO-045](#wo-045-playtest-polish-รอบใหญ่) | Playtest Polish รอบใหญ่ | High | Playtest / Soft / DNA | `done` @ 1.92.0-alpha |
 | [WO-046](#wo-046-relic--moment-soft-synergy-lite) | Relic × Moment Soft Synergy | High | Relic / World / Soft | `done` @ 1.93.0-alpha |
 | [WO-047](#wo-047-human-feedback-round--feel-polish) | Human Feedback + Feel Polish | High | Playtest / Soft / DNA | `done` @ 1.94.0-alpha |
+| [WO-048](#wo-048-hidden-grade--temple-unlock) | Hidden Grade + Temple Unlock | High | Stats / Soft / Mystery | `done` @ 1.95.0-alpha |
+| [WO-049](#wo-049-grade-surface--tier-soft) | Grade Surface + Tier Soft | High | Stats / Soft / UI | `done` @ 1.96.0-alpha |
+| [WO-050](#wo-050-damage-pipeline-v1) | Damage Pipeline v1 + Grade Soft | High | Combat / Soft / Grade | `done` @ 1.97.0-alpha |
+| [WO-051](#wo-051-appraisal-skill) | Appraisal Skill S–SSS | High | Soft / Mystery / Combat | `done` @ 1.98.0-alpha |
+| [WO-052](#wo-052-auto-growth) | Cut P @30 + Auto Growth | High | Stats / Soft / Progression | `done` @ 1.99.0-alpha |
+| [WO-053](#wo-053-personal-system) | Personal System Full | High | Soft / Narrative / Identity | `done` @ 2.00.0-alpha |
+| [WO-054](#wo-054-combat-identity) | Soft Combat Identity + Weakness Lite | High | Combat / Soft / Identity | `done` @ 2.01.0-alpha |
 
 *อัปเดตตารางนี้ทุกครั้งที่มี WO ใหม่หรือเปลี่ยนสถานะ*  
 *WO-003: เลขเว้นว่าง — ใช้ WO-004 ตามคิว Needs Phase 1*
@@ -1047,6 +1054,186 @@ Keep soft anti-spoiler logs. Reuse domain needs APIs.
 
 ---
 
+### WO-048 Hidden Grade + Temple Unlock
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-048 |
+| **ชื่อ** | Hidden Grade Design Lock + Temple Unlock + Soft P |
+| **สถานะ** | `done` |
+| **Shipped in** | `1.95.0-alpha` |
+| **เอกสารล็อก** | [`STAT_GRADES_LOCK.md`](STAT_GRADES_LOCK.md) |
+| **Harness** | `scripts/wo048_stat_grades_playtest.py` |
+| **โมดูล** | `game/domain/stat_grades.py` |
+
+#### สิ่งที่ ship
+
+1. ตารางเกรด F–SSS + growth_profile (สมดุล/เฉพาะ/ผสม)  
+2. วิหารปลด: Lv≥10 + soft ตัน · UX **W** ในตัวละคร  
+3. Soft P แสดง (คำ soft) + ตัวอักษรหลังปลด  
+4. เกรดรวมกระทบอัตราเติบโตแกนเมื่อลง P  
+5. V ประเมินมีบล็อกเกรด · unit + harness  
+
+#### นอกขอบเขต
+
+- ตัด P @30 · Appraisal S–SSS · Damage volatility
+
+---
+
+### WO-049 Grade Surface + Tier Soft
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-049 |
+| **ชื่อ** | Grade Surface UI + Axis Polish + Tier Soft |
+| **สถานะ** | `done` |
+| **Shipped in** | `1.96.0-alpha` |
+| **เอกสารล็อก** | [`STAT_GRADES_LOCK.md`](STAT_GRADES_LOCK.md) §2.1 · §7.1 |
+| **Harness** | `scripts/wo049_grade_surface_playtest.py` |
+| **โมดูล** | `game/domain/stat_grades.py` · status / personal hub |
+
+#### สิ่งที่ ship
+
+1. Soft Tier ต้น/กลาง/ปลาย/พิเศษ ภายในแบนด์เกรด  
+2. Grade Surface บน Status / Personal hub / V / เมนู P  
+3. เกรดรวม soft (นักฝึก→เสี้ยวเทพ) + แกน soft+ตัวอักษร+tier  
+4. invest feedback แจ้งเลื่อน letter/tier · growth_profile ยังครบ  
+5. unit + harness  
+
+#### นอกขอบเขต
+
+- ตัด P @30 (WO-052) · Appraisal S–SSS เต็ม (WO-051) · Damage pipeline (WO-050)
+
+---
+
+### WO-050 Damage Pipeline v1
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-050 |
+| **ชื่อ** | Damage Pipeline v1 (Adapter) + Grade Soft Mult |
+| **สถานะ** | `done` |
+| **Shipped in** | `1.97.0-alpha` |
+| **เอกสาร** | [`DAMAGE_PIPELINE.md`](DAMAGE_PIPELINE.md) · STAT_ARCHITECTURE §0.19 |
+| **Harness** | `scripts/wo050_damage_pipeline_playtest.py` |
+| **โมดูล** | `game/domain/damage_pipeline.py` · wrappers ใน `combat.py` |
+
+#### สิ่งที่ ship
+
+1. Adapter ทางเดียว: outbound / inbound / monster raw  
+2. Soft grade mult (player + axis + tier) · S ≈ +10–15% เบา  
+3. Soft combat log · Anima/burden/bond presence เบา  
+4. Legacy wrappers คง API เดิม · unit + harness  
+
+#### นอกขอบเขต
+
+- Weakness recipes / ธาตุ fusion · SSS volatility · Appraisal เต็ม · ตัด P@30
+
+---
+
+### WO-051 Appraisal Skill
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-051 |
+| **ชื่อ** | Appraisal Skill (S–SSS ชั้น) |
+| **สถานะ** | `done` |
+| **Shipped in** | `1.98.0-alpha` |
+| **เอกสาร** | [`APPRAISAL_GUIDE.md`](APPRAISAL_GUIDE.md) · STAT_ARCHITECTURE §0.20 |
+| **Harness** | `scripts/wo051_appraisal_playtest.py` |
+| **โมดูล** | `game/domain/appraisal.py` · skill `soft_appraise` |
+
+#### สิ่งที่ ship
+
+1. ชั้น base / S / SS / SSS ต่างกันชัด  
+2. Self (V) + Monster (I) soft appraisal  
+3. SS weakness soft · SSS soft recipe  
+4. Temple seed S · mana/cd · pipeline combat hint  
+5. Soft Alert `appraisal.*` · unit + harness  
+
+#### นอกขอบเขต
+
+- ตัด P@30 (WO-052) · weakness recipes เต็มใน combat · resource ใหม่
+
+---
+
+### WO-052 Auto Growth
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-052 |
+| **ชื่อ** | ตัดแต้ม P หลัง Lv30+ + Automatic Growth |
+| **สถานะ** | `done` |
+| **Shipped in** | `1.99.0-alpha` |
+| **เอกสาร** | [`GROWTH_GUIDE.md`](GROWTH_GUIDE.md) · STAT_ARCHITECTURE §0.21 |
+| **Harness** | `scripts/wo052_auto_growth_playtest.py` |
+| **โมดูล** | `game/domain/auto_growth.py` |
+
+#### สิ่งที่ ship
+
+1. เกต Lv ≥ 30 + soft foreshadow 28–29  
+2. Phase-out แต้มคงเหลือครั้งเดียว  
+3. Auto growth จากเกรด × profile + quest/combat/anima  
+4. เมนู P soft “พลังไหลเวียนเอง” · allocate ปฏิเสธ  
+5. unit + harness  
+
+#### นอกขอบเขต
+
+- Weakness recipes · volatility · resource ใหม่ · rewrite สถาปัตยกรรมหลัก
+
+---
+
+### WO-053 Personal System
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-053 |
+| **ชื่อ** | Personal System เต็มรูปแบบ (เรื่องของฉัน) |
+| **สถานะ** | `done` |
+| **Shipped in** | `2.00.0-alpha` |
+| **เอกสาร** | [`PERSONAL_SYSTEM_GUIDE.md`](PERSONAL_SYSTEM_GUIDE.md) · STAT §0.22 |
+| **Harness** | `scripts/wo053_personal_system_playtest.py` |
+| **โมดูล** | `game/domain/personal_system.py` · Personal Hub **V** |
+
+#### สิ่งที่ ship
+
+1. Panel 「เรื่องของฉัน」 รวมเกรด/Appraisal/Anima/เรลิก/Faction/โต  
+2. Soft Journal + hooks วิหาร · growth · anima · bond · faction  
+3. Hub compact · V submenu deep appraisal  
+4. unit + harness  
+
+#### นอกขอบเขต
+
+- Weakness recipes เต็ม · appraisal เฉลยสูตร · resource ใหม่ · online
+
+---
+
+### WO-054 Combat Identity
+
+| ฟิลด์ | ค่า |
+|--------|-----|
+| **ID** | WO-054 |
+| **ชื่อ** | Soft Combat Identity + Weakness Lite |
+| **สถานะ** | `done` |
+| **Shipped in** | `2.01.0-alpha` |
+| **เอกสาร** | [`COMBAT_IDENTITY_GUIDE.md`](COMBAT_IDENTITY_GUIDE.md) · STAT §0.23 |
+| **Harness** | `scripts/wo054_combat_identity_playtest.py` |
+| **โมดูล** | `game/domain/combat_identity.py` |
+
+#### สิ่งที่ ship
+
+1. Pre-fight / hit soft จากเกรด · bond · faction · anima  
+2. Identity micro mult เข้า damage pipeline  
+3. Weakness Lite หลัง Appraisal SS+ (ใบ้ + mult เบา)  
+4. Auto farm parity · journal ชนะบอส  
+5. unit + harness  
+
+#### นอกขอบเขต
+
+- Weakness recipes เต็ม · ธาตุ fusion อัตโนมัติ · resource ใหม่ · UI ใหญ่
+
+---
+
 ### WO-00N … (แม่แบบ)
 
 ```markdown
@@ -1072,6 +1259,13 @@ Keep soft anti-spoiler logs. Reuse domain needs APIs.
 
 | วันที่ | เหตุการณ์ |
 |--------|-----------|
+| 2026-07-16 | **WO-054 done** @ 2.01.0-alpha — Soft Combat Identity + Weakness Lite |
+| 2026-07-16 | **WO-053 done** @ 2.00.0-alpha — Personal System เรื่องของฉัน |
+| 2026-07-16 | **WO-052 done** @ 1.99.0-alpha — Cut P @30 + Auto Growth |
+| 2026-07-16 | **WO-051 done** @ 1.98.0-alpha — Appraisal Skill S–SSS |
+| 2026-07-16 | **WO-050 done** @ 1.97.0-alpha — Damage Pipeline v1 + Grade Soft Mult |
+| 2026-07-16 | **WO-049 done** @ 1.96.0-alpha — Grade Surface + Tier Soft |
+| 2026-07-16 | **WO-048 done** @ 1.95.0-alpha — Hidden Grade + Temple |
 | 2026-07-15 | สร้าง backlog · รับ **WO-001** |
 | 2026-07-15 | implement **WO-002** @ 1.55.0-alpha |
 | 2026-07-15 | **Defer WO-002:** simple world picker default · `WORLD_THEME_UX_ENABLED=False` · เก็บโค้ด |
@@ -1115,3 +1309,4 @@ Keep soft anti-spoiler logs. Reuse domain needs APIs.
 | 2026-07-16 | **WO-045 done** @ 1.92.0-alpha — Playtest Polish · DNA lock lite · foresight/moment tone |
 | 2026-07-16 | **WO-046 done** @ 1.93.0-alpha — Relic × Moment/Area Soft Synergy lite |
 | 2026-07-16 | **WO-047 done** @ 1.94.0-alpha — Human Feedback + Feel Polish · DNA lock |
+| 2026-07-16 | **WO-048 done** @ 1.95.0-alpha — Hidden Grade + Temple + Soft P letters |

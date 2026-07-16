@@ -170,14 +170,52 @@ def format_personal_hub_lines(
 
     pts = int(player.get("stat_points") or 0)
     ppts = int(player.get("personality_points") or 0)
-    if pts > 0 or ppts > 0:
+    # WO-052: auto growth soft instead of "แต้ม → P"
+    try:
+        from game.domain.auto_growth import is_auto_growth_mode, soft_threshold_flag
+
+        if is_auto_growth_mode(player):
+            lines.append("---")
+            bits = ["พลังไหลเอง → P"]
+            if ppts > 0:
+                bits.append(f"แต้มนิสัย {ppts} → N")
+            lines.append(" ✦ " + "  ·  ".join(bits))
+        elif pts > 0 or ppts > 0:
+            lines.append("---")
+            bits = []
+            if pts > 0:
+                bits.append(f"แต้มสถานะ {pts} → P")
+            if ppts > 0:
+                bits.append(f"แต้มนิสัย {ppts} → N")
+            if soft_threshold_flag(player):
+                bits.append("ใกล้ไหลเอง")
+            lines.append(" ✦ " + "  ·  ".join(bits))
+    except Exception:
+        if pts > 0 or ppts > 0:
+            lines.append("---")
+            bits = []
+            if pts > 0:
+                bits.append(f"แต้มสถานะ {pts} → P")
+            if ppts > 0:
+                bits.append(f"แต้มนิสัย {ppts} → N")
+            lines.append(" ✦ " + "  ·  ".join(bits))
+
+    # WO-049/053: Grade Surface + Personal compact on hub
+    try:
+        from game.domain.stat_grades import grade_hub_compact_lines
+
         lines.append("---")
-        bits = []
-        if pts > 0:
-            bits.append(f"แต้มสถานะ {pts} → P")
-        if ppts > 0:
-            bits.append(f"แต้มนิสัย {ppts} → N")
-        lines.append(" ✦ " + "  ·  ".join(bits))
+        lines.extend(grade_hub_compact_lines(player))
+    except Exception:
+        pass
+    try:
+        from game.domain.personal_system import format_personal_compact_lines
+
+        lines.append("---")
+        lines.extend(format_personal_compact_lines(player))
+        lines.append("  (V = เรื่องของฉัน)")
+    except Exception:
+        pass
 
     raw_st = player.get("statuses") or []
     if raw_st:
@@ -286,6 +324,14 @@ def render_status_l1c(player: Mapping[str, Any], current_area: str) -> str:
     if hints:
         lines.append("---")
         lines.append(" ✦ " + "  ·  ".join(hints))
+    # WO-049: compact grade surface on overview status
+    try:
+        from game.domain.stat_grades import grade_hub_compact_lines
+
+        lines.append("---")
+        lines.extend(grade_hub_compact_lines(player))
+    except Exception:
+        pass
     return render_box(lines, double=False)
 
 
@@ -300,6 +346,7 @@ def _sight_kind_th(kind: str) -> str:
         "companion": "เงา",
         "boss": "บอส",
         "faction_moment": "โลก",
+        "shop_rep_event": "ร้าน",
     }.get(k, k or "?")
 
 
@@ -454,7 +501,8 @@ def render_combat_vitals(
                 rel = get_relationship(player, mid, m)
                 soft = soft_relationship_label(rel)
                 lines.append(
-                    f"  {i}. {nm} · {kl} · [{relationship_bar(rel)}] {soft}"
+                    f"  {i}. {nm} · {kl} · สัมพันธ์สหาย "
+                    f"[{relationship_bar(rel)}] {soft}"
                 )
         except Exception:
             for i, m in enumerate(party, 1):
@@ -660,6 +708,14 @@ def render_status_l1(player: Mapping[str, Any], current_area: str) -> str:
         m = int(alloc.get("magic", 0) or 0)
         s = int(alloc.get("speed", 0) or 0)
         lines.append(f" โจม/กัน/เวท/เร็ว  (soft · ไม่โชว์ดิบ)")
+    # WO-049: Grade Surface on full Status
+    try:
+        from game.domain.stat_grades import format_grade_surface_lines
+
+        lines.append("---")
+        lines.extend(format_grade_surface_lines(player, compact=False, include_header=True))
+    except Exception:
+        pass
     try:
         from game.domain.combo_mind import soft_combo_mind_hint
 

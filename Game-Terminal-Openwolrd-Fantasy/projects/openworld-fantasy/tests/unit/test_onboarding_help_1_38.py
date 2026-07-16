@@ -11,10 +11,11 @@ from game.ui_terminal.help import (
 from game.ports.io import ScriptedIO
 
 
-def test_tutorial_has_eight_pages_and_growth_topics():
-    assert len(TUTORIAL_PAGES) >= 8
+def test_tutorial_has_six_soft_pages():
+    assert len(TUTORIAL_PAGES) == 6
     blob = "\n".join("\n".join(p) for p in TUTORIAL_PAGES)
-    for key in ("อาชีพ", "ต้นไม้", "แต้ม", "อัป", "อาชีพลับ", "เข้าทาง"):
+    # soft DNA core topics (growth detail lives in onboard tips + H help)
+    for key in ("หิว", "ขวัญ", "Anima", "Mini-Moment", "เรลิก", "ภาระ", "Auto"):
         assert key in blob
 
 

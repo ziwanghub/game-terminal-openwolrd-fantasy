@@ -1,37 +1,44 @@
 id: mountain_rock
 name: ภูเขาหิน
-climate: [cold, windy]
+climate:
+- cold
+- windy
 world_tier: 2
 unlock_level: 4
-connections: [dark_forest, desert_heat, crystal_peak]
-stations: [camp, forge]
+connections:
+- dark_forest
+- desert_heat
+- crystal_peak
+stations:
+- camp
+- forge
 mastery_start: 12
 ambient:
   hp_regen: 2
   mana_regen: 2
 monster_pools:
-  - id: rock_golem
-    weight: 32
-  - id: mountain_troll
-    weight: 26
-  - id: stone_mole
-    weight: 20
-  - id: cliff_eagle
-    weight: 16
-  - id: ridge_reaver
-    weight: 4
-  - id: stone_drake
-    weight: 4
-  - id: ridge_goat
-    weight: 16
-  - id: mountain_carrion_crow
-    weight: 12
-  - id: elite_ridge_warlord
-    weight: 4
-
+- id: rock_golem
+  weight: 24
+- id: mountain_troll
+  weight: 20
+- id: stone_mole
+  weight: 16
+- id: cliff_eagle
+  weight: 14
+- id: ridge_reaver
+  weight: 7
+- id: stone_drake
+  weight: 6
+- id: ridge_goat
+  weight: 14
+- id: mountain_carrion_crow
+  weight: 12
+- id: elite_ridge_warlord
+  weight: 8
+- id: ridge_ember_goat
+  weight: 11
 boss_id: boss_stone_titan
 boss_unlock_level: 10
-# WO-032 soft loop
 loop_soft:
-  - "ภูเขาหิน: เดินสัน·ล่าโกเล็ม·เงาใต้ยอดผา แล้วค่อยล้มไททัน"
-  - "ลมผาจำฝีเท้า — กลับสำรวจ/ล่าซ้ำได้ผล soft"
+- 'ภูเขาหิน: เดินสัน·ล่าโกเล็ม·เงาใต้ยอดผา แล้วค่อยล้มไททัน'
+- ลมผาจำฝีเท้า — กลับสำรวจ/ล่าซ้ำได้ผล soft
