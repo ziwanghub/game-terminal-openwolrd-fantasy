@@ -165,6 +165,16 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("quests", {})
     data.setdefault("quests_done", [])
     data.setdefault("bosses_defeated", [])
+    # WO-Worthiness-1: soft wall + trial flags
+    try:
+        from game.domain.worthiness import ensure_worthiness
+
+        ensure_worthiness(data)
+    except Exception:
+        data.setdefault(
+            "worthiness",
+            {"trials_cleared": [], "rewards_granted": [], "god_eye_owned": False},
+        )
     data.setdefault("stats", {})
     data.setdefault("world_modifiers", {})
     data.setdefault("tutorial_done", False)

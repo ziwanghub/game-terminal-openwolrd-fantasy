@@ -26,7 +26,7 @@ def _oracle():
 
 
 def test_version_appraise_ui():
-    assert "2.20" in APP_VERSION
+    assert "2.2" in APP_VERSION  # 2.20+ line incl. 2.21 worthiness
     # phase stamp moves with later WOs; keep non-empty + known lineage soft-ok
     assert PHASE
     assert any(

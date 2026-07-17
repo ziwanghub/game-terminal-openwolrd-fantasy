@@ -10,8 +10,8 @@ ART_DIR = DATA_DIR / "art"
 PROTOTYPE_PATH = PROJECT_ROOT / "pixel_fantasy_openskill.py"
 
 APP_NAME = "Open World Fantasy"
-APP_VERSION = "2.20.2-alpha"
-PHASE = "wo-storage-1-2-shared"
+APP_VERSION = "2.21.0-alpha"
+PHASE = "wo-worthiness-1"
 
 # Terminal layout (RD-09)
 UI_WIDTH = 60

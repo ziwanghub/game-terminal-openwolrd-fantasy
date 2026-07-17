@@ -2163,6 +2163,24 @@ def _run_combat(
                     double=False,
                 )
             )
+            # WO-Worthiness-1: Trial grant T1/T2 (manual only · once)
+            if mon.get("boss"):
+                try:
+                    from game.domain.worthiness import on_boss_defeated_worthiness
+
+                    w_lines = on_boss_defeated_worthiness(
+                        player, mon, reg, via_auto=False
+                    )
+                    if w_lines:
+                        io.write_line()
+                        io.write_line(
+                            _rb_win(
+                                [" วงพิสูจน์", "---", *w_lines],
+                                double=False,
+                            )
+                        )
+                except Exception:
+                    pass
             if mon.get("boss"):
                 for line in bump_quest(
                     player, reg, "kill_boss", area_id=str(mon.get("id"))

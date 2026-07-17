@@ -628,11 +628,28 @@ def run_field(
                 io.write_line(f"ท้าทายไม่ได้: {msg}")
             else:
                 io.write_line(f"\n☠ ท้าทายบอส: {msg}")
-                conf = io.read_line("ยืนยัน? (1=สู้): ").strip()
+                # WO-Worthiness-1: soft readiness before trial (มือ · ถอยได้)
+                try:
+                    from game.domain.boss import area_boss_info
+                    from game.domain.worthiness import trial_readiness_lines
+
+                    info = area_boss_info(reg, area_id)
+                    bid = str((info or {}).get("id") or "")
+                    for ln in trial_readiness_lines(player, reg, bid):
+                        io.write_line(ln)
+                except Exception:
+                    pass
+                conf = io.read_line("ยืนยัน? (1=สู้ / 0=ถอยเตรียม): ").strip()
                 if conf == "1":
                     boss = spawn_boss(reg, area_id, rng)
                     if boss:
                         boss = apply_world_enemy_mods(boss, player)
+                        try:
+                            from game.domain.worthiness import set_combat_via_auto
+
+                            set_combat_via_auto(player, False)
+                        except Exception:
+                            pass
                         io.write_line(
                             spotlight(
                                 "BOSS",
@@ -649,7 +666,7 @@ def run_field(
                     else:
                         io.write_line("ไม่พบบอสใน data")
                 else:
-                    io.write_line("ถอย")
+                    io.write_line("ถอย — เข้าถึงได้ ≠ สมควรได้ · เตรียมแล้วค่อยกลับ")
         elif ch in ("r", "R"):
             # Care band — rest (personal-style light care)
             from game.domain.needs import personal_rest_care

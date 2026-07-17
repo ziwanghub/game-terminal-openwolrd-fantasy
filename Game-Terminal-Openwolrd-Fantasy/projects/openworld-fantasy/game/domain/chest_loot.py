@@ -707,7 +707,22 @@ def open_chest(
             continue
 
         iid = str(rng.choice(pool))
+        # WO-Worthiness-1: skip trial-exclusive / god-tier catalog items on chest farm
+        try:
+            from game.domain.worthiness import item_blocked_on_farm
+
+            if item_blocked_on_farm(iid, reg, allow_god=False):
+                continue
+        except Exception:
+            pass
         rid = _roll_rarity_biased(reg, rng, bias)
+        try:
+            from game.domain.worthiness import clamp_farm_rarity
+
+            rid = clamp_farm_rarity(reg, rid, allow_god=False)
+        except Exception:
+            if rid in ("divine", "archdivine", "mythic"):
+                rid = "legendary"
         it = reg.items.get(iid) or {}
         if str(it.get("kind")) == "material" and rng.random() < 0.6:
             rid = "common"
@@ -764,10 +779,20 @@ def _roll_rarity_biased(
 ) -> str:
     from game.domain.rarity import all_tiers
 
+    try:
+        from game.domain.worthiness import FARM_MAX_RARITY_RANK
+
+        max_rank = int(FARM_MAX_RARITY_RANK)
+    except Exception:
+        max_rank = 5
+
     tiers = all_tiers(reg)
     ids = []
     weights = []
     for t in tiers:
+        # WO-Worthiness-1: chest farm ceiling ≤ legendary
+        if int(t.get("rank") or 1) > max_rank:
+            continue
         tid = str(t.get("id"))
         w = float(t.get("drop_weight") or 1) * float(bias.get(tid) or 0.0)
         # if bias missing key, use small weight for known mid tiers

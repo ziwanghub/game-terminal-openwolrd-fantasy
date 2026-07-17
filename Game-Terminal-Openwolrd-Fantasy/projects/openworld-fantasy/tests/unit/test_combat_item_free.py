@@ -44,7 +44,7 @@ def _mon():
 
 
 def test_version_phase_item_free():
-    assert "2.20" in APP_VERSION
+    assert "2.2" in APP_VERSION  # 2.20+ line incl. 2.21 worthiness
     # free-item may be followed by later WO phase stamps
     assert PHASE
     assert any(

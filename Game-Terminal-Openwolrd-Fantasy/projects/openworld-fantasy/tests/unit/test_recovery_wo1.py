@@ -31,7 +31,7 @@ def _player(reg=None):
 
 def test_version_phase_recovery():
     # recovery shipped @ 2.18.0; current line is 2.20.x (storage WO phase)
-    assert "2.20" in APP_VERSION
+    assert "2.2" in APP_VERSION  # 2.20+ line incl. 2.21 worthiness
     assert PHASE
     assert (
         ("recovery" in PHASE)

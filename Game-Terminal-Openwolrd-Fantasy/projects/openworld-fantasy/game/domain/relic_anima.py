@@ -37,6 +37,7 @@ _RELIC_ID_LEAN: Dict[str, str] = {
     "relic_echo_shroud": FACTION_ECHO,
     # WO-043 third pieces (enable Soft Chorus)
     "relic_divine_laurel": FACTION_DIVINE,
+    "relic_god_eye": FACTION_DIVINE,
     "relic_hell_ash_greaves": FACTION_INFERNAL,
     "relic_echo_sandals": FACTION_ECHO,
 }

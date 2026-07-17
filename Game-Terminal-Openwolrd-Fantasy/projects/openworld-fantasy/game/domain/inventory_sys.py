@@ -1629,24 +1629,48 @@ def build_combat_loot_table(
             mon["boss"] = True
     boss = bool(mon.get("boss"))
     min_rank = 1
-    max_rank = 6 if boss else 4
+    # WO-Worthiness-1: farm/normal boss loot ≤ legendary (rank 5); god-tier = trial only
+    max_rank = 5 if boss else 4
     if boss:
         min_rank = 2
     has_table = monster_has_drop_table(mon)
     table_n = len(mon_drop_entries(mon)) if has_table else 0
 
     def _pack(iid: str, note: str = "", *, source: str = "") -> Dict[str, Any]:
+        from game.domain.worthiness import (
+            clamp_farm_rarity,
+            item_blocked_on_farm,
+        )
+
+        if item_blocked_on_farm(iid, reg, allow_god=False):
+            return {}
         it = reg.items.get(iid) or reg.cards.get(iid) or {}
         base = item_default_rarity(it, reg) if it else "common"
         is_card = iid in (reg.cards or {}) or str(iid).startswith("card_")
         if is_card:
             rid = str(it.get("rarity") or base or "common")
+            rid = clamp_farm_rarity(reg, rid, allow_god=False)
         elif it.get("kind") == "equipment" or it.get("slot"):
-            rid = roll_rarity(reg, rng, pool="drop", min_rank=min_rank, max_rank=max_rank)
+            rid = roll_rarity(
+                reg,
+                rng,
+                pool="drop",
+                min_rank=min_rank,
+                max_rank=max_rank,
+                farm_ceiling=True,
+            )
+            rid = clamp_farm_rarity(reg, rid, allow_god=False)
         else:
-            rid = base
+            rid = clamp_farm_rarity(reg, base, allow_god=False)
             if rng.random() < 0.15:
-                rid = roll_rarity(reg, rng, pool="drop", min_rank=1, max_rank=3)
+                rid = roll_rarity(
+                    reg,
+                    rng,
+                    pool="drop",
+                    min_rank=1,
+                    max_rank=3,
+                    farm_ceiling=True,
+                )
         from game.domain.rarity import display_item_name
 
         nm = it.get("name") or iid
@@ -1689,7 +1713,9 @@ def build_combat_loot_table(
                 note = "อุปกรณ์มอน"
             else:
                 note = "จากศัตรู"
-        drops.append(_pack(iid, note, source="จากมอน"))
+        packed = _pack(iid, note, source="จากมอน")
+        if packed.get("id"):
+            drops.append(packed)
 
     # ── 2) Generic fallback — WO-ITEM-1/5: thick table → soft reserve only ──
     # WO-ITEM-5 hot-fix (playtest harness): slightly lower than 2.10.0
@@ -1707,23 +1733,28 @@ def build_combat_loot_table(
     # still allow tiny soft reserve even on thick tables
     if has_table and not drops and gen_scale < 0.2:
         gen_scale = 0.20  # avoid empty loot feel if table rolled nothing
+    def _append_pack(iid: str, note: str = "", *, source: str = "") -> None:
+        packed = _pack(iid, note, source=source)
+        if packed.get("id"):
+            drops.append(packed)
+
     if rng.random() < up_c * gen_scale:
-        drops.append(_pack("upgrade_mat", "วัสดุสำรอง · ใช้คราฟได้", source="สำรองสนาม"))
+        _append_pack("upgrade_mat", "วัสดุสำรอง · ใช้คราฟได้", source="สำรองสนาม")
     if rng.random() < rare_c * gen_scale * 0.85:
-        drops.append(_pack("rare_mat", "วัสดุหายาก · สำรองสนาม", source="สำรองสนาม"))
+        _append_pack("rare_mat", "วัสดุหายาก · สำรองสนาม", source="สำรองสนาม")
     if rng.random() < 0.16 * gen_scale:
-        drops.append(_pack("potion_hp_small", "ยาสำรองสนาม", source="สำรองสนาม"))
+        _append_pack("potion_hp_small", "ยาสำรองสนาม", source="สำรองสนาม")
     if rng.random() < 0.07 * gen_scale:
-        drops.append(_pack("potion_mana", "ยาสำรองสนาม", source="สำรองสนาม"))
+        _append_pack("potion_mana", "ยาสำรองสนาม", source="สำรองสนาม")
     if mon.get("boss") and rng.random() < 0.35:
         for cid in ("steel_blade", "iron_plate", "shadow_dagger", "arcane_circlet", "scout_spear"):
             if cid in reg.items and rng.random() < 0.45:
-                drops.append(_pack(cid, "อุปกรณ์บอส", source="จากบอส"))
+                _append_pack(cid, "อุปกรณ์บอส", source="จากบอส")
                 break
     elif (not has_table) and rng.random() < 0.08:
         for cid in ("iron_sword", "leather_armor", "copper_ring", "leather_cap"):
             if cid in reg.items:
-                drops.append(_pack(cid, "อุปกรณ์", source="สำรองสนาม"))
+                _append_pack(cid, "อุปกรณ์", source="สำรองสนาม")
                 break
 
     # ── 3) Global card pool only if mon has no card_id (bound card is in table) ──

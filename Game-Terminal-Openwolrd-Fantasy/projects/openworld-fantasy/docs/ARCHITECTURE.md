@@ -5,7 +5,7 @@
 
 | ฟิลด์ | ค่า |
 |-------|-----|
-| **เวอร์ชันเกม** | 1.13.16-alpha (`needs-n1-n4`) |
+| **เวอร์ชันเกม** | 2.21.0-alpha (`wo-worthiness-1`) |
 | **สถานะเอกสาร** | Living hub — อัปเดตเมื่อเพิ่มระบบหลัก |
 | **เจ้าของ** | ทีม openworld-fantasy |
 | **อัปเดตล่าสุด** | 2026-07-14 (onboarding + U prefs) |
@@ -153,6 +153,7 @@ projects/openworld-fantasy/
 | ตั้งค่าจอ | `ui_prefs.py` | — | **U** |
 | Onboarding | `ui_terminal/help.py` | — | **H** / **T** · ใบ้เมือง |
 | Mode Shell | `mode_shell` · `personal_hub` · `shop_hub` | **MODE_SHELL_DESIGN** | สำรวจ·ตัวละคร·ร้าน·ไฟต์ |
+| Worthiness lite | `domain/worthiness.py` · loot ceiling · T1/T2 trial | **WO_WORTHINESS_1** | Whisper แมพ · บอสมือ · ของเทพ |
 | เทส | `tests/**` | TESTING | `pytest -q` |
 
 ---

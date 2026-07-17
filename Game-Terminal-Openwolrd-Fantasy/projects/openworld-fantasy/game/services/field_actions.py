@@ -281,6 +281,14 @@ def do_travel(
         return
     player["location"] = dest
     emit_narrative(io, field_enter_area(reg, dest, rng))
+    # WO-Worthiness-1: Soft wall Whisper on travel (never hard block)
+    try:
+        from game.domain.worthiness import travel_worthiness_lines
+
+        for ln in travel_worthiness_lines(player, reg, dest):
+            io.write_line(ln)
+    except Exception:
+        pass
     # WO-029: soft area loop tip once per visit key
     # WO-044: Soft Foresight world gaze on each travel arrival
     try:

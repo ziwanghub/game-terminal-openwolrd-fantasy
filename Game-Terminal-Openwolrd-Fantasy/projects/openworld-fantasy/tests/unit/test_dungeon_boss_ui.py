@@ -28,7 +28,7 @@ class _IO:
 
 
 def test_version_dungeon_boss_ui():
-    assert "2.20" in APP_VERSION
+    assert "2.2" in APP_VERSION  # 2.20+ line incl. 2.21 worthiness
     assert PHASE
     assert any(
         k in PHASE for k in ("dungeon-boss", "skill-ui", "appraise", "storage", "wo-storage")

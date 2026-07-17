@@ -1903,8 +1903,33 @@
   - holy
   - sky
   - storm
-  desc: เรลิกศีรษะสายสวรรค์ — คู่เขี้ยว+เกราะ → Soft Chorus เทพ
+  - worthiness_t1
+  desc: เรลิกศีรษะสายสวรรค์ — คู่เขี้ยว+เกราะ → Soft Chorus เทพ · ได้จากวงพิสูจน์ป่า (มือ)
   latent_hp_pct: 0.02
+- id: relic_god_eye
+  code: rl_ge1
+  rarity: divine
+  name: ดวงตาพระเจ้า
+  kind: equipment
+  slot: acc_1
+  material: starlight
+  weight_class: light
+  def: 4
+  mdef: 14
+  max_hp: 12
+  sockets: 0
+  price_world: 1200
+  price_heaven: 3
+  divine_burden: true
+  force_burden: true
+  tags:
+  - holy
+  - sight
+  - divine
+  - worthiness_t2
+  desc: ดวงตาแห่งการพิสูจน์ — หนึ่งครั้งต่อวิญญาณ · ไม่ดรอปจากฟาร์ม (T2 มือ)
+  latent_hp_pct: 0.03
+  latent_crit: 0.8
 - id: relic_hell_ash_greaves
   code: rl_hg1
   rarity: legendary

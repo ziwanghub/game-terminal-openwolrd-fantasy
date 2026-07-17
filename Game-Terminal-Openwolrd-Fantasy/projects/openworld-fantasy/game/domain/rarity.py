@@ -82,11 +82,20 @@ def roll_rarity(
     pool: str = "drop",
     min_rank: int = 1,
     max_rank: int = 99,
+    farm_ceiling: bool = False,
 ) -> str:
     """
     Weighted roll. pool: drop | recruit
     kind: companion kind for bias (optional)
+    farm_ceiling: WO-Worthiness-1 — clamp max to legendary (rank 5) for farm/chest.
     """
+    if farm_ceiling:
+        try:
+            from game.domain.worthiness import FARM_MAX_RARITY_RANK
+
+            max_rank = min(int(max_rank), int(FARM_MAX_RARITY_RANK))
+        except Exception:
+            max_rank = min(int(max_rank), 5)
     tiers = all_tiers(reg)
     weight_key = "drop_weight" if pool == "drop" else "recruit_weight"
     bias = {}

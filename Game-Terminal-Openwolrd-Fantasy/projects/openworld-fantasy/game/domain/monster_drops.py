@@ -116,6 +116,14 @@ def roll_monster_table_drops(
         # validate id exists
         if iid not in (reg.items or {}) and iid not in (reg.cards or {}):
             continue
+        # WO-Worthiness-1: Reward Lock — no trial-exclusive / god-tier from farm table
+        try:
+            from game.domain.worthiness import item_blocked_on_farm
+
+            if item_blocked_on_farm(iid, reg, allow_god=False):
+                continue
+        except Exception:
+            pass
         chance = rate_to_chance(entry.get("rate"))
         if boss and str(entry.get("rate") or "").lower() in ("rare", "very_rare"):
             chance = min(0.95, chance * 1.35)

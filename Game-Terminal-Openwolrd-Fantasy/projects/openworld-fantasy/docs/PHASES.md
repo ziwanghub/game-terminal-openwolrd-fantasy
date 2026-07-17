@@ -10,6 +10,7 @@
 
 | เวอร์ชัน | สรุป |
 |----------|------|
+| **2.21.0** | **WO-Worthiness-1:** Path of Worthiness lite · loot ≤legendary · soft wall Whisper · T1 laurel / T2 god eye · auto ห้าม first-trial |
 | **2.20.2** | **WO-Storage-1.2:** คลังทีมแชร์ user+pass · ไฟล์ vault ระดับโลก · ยา/เกียร์ฝากได้ · เพื่อนร่วมทีมเข้าคลังเดียวกัน |
 | **2.20.1** | **WO-Storage-1.1:** ฝาก multi/ช่วง/`a` mat·junk · ถอน `n:qty` · เงิน Enter=ทั้งหมด · header compact |
 | **2.20.0** | **WO-Storage-1:** คลังส่วนตัว 200 ช่อง · user+pass (sha256) · ฝาก/ถอน ของ+เงิน 3 สกุล · Auto stash default ปิด · PERSONAL 7/U |

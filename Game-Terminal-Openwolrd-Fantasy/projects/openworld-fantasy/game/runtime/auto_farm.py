@@ -166,6 +166,21 @@ def auto_fight(
 
     ensure_needs(player)
     lines: List[str] = []
+    # WO-Worthiness-1: Auto ห้าม first-trial (บอสพิสูจน์ต้องมือ)
+    try:
+        from game.domain.worthiness import (
+            auto_may_fight_boss,
+            set_combat_via_auto,
+        )
+
+        ok_boss, why = auto_may_fight_boss(player, mon)
+        if not ok_boss:
+            lines.append(f"  ออโต้: {why}")
+            lines.append("  「เข้าถึงได้ ≠ สมควรได้ — ท้าทายมือเมื่อพร้อม」")
+            return lines
+        set_combat_via_auto(player, True)
+    except Exception:
+        pass
     # WO-033: soft alert before auto combat (throttled)
     try:
         from game.domain.divine_burden import pre_fight_burden_alerts
@@ -348,6 +363,12 @@ def auto_fight(
         except Exception:
             pass
         mark_monster_seen(player, mon)
+        try:
+            from game.domain.worthiness import set_combat_via_auto
+
+            set_combat_via_auto(player, False)
+        except Exception:
+            pass
         return lines
 
     # Victory needs (same event as combat_session)
@@ -418,6 +439,21 @@ def auto_fight(
             lines.append("ดรอป " + add_item(player, "upgrade_mat", reg))
         except Exception:
             pass
+    # WO-Worthiness-1: never grant trial rewards via auto (even rematch)
+    if mon.get("boss"):
+        try:
+            from game.domain.worthiness import on_boss_defeated_worthiness
+
+            for ln in on_boss_defeated_worthiness(player, mon, reg, via_auto=True):
+                lines.append(ln if str(ln).startswith(" ") else f"  {ln}")
+        except Exception:
+            pass
+    try:
+        from game.domain.worthiness import set_combat_via_auto
+
+        set_combat_via_auto(player, False)
+    except Exception:
+        pass
     return lines
 
 

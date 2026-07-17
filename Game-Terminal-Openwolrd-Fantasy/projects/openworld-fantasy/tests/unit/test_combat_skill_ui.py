@@ -19,7 +19,7 @@ from game.ui_terminal.layout import display_width
 
 
 def test_version_skill_ui():
-    assert "2.20" in APP_VERSION
+    assert "2.2" in APP_VERSION  # 2.20+ line incl. 2.21 worthiness
     assert PHASE
     assert any(
         k in PHASE
