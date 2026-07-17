@@ -1,0 +1,48 @@
+# WO-Recovery-1 — Recovery bottle rank table
+# amount: flat per-turn heal (HP/MP points or fatigue relief)
+# duration: turns the bottle lasts (S is shorter but Full each tick)
+# full: true → restore to max (HP/MP) or fatigue → 0 (PY) each tick
+
+default_duration: 5
+s_duration: 3
+
+ranks:
+  F:
+    amount: 15
+    duration: 5
+    full: false
+  E:
+    amount: 20
+    duration: 5
+    full: false
+  D:
+    amount: 30
+    duration: 5
+    full: false
+  C:
+    amount: 50
+    duration: 5
+    full: false
+  B:
+    amount: 80
+    duration: 5
+    full: false
+  A:
+    amount: 100
+    duration: 5
+    full: false
+  S:
+    amount: 0
+    duration: 3
+    full: true
+
+kinds:
+  hp:
+    label: HP
+    soft: เลือด
+  mp:
+    label: MP
+    soft: มานา
+  py:
+    label: PY
+    soft: ล้า

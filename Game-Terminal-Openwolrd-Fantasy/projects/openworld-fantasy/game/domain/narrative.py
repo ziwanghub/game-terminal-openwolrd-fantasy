@@ -267,8 +267,11 @@ def situation_strip(
     *,
     known: bool = True,
     reg: Optional[DataRegistry] = None,
+    max_width: int = 52,
 ) -> str:
-    """One-line HUD atmosphere under HP bar."""
+    """One-line HUD atmosphere — capped width so box doesn't clip mid-glyph."""
+    from game.ui_terminal.layout import display_width
+
     bits: List[str] = []
     php = int(player.get("hp") or 0)
     pmax = max(1, int(player.get("max_hp") or 1))
@@ -298,18 +301,18 @@ def situation_strip(
     ]
     if mon_st:
         names = [status_display_name(str(s), reg) for s in mon_st if s]
-        bits.append("ศัตรู:" + "/".join(names))
+        # short status chip — no "ศัตรู:" prefix (saves columns)
+        bits.append("/".join(names[:2]))
     p_st = [
         (s.get("id") if isinstance(s, dict) else s) for s in (player.get("statuses") or [])
     ]
     if p_st:
         names = [status_display_name(str(s), reg) for s in p_st if s]
-        bits.append("คุณ:" + "/".join(names))
+        bits.append("คุณ:" + "/".join(names[:2]))
     if player.get("blessings"):
         bits.append("บัฟ:" + ",".join(str(x) for x in (player.get("blessings") or [])[:2]))
     if player.get("party_call_active"):
-        bits.append("ปาร์ตี้ถูกเรียก")
-    # WO-005: soft needs tag on situation strip (ขวัญ/หิว/ล้า vocabulary)
+        bits.append("ปาร์ตี้ช่วย")
     try:
         from game.domain.needs import band, get_needs
 
@@ -324,9 +327,8 @@ def situation_strip(
         pass
     party = list(player.get("party") or [])
     if party:
-        names = [str(m.get("name") or "?") for m in party[:3]]
-        bits.append("ทีม:" + "/".join(names))
-    # MI polish: soft mind read (no %)
+        # stable token for tests / scan: ทีม:3
+        bits.append(f"ทีม:{len(party)}")
     try:
         from game.domain.monster_ai import resolve_monster_intel_tier, talk_eligible
 
@@ -344,7 +346,16 @@ def situation_strip(
             bits.append("คุยได้อยู่")
     except Exception:
         pass
-    return " · ".join(bits)
+
+    # fit into box width (inner ~56; leave room for " ▸ ")
+    out: List[str] = []
+    for b in bits:
+        trial = " · ".join(out + [b]) if out else b
+        if display_width(trial) <= max_width:
+            out.append(b)
+        else:
+            break
+    return " · ".join(out) if out else "…"
 
 
 def emit_narrative(

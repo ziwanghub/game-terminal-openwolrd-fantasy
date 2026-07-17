@@ -517,30 +517,35 @@ def enemy_assess_lines(
     else:
         off = "ไม่แน่ชัด"
 
+    # Proportional soft panel sections (WO combat UI)
     lines = [
         " ประเมินศัตรู (soft)",
         "---",
-        f" เป้า   {name}",
-        f" อาการ  {cond}",
-        f" ภัย    〔{threat}〕",
-        f" คม     〔{off}〕",
+        " เป้า / สภาพ",
+        f"  ชื่อ    {name}",
+        f"  อาการ  {cond}",
+        f"  ภัย    〔{threat}〕    คม  〔{off}〕",
     ]
+    notes: List[str] = []
     if mon.get("boss"):
-        lines.append(" · บอส — อย่าประมาท · ดูจังหวะ")
+        notes.append("บอส — อย่าประมาท · ดูจังหวะ")
     if mon.get("rarity"):
-        lines.append(f" · เรืองรองแปลก ๆ ({mon.get('rarity')})")
+        notes.append(f"เรืองรองแปลก ๆ ({mon.get('rarity')})")
     # player anima soft: high anima slightly clearer read
     if player is not None:
         try:
             a = anima_value(player)
             if a >= 60:
-                lines.append(" · จิตวิญญาณมั่น — อ่านเจตนาได้ชัดขึ้นเล็กน้อย")
+                notes.append("จิตวิญญาณมั่น — อ่านเจตนาชัดขึ้นเล็กน้อย")
             elif a < 30:
-                lines.append(" · จิตวิญญาณแผ่ว — อ่านศัตรูพร่า")
+                notes.append("จิตวิญญาณแผ่ว — อ่านศัตรูพร่า")
         except Exception:
             pass
-    lines.append("---")
-    lines.append(" · ไม่โชว์ HP/ATK ดิบ · รู้สึกอย่างเดียว")
+    if notes:
+        lines.append("---")
+        lines.append(" ร่องรอย")
+        for n in notes:
+            lines.append(f"  · {n}")
     return lines
 
 

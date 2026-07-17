@@ -67,16 +67,22 @@ def test_confirm_and_auto_turn_damages():
     assert _confirm_combat_auto_play(p, reg, io) is True
     assert p.get("_combat_auto_play") is True
     assert p.get("_combat_auto_continuous") is True
-    assert "เข้าสู่โหมด Auto Play" in io.joined()
-    assert "Caution" in io.joined() or "caution" in io.joined().lower() or "สรุป" in io.joined()
+    out = io.joined()
+    assert "Auto Play" in out
+    assert "Continuous" in out
+    assert "สรุป" in out
+    assert "Caution" in out or "caution" in out.lower()
+    # proportional box chrome
+    assert "┌" in out or "│" in out or "---" in out or "╔" in out
 
     hp_before = int(mon["hp"])
     rng = random.Random(3)
+    io2 = ScriptedIO([])
     result = _execute_combat_auto_turn(
         p,
         mon,
         reg,
-        ScriptedIO([]),
+        io2,
         rng,
         area_id="dark_forest",
         known=True,
@@ -85,6 +91,11 @@ def test_confirm_and_auto_turn_damages():
     )
     assert result is True
     assert int(mon["hp"]) < hp_before
+    auto_out = io2.joined()
+    # boxed Auto turn — no free-form 〔Auto Play〕 dump
+    assert "Auto" in auto_out
+    assert "โจมตี" in auto_out or "ท่า" in auto_out or "ดาเมจ" in auto_out
+    assert "〔Auto Play〕" not in auto_out
 
 
 def test_player_act_auto_key_and_stop():

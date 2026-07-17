@@ -52,9 +52,10 @@ def test_examine_equipment_uses_showcase():
     reg = DataRegistry.load(DATA_DIR)
     lines = examine_item("iron_sword", reg, rarity="rare")
     text = "\n".join(lines)
-    assert "ไอดี" in text or "iron_sword" in text
+    assert "ไอดี" in text or "iron_sword" in text or "sw001" in text
     assert "Lv.3" in text or "หายาก" in text
-    assert "วิธีใช้" in text
+    # soft: howto section label is "การกระทำ" (was "วิธีใช้")
+    assert "การกระทำ" in text or "วิธีใช้" in text
 
 
 def test_category_list_equipment_shows_id():

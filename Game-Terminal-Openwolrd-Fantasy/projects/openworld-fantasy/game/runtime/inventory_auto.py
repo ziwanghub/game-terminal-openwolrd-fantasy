@@ -30,6 +30,8 @@ DEFAULT_INV_AUTO: Dict[str, Any] = {
     "auto_buy_supplies": True,  # WO-022 soft default ON
     "auto_buy_reserve": 50,
     "auto_buy_max": 2,
+    # WO-Storage-1: stash mat/junk to personal warehouse before sell/drop
+    # Master switch lives on warehouse.prefs.auto_stash (default OFF)
 }
 
 # Cheap early stock Auto may buy (traveling merchant style) — world currency only
@@ -273,12 +275,31 @@ def auto_free_bag_space(
     sell: Optional[bool] = None,
 ) -> List[str]:
     """
-    Free bag slots by selling junk (WO-021 passive income) and/or dropping.
-    Prefer sell when inv_sell_junk; drop only if sell off or as fallback.
+    Free bag slots:
+      1) WO-Storage-1 Auto stash mat/junk → warehouse (if pref ON)
+      2) sell junk (WO-021) and/or drop
     """
     notes: List[str] = []
     if need_free <= 0 or max_drops <= 0:
         return notes
+
+    # WO-Storage-1: stash before sell/drop (default OFF via warehouse.prefs)
+    try:
+        from game.domain.warehouse import auto_stash_from_bag
+
+        notes.extend(
+            auto_stash_from_bag(
+                player,
+                reg,
+                need_free=need_free,
+                max_moves=max_drops,
+            )
+        )
+        if bag_free_slots(player) >= need_free:
+            return notes
+    except Exception:
+        pass
+
     prefs = ensure_inv_auto_prefs(player)
     do_sell = bool(prefs.get("inv_sell_junk", True)) if sell is None else bool(sell)
     do_drop = bool(prefs.get("inv_drop_junk", True))

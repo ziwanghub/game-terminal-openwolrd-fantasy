@@ -191,6 +191,32 @@ def load_player(path: str) -> Dict[str, Any]:
     data.setdefault("party_bonus_max_hp", 0)
     data.setdefault("party_bonus_max_mana", 0)
     data.setdefault("bag_cap", 40)
+    # WO-Storage-1: personal warehouse
+    try:
+        from game.domain.warehouse import ensure_warehouse
+
+        ensure_warehouse(data)
+    except Exception:
+        data.setdefault(
+            "warehouse",
+            {
+                "schema": 1,
+                "cap": 200,
+                "user": "",
+                "user_locked": False,
+                "pass_salt": "",
+                "pass_hash": "",
+                "items": {
+                    "inventory_ids": [],
+                    "inventory_qty": [],
+                    "inventory_rarities": [],
+                    "inventory": [],
+                    "inventory_items": [],
+                },
+                "money": {"world": 0, "heaven": 0, "hell": 0},
+                "prefs": {"auto_stash": False},
+            },
+        )
     data.setdefault("unit_mastery", 0)
     data.setdefault("unit_mastery_xp", 0)
     data.setdefault("inventory_rarities", [])

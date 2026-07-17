@@ -132,6 +132,13 @@ def run_personal_hub(
                 close_tama_panel_session(player)
             except Exception:
                 pass
+            # WO-Storage-1: lock warehouse session when leaving PERSONAL
+            try:
+                from game.services.warehouse_hub import lock_warehouse_on_personal_exit
+
+                lock_warehouse_on_personal_exit(player)
+            except Exception:
+                pass
             break
         # WO-053: Personal Narrative 「เรื่องของฉัน」 (+ optional deep appraisal)
         if ch in (
@@ -238,14 +245,26 @@ def run_personal_hub(
             _party_menu(player, reg, io)
         elif ch == "6":
             _show_auto_history_log(player, io)
-        elif ch == "7" or ch == "j" or ch == "J":
+        # WO-Storage-1: 7 / U = คลังส่วนตัว (K still skill tree on 3)
+        elif ch == "7" or ch in (
+            "u",
+            "U",
+            "vault",
+            "warehouse",
+            "คลัง",
+            "storage",
+        ):
+            from game.services.warehouse_hub import run_warehouse_hub
+
+            run_warehouse_hub(player, reg, io)
+        elif ch == "j" or ch == "J":
             _show_missions(player, reg, io)
             sub = io.read_line("  J=กระดานเต็ม · Enter=กลับ: ").strip()
             if sub in ("j", "J"):
                 from game.services.mission_service import run_mission_board
 
                 run_mission_board(player, reg, io)
-        elif ch == "8" or ch in ("u", "U"):
+        elif ch == "8":
             _settings_save_submenu(player, io)
         elif ch == "9":
             for line in money_summary_lines(player):
@@ -283,6 +302,12 @@ def run_personal_hub(
             for line in quick_use_care_potion(player, reg, kind="mp"):
                 io.write_line(line)
             io.read_line("Enter...")
+        elif ch in ("y", "Y"):
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="py"):
+                io.write_line(line)
+            io.read_line("Enter...")
         elif ch in ("a", "A"):
             from game.services.auto_policy_hub import run_auto_policy_hub
 
@@ -291,8 +316,8 @@ def run_personal_hub(
             _library(player, reg, io)
         else:
             io.write_line(
-                "1–6 ไปที่ · 7 ภารกิจ · 8 ตั้งค่า · 9 เงิน/ห้องสมุด · "
-                "R/E/H/M ดูแล · A=Auto Policy · X=Test Run · 0 กลับ"
+                "1–6 · 7/U คลังส่วนตัว · 8 ตั้งค่า · J ภารกิจ · 9 เงิน · "
+                "R/E/H/M/Y ดูแล · A=Auto Policy · X=Test Run · 0 กลับ"
             )
 
 

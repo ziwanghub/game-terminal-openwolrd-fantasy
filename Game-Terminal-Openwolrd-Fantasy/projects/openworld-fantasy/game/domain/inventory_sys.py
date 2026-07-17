@@ -301,8 +301,15 @@ def item_category(item_id: str, reg: DataRegistry) -> str:
             "restore_intel",
             "boost_intel_max",
             "fill_intel",
+            "recovery_kind",
+            "recovery_rank",
         )
     ):
+        return "healing"
+    tags_rec = it.get("tags") or []
+    if isinstance(tags_rec, str):
+        tags_rec = [tags_rec]
+    if "recovery" in tags_rec or str(iid).startswith("recovery_"):
         return "healing"
     if kind == "consumable":
         return "healing"
@@ -351,13 +358,13 @@ def list_bag_entries(
         it = item_by_id(reg, str(iid)) or {}
         rid = rarity_of_inventory_index(player, i)
         raw_name = str(it.get("name") or (inv[i] if i < len(inv) else iid))
-        shown = display_item_name(raw_name, rid, reg)
         q = qty_at(player, i)
-        if q > 1:
-            shown = f"{shown} x{q}"
         meta_bits = []
         chest_rank = ""
         if cat == "food":
+            shown = display_item_name(raw_name, rid, reg)
+            if q > 1:
+                shown = f"{shown} x{q}"
             tier = it.get("food_tier")
             if tier:
                 meta_bits.append(f"ชั้น{tier}")
@@ -366,17 +373,36 @@ def list_bag_entries(
             if it.get("heal_hp"):
                 meta_bits.append(f"อุ่น+{it['heal_hp']}")
         elif cat == "chest":
-            # L5: soft rank label on sealed chests
+            # Chest display uses chest_rank (not inventory rarity) — avoid double label
             try:
-                from game.domain.chest_loot import chest_rank_from_item, chest_soft_label
+                from game.domain.chest_loot import chest_rank_from_item, rank_def
 
                 chest_rank = chest_rank_from_item(it)
-                meta_bits.append(chest_soft_label(reg, chest_rank))
+                rd = rank_def(reg, chest_rank)
+                sym = str(rd.get("symbol") or "□")
+                rname = str(rd.get("name") or chest_rank)
+                base = str(it.get("name") or "หีบ")
+                # clean: "■ หายาก  ·  หีบ · หายาก  ×2"
+                shown = f"{sym} {rname}"
+                if q > 1:
+                    shown = f"{shown}  ×{q}"
+                meta_bits.append(base)
             except Exception:
+                shown = str(raw_name)
+                if q > 1:
+                    shown = f"{shown} x{q}"
                 if it.get("chest_rank"):
                     chest_rank = str(it.get("chest_rank"))
                     meta_bits.append(f"แรงก์ {chest_rank}")
         else:
+            shown = display_item_name(raw_name, rid, reg)
+            if q > 1:
+                shown = f"{shown} x{q}"
+            if it.get("recovery_kind") and it.get("recovery_rank"):
+                rk = str(it.get("recovery_kind") or "").upper()
+                rr = str(it.get("recovery_rank") or "").upper()
+                dur = 3 if rr == "S" else 5
+                meta_bits.append(f"Recovery {rk} {rr} · {dur}เทิร์น")
             if it.get("heal_hp"):
                 meta_bits.append(f"HP+{it['heal_hp']}")
             if it.get("heal_mana"):
@@ -510,7 +536,7 @@ def format_category_list(
             lines.append(" หีบปิดผนึก · แรงก์สูง ≠ ของดีเสมอ")
             lines.append(" หมายเลข = เปิด · A = เปิดทั้งหมด")
     if category == "healing":
-        lines.append(" ยา/บัฟ/ล้าง · ฟื้น HP/MP เป็นหลัก")
+        lines.append(" ยา/บัฟ/ล้าง · Recovery ขวด F–S (5 เทิร์น · S=3) · one-shot เก่า")
     lines.append("---")
     if not entries:
         lines.append(" (ว่าง)")
@@ -533,6 +559,12 @@ def format_category_list(
                     hint=str(e.get("hint") or ""),
                 )
             )
+    elif category == "chest":
+        lines.append(" รายการหีบ")
+        for i, e in enumerate(entries, 1):
+            # name already "■ หายาก ×2"; hint is base item name if any
+            hint = f"  · {e['hint']}" if e.get("hint") else ""
+            lines.append(f"  {i}. {e['name']}{hint}")
     else:
         for i, e in enumerate(entries, 1):
             hint = f"  · {e['hint']}" if e.get("hint") else ""
@@ -609,18 +641,11 @@ def examine_item(
         or slot in ("weapon", "armor", "accessory", "shield")
     )
 
-    # Premium gear card for equipment (id + ระดับอาวุธ + frame by rarity)
+    # Premium gear card for equipment — proportional sections (price inside card)
     if is_equipment:
         from game.ui_terminal.gear_showcase import format_examine_with_showcase
 
-        lines = format_examine_with_showcase(item_id, reg, rarity=rid, howto=True)
-        if it.get("price_world"):
-            lines.append(f" มูลค่าตลาดโลก: ~{it['price_world']}")
-        if it.get("price_heaven"):
-            lines.append(f" มูลค่าสวรรค์: ~{it['price_heaven']}")
-        if it.get("price_hell"):
-            lines.append(f" มูลค่านรก: ~{it['price_hell']}")
-        return lines
+        return format_examine_with_showcase(item_id, reg, rarity=rid, howto=True)
 
     from game.domain.rarity import display_item_name
 
@@ -784,13 +809,13 @@ def bag_item_rarity_at(player: Mapping[str, Any], index_1based: int) -> str:
 
 def format_equip_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str]:
     """
-    What is worn + soft power — sectioned for box UI.
+    What is worn + soft power — proportional sections for box UI.
     """
     ensure_gear_fields(player)  # type: ignore
     lines: List[str] = [
         " เกียร์ · สวมใส่",
         "---",
-        " ช่อง",
+        " ช่องสวม",
     ]
     total_atk = 0
     total_hp = 0
@@ -798,20 +823,28 @@ def format_equip_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str
     from game.domain.rarity import equip_rarity_for_slot, scaled_item_stats
     from game.domain.rarity import display_item_name as _din
 
-    from game.domain.equipment import EQUIP_SLOT_UI, item_grip, OFF_HAND_ATK_MULT, GRIP_ONE_HAND, GRIP_FOCUS
+    from game.domain.equipment import (
+        EQUIP_SLOT_UI,
+        item_grip,
+        OFF_HAND_ATK_MULT,
+        GRIP_ONE_HAND,
+        GRIP_FOCUS,
+    )
+    from game.domain.item_codes import item_code
 
+    worn_n = 0
     for slot, label in EQUIP_SLOT_UI:
         eid = (player.get("equip_ids") or {}).get(slot)
         up = int((player.get("upgrade_levels") or {}).get(slot, 0))
         if not eid:
-            # two_hand soft lock on off_hand
             if slot == "off_hand":
                 mid = (player.get("equip_ids") or {}).get("main_hand")
                 if mid and item_grip(reg.items.get(mid) or {}) == "two_hand":
-                    lines.append(f"  {label:<10} (ล็อก · สองมือ)")
+                    lines.append(f"  {label:<10}  —  ล็อก · สองมือ")
                     continue
-            lines.append(f"  {label:<10} (ว่าง)")
+            lines.append(f"  {label:<10}  —  ว่าง")
             continue
+        worn_n += 1
         it = reg.items.get(eid) or {}
         name = it.get("name") or eid
         rid = equip_rarity_for_slot(player, slot)
@@ -822,95 +855,125 @@ def format_equip_panel(player: Mapping[str, Any], reg: DataRegistry) -> List[str
         if slot == "off_hand" and grip in (GRIP_ONE_HAND, GRIP_FOCUS) and atk > 0:
             atk = max(0, int(round(atk * OFF_HAND_ATK_MULT)))
         total_atk += atk
-        total_hp += hp  # explicit HP only (not latent)
+        total_hp += hp
         total_mp += mp
-        up_bit = f"  +{up}" if up else ""
+        up_bit = f" +{up}" if up else ""
         grip_bit = ""
         if grip == "two_hand":
             grip_bit = " ·สองมือ"
         elif grip == "shield":
             grip_bit = " ·โล่"
-        lines.append(f"  {label:<10} {_din(str(name), rid, reg)}{up_bit}{grip_bit}")
+        code = ""
+        try:
+            code = item_code(str(eid), reg) or ""
+        except Exception:
+            code = ""
+        code_bit = f"  [{code}]" if code else ""
+        shown = _din(str(name), rid, reg)
+        lines.append(f"  {label:<10}  {shown}{up_bit}{grip_bit}")
+        if code:
+            lines.append(f"             รหัส  {code}")
+
         from game.domain.equipment import soft_piece_defense_hint
 
-        # weapons: ATK; armor: DEF/MDEF; never list latent HP
         is_armor = slot in ("body", "head", "legs", "feet") or grip == "shield"
         is_focus = grip == "focus"
+        stat_bits: List[str] = []
         if is_armor or (is_focus and (pdef or pmdef)):
             def_hint = soft_piece_defense_hint(it, slot=slot, grip=grip, st=st)
             if def_hint:
-                lines.append(f"             {def_hint}")
-            elif atk or mp:
-                bits = []
+                lines.append(f"             {def_hint.strip()}")
+            else:
                 if atk:
-                    bits.append(f"ATK+{atk}")
+                    stat_bits.append(f"ATK+{atk}")
                 if mp:
-                    bits.append(f"MP+{mp}")
-                if bits:
-                    lines.append(f"             {' · '.join(bits)}")
+                    stat_bits.append(f"MP+{mp}")
+                if stat_bits:
+                    lines.append(f"             {' · '.join(stat_bits)}")
         else:
-            bits = [f"ATK+{atk}"]
+            stat_bits = [f"ATK+{atk}"]
             if hp:
-                bits.append(f"HP+{hp}")
+                stat_bits.append(f"HP+{hp}")
             if mp:
-                bits.append(f"MP+{mp}")
-            lines.append(f"             {' · '.join(bits)}")
-        if it.get("tags"):
-            lines.append("             แท็ก: " + ", ".join(str(t) for t in it["tags"]))
+                stat_bits.append(f"MP+{mp}")
+            lines.append(f"             {' · '.join(stat_bits)}")
+
         socks = list((player.get("sockets") or {}).get(slot) or [])
         if socks:
-            parts = []
-            for cid in socks:
+            filled = 0
+            parts: List[str] = []
+            for i, cid in enumerate(socks, 1):
                 if not cid:
-                    parts.append("ว่าง")
+                    parts.append(f"{i}:ว่าง")
                 else:
-                    parts.append(str((reg.cards.get(cid) or {}).get("name") or cid))
-            lines.append("             การ์ด: " + ", ".join(parts))
+                    filled += 1
+                    cname = str((reg.cards.get(cid) or {}).get("name") or cid)
+                    parts.append(f"{i}:{cname}")
+            lines.append(
+                f"             การ์ด  {filled}/{len(socks)}  ·  "
+                + " · ".join(parts)
+            )
 
-    # recompute totals for def from player after loop uses equip_def
     total_def = int(player.get("equip_def") or 0)
     total_mdef = int(player.get("equip_mdef") or 0)
 
+    soft_bits: List[str] = []
     for note in player.get("loadout_soft_notes") or []:
-        lines.append(f" 「{note}」")
+        soft_bits.append(str(note))
     try:
         from game.domain.loadout_context import soft_weight_label
 
-        lines.append(f" น้ำหนักรู้สึก: {soft_weight_label(player)}")
+        soft_bits.append(f"น้ำหนักรู้สึก: {soft_weight_label(player)}")
     except Exception:
         pass
+    if soft_bits:
+        lines.append("---")
+        lines.append(" โทนชุด")
+        for s in soft_bits:
+            lines.append(f"  · {s}")
 
     lines.append("---")
-    lines.append(" สรุป")
+    lines.append(" สรุปจากเกียร์")
     lines.append(
-        f"  จากเกียร์   ATK+{total_atk} · กันกาย+{total_def} · กันเวท+{total_mdef} · MP+{total_mp}"
+        f"  ATK+{total_atk}   กันกาย+{total_def}   กันเวท+{total_mdef}   MP+{total_mp}"
     )
     try:
         from game.domain.equipment import soft_guard_summary
 
-        lines.append(f"  ป้องกันรวม  {soft_guard_summary(player)}")
-        lines.append("  (กันกาย/เวท ลดดาเมจในไฟต์ · เลือดแฝงจากเกราะไม่โชว์ที่ชิ้น)")
+        lines.append(f"  ป้องกัน  {soft_guard_summary(player)}")
     except Exception:
         pass
+    lines.append("---")
+    lines.append(" ตัวละคร (หลังเกียร์+ปาร์ตี้)")
     lines.append(
-        f"  รวมตัวละคร  ATK {player.get('bonus_atk')} · "
-        f"HP {player.get('hp')}/{player.get('max_hp')} · "
+        f"  ATK {player.get('bonus_atk')}   "
+        f"HP {player.get('hp')}/{player.get('max_hp')}   "
         f"MP {player.get('mana')}/{player.get('max_mana')}"
     )
     if player.get("active_sets") or player.get("partial_sets"):
         lines.append("---")
+        lines.append(" เซ็ต")
         if player.get("active_sets"):
-            lines.append(" เซ็ตที่ทำงาน: " + ", ".join(str(x) for x in player["active_sets"]))
+            lines.append(
+                "  ทำงาน  " + ", ".join(str(x) for x in player["active_sets"])
+            )
         if player.get("partial_sets"):
-            lines.append(" เศษเซ็ต: " + ", ".join(str(x) for x in player["partial_sets"]))
+            lines.append(
+                "  เศษ     " + ", ".join(str(x) for x in player["partial_sets"])
+            )
         for fl in player.get("set_flavors") or []:
             lines.append(f"  “{fl}”")
     if player.get("party_bonus_atk") or player.get("party_bonus_max_hp"):
+        lines.append("---")
+        lines.append(" ปาร์ตี้")
         lines.append(
-            f" ปาร์ตี้       ATK+{player.get('party_bonus_atk', 0)} · "
-            f"HP+{player.get('party_bonus_max_hp', 0)} · "
+            f"  ATK+{player.get('party_bonus_atk', 0)}   "
+            f"HP+{player.get('party_bonus_max_hp', 0)}   "
             f"MP+{player.get('party_bonus_max_mana', 0)}"
         )
+    lines.append("---")
+    lines.append(f" สวม {worn_n} ช่อง  ·  ว่างไม่โชว์สเตตัส")
+    lines.append(" พิมพ์รหัสชิ้น (sw001) เพื่อจัดการ  ·  0/Enter กลับ")
     return lines
 
 
@@ -1435,16 +1498,34 @@ def present_loot_choices(
 ) -> List[str]:
     """
     drops: [{id, name, note?}]
-    UI: A = เก็บทั้งหมด · เลขคั่น comma · 0 = ไม่เก็บ
+    Proportional loot panel — box-ready lines.
     """
     lines = [
-        "── ของที่ตก ──",
-        " A = เก็บทั้งหมด   เลขคั่น , = เลือก   0 = ไม่เก็บ",
-        " ตัวอย่าง: 1,3   หรือ  2, 4",
+        " ของที่ตก",
+        "---",
+        f" ชิ้น    {len(drops)}",
+        "---",
+        " วิธีเก็บ",
+        "  A      เก็บทั้งหมด",
+        "  1,3    เลือกเลข (คั่นด้วย , หรือช่องว่าง)",
+        "  0      ไม่เก็บ",
+        "---",
+        " รายการ",
     ]
+    if not drops:
+        lines.append("  (ไม่มีของ)")
+        return lines
     for i, d in enumerate(drops, 1):
-        note = f" — {d['note']}" if d.get("note") else ""
-        lines.append(f"  {i}. {d.get('name')}{note}")
+        name = str(d.get("name") or d.get("id") or "?")
+        note = str(d.get("note") or "").strip()
+        if note:
+            # short note — source only
+            if " · " in note:
+                note = note.split(" · ")[-1].strip()
+            lines.append(f"  {i}. {name}")
+            lines.append(f"      · {note}")
+        else:
+            lines.append(f"  {i}. {name}")
     return lines
 
 

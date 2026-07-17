@@ -613,8 +613,18 @@ def use_items_by_thresholds(
     hp_pct = 100.0 * hp / mhp
     mp_pct = 100.0 * mp / mmp
 
-    # food for hunger / fatigue
-    need_food = force or hunger >= th["hunger"] or fatigue >= th["fatigue"]
+    # WO-Recovery-1: PY bottle when fatigue high (before food)
+    used_py = False
+    if force or fatigue >= th["fatigue"]:
+        n = _consume_recovery_bottle(player, reg, kind="py")
+        if n:
+            notes.extend(n)
+            used_py = True
+
+    # food for hunger / fatigue (skip fatigue-driven food if PY bottle just applied)
+    need_food = force or hunger >= th["hunger"] or (
+        fatigue >= th["fatigue"] and not used_py
+    )
     # P1.3: eat for morale when low/crit and policy not ignore
     pol = str(prefs.get("low_morale_policy") or "caution")
     need_morale_food = (
@@ -631,10 +641,14 @@ def use_items_by_thresholds(
             notes.append("  ออโต้: เลือกเสบียงประทังขวัญ")
         notes.extend(n)
 
-    # HP potion
+    # HP: multi-turn Recovery first, then one-shot potion
     if force or hp_pct <= th["hp_pct"]:
-        n = _consume_potion(player, reg, kind="hp")
-        notes.extend(n)
+        n = _consume_recovery_bottle(player, reg, kind="hp")
+        if n:
+            notes.extend(n)
+        else:
+            n = _consume_potion(player, reg, kind="hp")
+            notes.extend(n)
 
     # MP potion — only if plan needs mana; low morale → thrift MP slightly
     plan_needs_mp = any(int(x) != 1 for x in (prefs.get("skill_plan") or [1]))
@@ -643,8 +657,12 @@ def use_items_by_thresholds(
         # less aggressive skill use path: wait for lower MP before potion
         mp_th = max(5, mp_th - 5)
     if plan_needs_mp and (force or mp_pct <= mp_th):
-        n = _consume_potion(player, reg, kind="mp")
-        notes.extend(n)
+        n = _consume_recovery_bottle(player, reg, kind="mp")
+        if n:
+            notes.extend(n)
+        else:
+            n = _consume_potion(player, reg, kind="mp")
+            notes.extend(n)
 
     food_left = count_food(player, reg)
     if food_left <= 2 and notes:
@@ -702,6 +720,40 @@ def _consume_best_food(
     ]
 
 
+def _consume_recovery_bottle(
+    player: MutableMapping[str, Any], reg: DataRegistry, *, kind: str
+) -> List[str]:
+    """WO-Recovery-1: use multi-turn Recovery bottle if bag has one of kind."""
+    try:
+        from game.domain.recovery import (
+            consume_recovery_from_bag,
+            find_best_recovery_index,
+            get_active,
+        )
+
+        # already recovering this kind — don't stack spam
+        if kind in get_active(player):
+            return []
+        if find_best_recovery_index(player, reg, kind=kind) < 0:
+            return []
+        notes = consume_recovery_from_bag(
+            player, reg, kind=kind, immediate_tick=True, silent=True
+        )
+        # silent apply still heals; surface soft auto note
+        from game.domain.recovery import get_active as _ga
+
+        act = _ga(player).get(kind) or {}
+        name = str(act.get("name") or f"recovery_{kind}")
+        rank = str(act.get("rank") or "?")
+        left = int(act.get("turns_left") or 0)
+        label = {"hp": "HP", "mp": "MP", "py": "ล้า"}.get(kind, kind)
+        return [
+            f"  ใช้เงื่อนไข → Recovery {label}「{name}」{rank} · เหลือ {left} เทิร์น"
+        ] if notes is not None else []
+    except Exception:
+        return []
+
+
 def _consume_potion(
     player: MutableMapping[str, Any], reg: DataRegistry, *, kind: str
 ) -> List[str]:
@@ -709,6 +761,9 @@ def _consume_potion(
     for i, iid in enumerate(ids):
         it = (reg.items or {}).get(str(iid)) or {}
         s = str(iid).lower()
+        # skip multi-turn recovery catalog (WO-Recovery-1)
+        if str(it.get("recovery_kind") or "") or s.startswith("recovery_"):
+            continue
         ok = False
         if kind == "hp" and ("potion_hp" in s or it.get("heal_hp")):
             ok = True

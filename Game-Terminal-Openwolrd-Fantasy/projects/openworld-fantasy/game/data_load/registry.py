@@ -117,6 +117,23 @@ class DataRegistry:
             reg.items = load_list_file(it_path)
         else:
             reg.items = load_dir_maps(root / "items")
+        # WO-Recovery-1: multi-turn recovery bottles (separate catalog)
+        rec_items = root / "items" / "recovery.yaml"
+        if rec_items.exists():
+            try:
+                extra = load_list_file(rec_items)
+                if isinstance(extra, dict):
+                    reg.items.update(extra)
+            except Exception:
+                pass
+        rec_ranks = root / "recovery" / "ranks.yaml"
+        if rec_ranks.exists():
+            try:
+                rd = load_file(rec_ranks)
+                if isinstance(rd, dict):
+                    reg.recovery_ranks = rd  # type: ignore[attr-defined]
+            except Exception:
+                pass
         cards_path = root / "cards" / "cards.yaml"
         if cards_path.exists():
             reg.cards = load_list_file(cards_path)

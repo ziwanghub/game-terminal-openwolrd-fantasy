@@ -193,15 +193,31 @@ def _use_inventory_index(
         return False
 
     it = dict(reg.items.get(item_id) or {})
-    io.write_line(f"ใช้: {it.get('name') or item_name}")
 
-    # L1: open sealed chest
+    # L1: open sealed chest — proportional result card
     try:
         from game.domain.chest_loot import chest_rank_from_item, is_chest_item, open_chest
+        from game.ui_terminal.layout import render_box as _rb_ch
 
         if is_chest_item(it):
             rank = chest_rank_from_item(it)
-            for line in open_chest(player, reg, random.Random(), rank):
+            notes = list(open_chest(player, reg, random.Random(), rank))
+            io.write_line()
+            io.write_line(_rb_ch(notes, double=False))
+            return True
+    except Exception:
+        pass
+    io.write_line(f"ใช้: {it.get('name') or item_name}")
+
+    # WO-Recovery-1: multi-turn recovery bottles
+    try:
+        from game.domain.recovery import try_handle_item_use
+
+        rec_notes = try_handle_item_use(
+            player, it, item_id=item_id, immediate_tick=True
+        )
+        if rec_notes is not None:
+            for line in rec_notes:
                 io.write_line(line)
             return True
     except Exception:
@@ -402,21 +418,40 @@ def _category_loop(
         # L5: open all sealed chests in bag (soft confirm) — WO-INV-1 respects qty stacks
         if category == "chest" and ch.lower() in ("a", "all", "ทั้งหมด", "*"):
             if not entries:
-                io.write_line("ไม่มีหีบในคลัง")
+                io.write_line(
+                    render_box(
+                        [" คลังหีบ", "---", "  ว่าง — ไม่มีหีบให้เปิด"],
+                        double=False,
+                    )
+                )
                 continue
             from game.domain.bag_stack import qty_at
 
             n = sum(int(e.get("qty") or qty_at(player, int(e["index"]))) for e in entries)
-            if not confirm_yn(io, f"เปิดหีบทั้งหมด {n} ใบ?"):
-                io.write_line("ยกเลิกเปิดทั้งหมด")
+            io.write_line()
+            io.write_line(
+                render_box(
+                    [
+                        " เปิดหีบทั้งหมด",
+                        "---",
+                        f"  จำนวน  {n} ใบ",
+                        "---",
+                        "  y  เปิดทั้งหมด",
+                        "  n  ยกเลิก",
+                    ],
+                    double=False,
+                )
+            )
+            if not confirm_yn(io, "  ยืนยัน (y/n)"):
+                io.write_line(
+                    render_box([" ยกเลิก", "---", "  ไม่ได้เปิดหีบ"], double=False)
+                )
                 continue
-            # open one unit at a time from highest index; re-scan each pass
             opened = 0
             safety = max(n, 1) + 5
             while opened < n and safety > 0:
                 safety -= 1
                 ids_now = list(player.get("inventory_ids") or [])
-                # find last chest index
                 chest_i = -1
                 for i in range(len(ids_now) - 1, -1, -1):
                     itc = reg.items.get(str(ids_now[i])) or {}
@@ -435,7 +470,19 @@ def _category_loop(
                 else:
                     break
             recompute_stats(player, reg)
-            io.write_line(f" เปิดครบ {opened}/{n} ใบจากคลัง")
+            io.write_line()
+            io.write_line(
+                render_box(
+                    [
+                        " สรุปเปิดหีบ",
+                        "---",
+                        f"  เปิดแล้ว  {opened}/{n} ใบ",
+                        "  ของเข้ากระเป๋าแล้ว (ดูหมวดอุปกรณ์/รักษา/วัตถุดิบ)",
+                    ],
+                    double=False,
+                )
+            )
+            io.read_line("  Enter...")
             continue
 
         entry = None
@@ -464,23 +511,78 @@ def _category_loop(
             continue
 
         if category in ("equipment", "relic"):
-            for line in examine_item(iid, reg, rarity=entry.get("rarity")):
-                io.write_line(line)
+            from game.ui_terminal.layout import render_box as _rb_ex
+
+            sheet = list(examine_item(iid, reg, rarity=entry.get("rarity")))
             if category == "relic":
-                io.write_line(" (เรลิก · ภาระเทพ/ออร่า soft — ไม่ stack)")
-            io.write_line(" 1.สวม  0.กลับ")
-            sub = io.read_line("เลือก: ").strip()
+                # fold relic note into sheet before actions if present
+                if sheet and "การกระทำ" not in "\n".join(sheet):
+                    sheet.extend(["---", " เรลิก · ภาระเทพ/ออร่า soft — ไม่ stack"])
+                else:
+                    # insert before การกระทำ
+                    for i, ln in enumerate(sheet):
+                        if "การกระทำ" in ln:
+                            sheet.insert(i, "---")
+                            sheet.insert(i + 1, " หมายเหตุเรลิก")
+                            sheet.insert(
+                                i + 2, "  · ภาระเทพ/ออร่า soft — ไม่ stack"
+                            )
+                            break
+            io.write_line()
+            io.write_line(_rb_ex(sheet, double=False))
+            sub = io.read_line("\n  เลือก (1=สวม · 0=กลับ): ").strip()
             if sub == "1":
                 name = (reg.items.get(iid) or {}).get("name") or iid
-                if not confirm_yn(io, f"สวม {name}?"):
-                    io.write_line("ยกเลิกสวม")
+                io.write_line()
+                io.write_line(
+                    _rb_ex(
+                        [
+                            " ยืนยันสวม",
+                            "---",
+                            f"  「{name}」",
+                            "---",
+                            "  y  ตกลงสวม",
+                            "  n  ยกเลิก",
+                        ],
+                        double=False,
+                    )
+                )
+                if not confirm_yn(io, "  ยืนยัน (y/n)"):
+                    io.write_line(
+                        _rb_ex([" ยกเลิก", "---", "  ไม่ได้สวมชิ้นนี้"], double=False)
+                    )
                     continue
                 msg = equip_item(player, iid, reg)
-                io.write_line(msg)
                 apply_party_passives_to_player(player, reg)
                 recompute_stats(player, reg)
+                # split multi-line equip soft notes into clean box
+                msg_lines = [
+                    ln.strip()
+                    for ln in str(msg).replace("\n", " · ").split("·")
+                    if ln.strip()
+                ]
+                # first line is primary equip message
+                primary = msg_lines[0] if msg_lines else str(msg)
+                extras = msg_lines[1:] if len(msg_lines) > 1 else []
+                result = [" สวมแล้ว", "---", f"  {primary}"]
+                if extras:
+                    result.append("---")
+                    result.append(" โทน")
+                    for ex in extras[:4]:
+                        result.append(f"  · {ex}")
+                result.extend(
+                    [
+                        "---",
+                        f"  ATK {player.get('bonus_atk')}   "
+                        f"HP {player.get('hp')}/{player.get('max_hp')}   "
+                        f"MP {player.get('mana')}/{player.get('max_mana')}",
+                    ]
+                )
+                io.write_line()
+                io.write_line(_rb_ex(result, double=False))
                 for line in bump_quest(player, reg, "equip_weapon"):
                     io.write_line(line)
+                io.read_line("  Enter...")
             continue
 
         if category == "material":
@@ -646,16 +748,43 @@ def run_bag_hub(
             if open_gear:
                 open_gear(player, reg, io)
             else:
-                for line in format_equip_panel(player, reg):
-                    io.write_line(line)
-                # also allow picking by code from equip panel view
-                sub = io.read_line("พิมพ์ไอดีที่สวม (เช่น sw001) หรือ Enter กลับ: ").strip()
-                if sub:
+                from game.ui_terminal.layout import render_box as _rb_eq
+
+                while True:
+                    try:
+                        apply_party_passives_to_player(player, reg)
+                    except Exception:
+                        pass
+                    try:
+                        recompute_stats(player, reg)
+                    except Exception:
+                        pass
+                    io.write_line()
+                    io.write_line(
+                        _rb_eq(format_equip_panel(player, reg), double=False)
+                    )
+                    sub = io.read_line(
+                        "\n  รหัสชิ้นที่สวม (sw001) · 0/Enter กลับ: "
+                    ).strip()
+                    if sub in ("", "0", "q", "Q", "b", "B"):
+                        break
                     eq2 = find_equipped_by_code(player, reg, sub)
                     if eq2:
                         _manage_equipped(player, reg, io, eq2)
                     else:
-                        io.write_line("ไม่พบไอดีนั้นบนตัว")
+                        io.write_line(
+                            _rb_eq(
+                                [
+                                    " ไม่พบชิ้น",
+                                    "---",
+                                    f"  「{sub}」ไม่อยู่บนตัว",
+                                    "  ดูรหัสในแผงเกียร์ (บรรทัด รหัส …)",
+                                    "  หรือ 0 / Enter กลับ",
+                                ],
+                                double=False,
+                            )
+                        )
+                        io.read_line("  Enter...")
         elif ch == "9":
             # direct local shop shortcut (no extra y/n friction)
             if open_shop:

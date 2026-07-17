@@ -201,9 +201,20 @@ def apply_needs_event(
         needs[k] = int(needs[k]) + dd
     _clamp_needs(needs)
     player["needs"] = needs
+    # WO-Recovery-1: advance multi-turn recovery bottles on time-passing events
+    rec_notes: List[str] = []
+    try:
+        from game.domain.recovery import RECOVERY_TICK_EVENTS, tick_recovery
+
+        if str(event) in RECOVERY_TICK_EVENTS:
+            rec_notes = tick_recovery(player, silent=silent)
+    except Exception:
+        rec_notes = []
     if silent:
         return []
-    return _soft_change_notes(before, needs, event)
+    notes = _soft_change_notes(before, needs, event)
+    notes.extend(rec_notes)
+    return notes
 
 
 def apply_food_relief(
@@ -397,19 +408,17 @@ def needs_pressure_hint(player: Mapping[str, Any]) -> Optional[str]:
 def format_combat_needs_compact(player: Mapping[str, Any]) -> str:
     """
     WO-005 / P1.5: one short line for combat vitals.
-    Labels: หิว · ล้า · ขวัญ (aligned with auto). Soft marks − / −− only when stressed.
+
+    Soft label only + stress mark — never "หิว−หิว" or "ขวัญ ขวัญดี".
+    Examples:  หิว− · ล้า− · ขวัญดี   |   อิ่ม · เบา · ขวัญดี
     """
     n = get_needs(player)
     bits: List[str] = []
-    # hunger/fatigue: high bad; morale: low bad
-    for key, label in (("hunger", "หิว"), ("fatigue", "ล้า"), ("morale", "ขวัญ")):
+    for key, _label in (("hunger", "หิว"), ("fatigue", "ล้า"), ("morale", "ขวัญ")):
         v = int(n.get(key) or 0)
         mark = _mark_for(key, v)
         lab = soft_label(key, v)
-        if mark:
-            bits.append(f"{label}{mark}{lab}")
-        else:
-            bits.append(f"{label} {lab}")
+        bits.append(f"{lab}{mark}" if mark else lab)
     return " · ".join(bits)
 
 

@@ -843,42 +843,48 @@ def on_floor_boss_defeated(
         notes.append(" ออโต้ชั้นนี้: เคยพิชิตหัวใจแล้ว — วนซ้ำชั้นนี้ได้อัตโนมัติ")
         return notes
 
-    notes.append("✦ ผู้เฝ้าชั้นล้ม — ทางลงเปิดแล้ว")
-    notes.append(" ลงลึกได้ (3) · หรือเดินออก (4) ได้ทุกเมื่อ")
-    notes.append(" ออโต้ (A): ชั้นนี้สู้บอสซ้ำได้อัตโนมัติแล้ว")
+    notes.append(" ผู้เฝ้าชั้นล้ม")
+    notes.append("---")
+    notes.append(" สถานะชั้น")
+    notes.append("  ทางลงเปิดแล้ว")
+    notes.append("  3  ลงลึกได้")
+    notes.append("  4  เดินออกได้ทุกเมื่อ")
+    notes.append("  A  ออโต้ — สู้บอสชั้นนี้ซ้ำได้อัตโนมัติแล้ว")
+    notes.append("---")
+    notes.append(" รางวัลชั้น")
     # small floor reward
     from game.domain.equipment import add_item
     from game.domain.leveling import grant_xp
 
     gold = 8 + depth * 6 + rng.randint(0, 10)
     player["money_world"] = int(player.get("money_world") or 0) + gold
-    notes.append(f"  +{gold} เงินโลก (ของชั้น)")
+    notes.append(f"  เงินโลก     +{gold}")
     # WO-021: light guaranteed special currency on floor clear (not combat RNG only)
     if depth <= 2 and rng.random() < 0.55:
         if rng.random() < 0.5:
             player["money_heaven"] = int(player.get("money_heaven") or 0) + 1
-            notes.append("  +1 เงินสวรรค์ (ของชั้น)")
+            notes.append("  เงินสวรรค์   +1")
         else:
             player["money_hell"] = int(player.get("money_hell") or 0) + 1
-            notes.append("  +1 เงินนรก (ของชั้น)")
+            notes.append("  เงินนรก     +1")
     elif depth >= 3 and rng.random() < 0.7:
         amt = 1 + (1 if depth >= 4 else 0)
         if rng.random() < 0.5:
             player["money_heaven"] = int(player.get("money_heaven") or 0) + amt
-            notes.append(f"  +{amt} เงินสวรรค์ (ของชั้น)")
+            notes.append(f"  เงินสวรรค์   +{amt}")
         else:
             player["money_hell"] = int(player.get("money_hell") or 0) + amt
-            notes.append(f"  +{amt} เงินนรก (ของชั้น)")
+            notes.append(f"  เงินนรก     +{amt}")
     xp = 10 + depth * 8
     summary = grant_xp(player, xp, reg.levels)
-    notes.append(f"  XP +{summary.get('gained', xp)}")
+    notes.append(f"  XP         +{summary.get('gained', xp)}")
     if rng.random() < 0.18 + min(0.25, depth * 0.03):
         if "dungeon_thread" in (reg.items or {}):
             nm = add_item(player, "dungeon_thread", reg, rarity="rare")
-            notes.append(f"  ได้ {nm}")
+            notes.append(f"  ของ        {nm}")
         elif "escape_shard" in (reg.items or {}):
             nm = add_item(player, "escape_shard", reg, rarity="uncommon")
-            notes.append(f"  ได้ {nm}")
+            notes.append(f"  ของ        {nm}")
     return notes
 
 

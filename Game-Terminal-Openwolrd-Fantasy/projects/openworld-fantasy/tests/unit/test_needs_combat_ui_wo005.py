@@ -10,11 +10,21 @@ from game.domain.narrative import situation_strip
 
 
 def test_format_combat_needs_uses_standard_labels():
-    p = {"needs": {"hunger": 20, "fatigue": 20, "morale": 70}}
+    # good bands → soft words only (no "หิว หิว" / "ขวัญ ขวัญดี")
+    p = {"needs": {"hunger": 20, "fatigue": 20, "morale": 80}}
     line = format_combat_needs_compact(p)
-    assert "หิว" in line
-    assert "ล้า" in line
-    assert "ขวัญ" in line
+    assert "อิ่ม" in line
+    assert "เบา" in line
+    assert "ขวัญดี" in line
+    assert "หิว−หิว" not in line
+    # stressed → soft + mark, still no double axis
+    bad = format_combat_needs_compact(
+        {"needs": {"hunger": 70, "fatigue": 70, "morale": 30}}
+    )
+    assert "หิว−" in bad or "หิว" in bad
+    assert "ล้า−" in bad or "ล้า" in bad
+    assert "หิว−หิว" not in bad
+    assert "ล้า−ล้า" not in bad
 
 
 def test_soft_warnings_low_morale_and_fatigue():

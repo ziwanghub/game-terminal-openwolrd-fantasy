@@ -155,15 +155,17 @@ def test_combat_vitals_known_and_unknown():
 
 
 def test_combat_vitals_shows_needs_compact():
-    """WO-005 P1.5: หิว · ล้า · ขวัญ on combat vitals."""
+    """WO-005 P1.5: soft needs line on combat vitals (proportional)."""
     p = _sample_player()
-    p["needs"] = {"hunger": 20, "fatigue": 15, "morale": 70}
+    p["needs"] = {"hunger": 20, "fatigue": 15, "morale": 80}
     mon = {"name": "มอน", "hp": 10, "max_hp": 10, "statuses": [], "boss": False}
     text = render_combat_vitals(p, mon, known=True, round_no=1)
     assert "กายใจ" in text
-    assert "หิว" in text
-    assert "ล้า" in text
+    # soft labels when good — not "หิว−หิว"
+    assert "อิ่ม" in text or "หิว" in text
+    assert "เบา" in text or "ล้า" in text
     assert "ขวัญ" in text
+    assert "หิว−หิว" not in text
 
 
 def test_combat_vitals_soft_warnings_when_stressed():

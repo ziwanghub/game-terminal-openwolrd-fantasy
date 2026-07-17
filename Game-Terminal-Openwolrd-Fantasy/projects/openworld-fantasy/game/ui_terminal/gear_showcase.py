@@ -484,21 +484,151 @@ def format_examine_with_showcase(
     howto: bool = True,
 ) -> List[str]:
     """
-    Showcase card + short how-to (equipment-focused).
-    Non-equipment falls back to plain showcase without sword art still OK.
+    Proportional gear examine card (box-friendly lines).
+    Prefer sectioned layout matching combat/bag UI; high-rank still soft-premium.
     """
-    lines = format_gear_showcase(item_id, reg, rarity=rarity)
-    it = reg.items.get(item_id) or {}
+    from game.domain.equipment import SLOT_LABEL_TH, item_by_id, normalize_slot
+    from game.domain.item_codes import item_code, rarity_observe_tag
+    from game.domain.rarity import (
+        display_item_name,
+        item_default_rarity,
+        rarity_stat_mult,
+        scaled_item_stats,
+    )
+
+    it = item_by_id(reg, item_id) or reg.items.get(item_id) or {}
+    if not it and item_id not in (reg.cards or {}):
+        return [f" ไม่รู้จักไอเทม ({item_id})"]
+    if not it:
+        it = reg.cards.get(item_id) or {}
+
+    name = str(it.get("name") or item_id)
+    rid = str(rarity or item_default_rarity(it, reg) or "common")
+    meta = _tier_meta(reg, rid)
+    rank = meta["rank"]
+    shown = display_item_name(name, rid, reg)
+    epithet = _EPITHETS.get(meta["id"], _EPITHETS["common"])
+    grade_soft = _GRADE_LABEL.get(meta["id"], "เกรดพิเศษ")
+    slot = str(it.get("slot") or "")
+    code = item_code(item_id, reg)
     kind = str(it.get("kind") or "")
-    if not howto:
-        return lines
-    lines = list(lines)
-    lines.append("")
-    if kind == "equipment" or it.get("slot") in ("weapon", "armor", "accessory"):
-        lines.append(" วิธีใช้: 1.สวม  ·  0.กลับ")
-        lines.append("  · อัปเกรดได้เมื่อสวมอยู่ (อัตราสำเร็จไม่คงที่)")
-    elif kind == "material" or "mat" in item_id:
-        lines.append(" วิธีใช้: วัตถุดิบ — ใช้ตอนคราฟ/อัปเกียร์ (ใช้ตรงไม่ได้)")
+
+    lines: List[str] = [
+        f" {shown}",
+        "---",
+        " ข้อมูล",
+        f"  รหัส    {code}",
+        f"  ระบบ    {item_id}",
+        f"  ระดับ   Lv.{rank}  {rarity_observe_tag(reg, rid)}",
+        f"  เกรด    {grade_soft}",
+        f"  อ่าน    {meta['tag']} = {meta['name']}",
+    ]
+
+    if it.get("desc"):
+        lines.append("---")
+        lines.append(" คำอธิบาย")
+        lines.append(f"  {it.get('desc')}")
+
+    # Stats
+    if any(it.get(k) for k in ("atk", "max_hp", "max_mana", "def", "defense", "mdef")):
+        st = scaled_item_stats(it, rid, reg, upgrade_level=0, slot=slot or "weapon")
+        bits: List[str] = []
+        if st.get("atk"):
+            bits.append(f"โจมตี +{st['atk']}")
+        if st.get("def"):
+            bits.append(f"กันกาย +{st['def']}")
+        if st.get("mdef"):
+            bits.append(f"กันเวท +{st['mdef']}")
+        if st.get("max_hp") and int(it.get("max_hp") or 0) > 0 and not it.get("latent_hp_pct"):
+            bits.append(f"HP +{st['max_hp']}")
+        if st.get("max_mana"):
+            bits.append(f"MP +{st['max_mana']}")
+        mult = rarity_stat_mult(reg, rid)
+        if bits:
+            lines.append("---")
+            lines.append(" คุณสมบัติ")
+            lines.append(f"  {' · '.join(bits)}")
+            if rank <= 1:
+                power = "มาตรฐาน"
+            elif rank <= 3:
+                power = f"สูงขึ้น (×{mult:.2f})"
+            elif rank <= 5:
+                power = f"อลังการ (×{mult:.2f})"
+            else:
+                power = f"เหนือชั้น (×{mult:.2f})"
+            lines.append(f"  พลัง    {power}")
+        if it.get("latent_hp_pct") or st.get("latent_tough"):
+            lines.append("  …เกราะอุ้มร่าง/อึด (สังเกตเลือดในไฟต์)")
+        if st.get("atk") and (
+            float(st.get("latent_atk_pct") or 0) > 0 or float(st.get("latent_crit") or 0) > 0
+        ):
+            lines.append("  …คมแฝง (สังเกตแรงโจมตี·คริ)")
+
+    lines.append("---")
+    lines.append(" การสวม")
+    if slot:
+        ns = normalize_slot(str(slot))
+        slot_th = SLOT_LABEL_TH.get(ns) or SLOT_LABEL_TH.get(str(slot)) or str(slot)
+        lines.append(f"  ช่อง     {slot_th}")
+    if it.get("sockets"):
+        n = int(it.get("sockets") or 0)
+        marks = "○" * n if rank < 4 else "◉" * n
+        lines.append(f"  การ์ด    {n} ช่อง  [{marks}]")
     else:
-        lines.append(" วิธีใช้: ดูรายละเอียด · กลับด้วย 0")
+        lines.append("  การ์ด    ไม่มีช่อง")
+    if it.get("set_id"):
+        sdef = (getattr(reg, "gear_sets", None) or {}).get(it["set_id"]) or {}
+        lines.append(f"  เซ็ต     {sdef.get('name') or it['set_id']}")
+    if it.get("tags"):
+        lines.append("  แท็ก     " + ", ".join(str(t) for t in it["tags"]))
+
+    # prices
+    price_bits: List[str] = []
+    if it.get("price_world"):
+        price_bits.append(f"โลก ~{it['price_world']}")
+    if it.get("price_heaven"):
+        price_bits.append(f"สวรรค์ ~{it['price_heaven']}")
+    if it.get("price_hell"):
+        price_bits.append(f"นรก ~{it['price_hell']}")
+    if price_bits:
+        lines.append("---")
+        lines.append(" มูลค่า")
+        lines.append("  " + "   ·   ".join(price_bits))
+
+    # soft epithet (compact — no sword ASCII for cleaner proportion)
+    lines.append("---")
+    lines.append(" โทน")
+    if rank <= 1:
+        lines.append(f"  {epithet}")
+    elif rank <= 3:
+        lines.append(f"  「{epithet}」")
+    elif rank <= 5:
+        lines.append(f"  『{epithet}』")
+    else:
+        lines.append(f"  ❝ {epithet} ❞")
+
+    if howto:
+        lines.append("---")
+        lines.append(" การกระทำ")
+        if kind == "equipment" or it.get("slot") in (
+            "weapon",
+            "armor",
+            "accessory",
+            "main_hand",
+            "off_hand",
+            "body",
+            "head",
+            "legs",
+            "feet",
+            "acc_1",
+        ):
+            lines.append("  1  สวมชิ้นนี้")
+            lines.append("  0  กลับ")
+            lines.append("  · อัปเกรดได้หลังสวม (อัตราไม่คงที่)")
+        elif kind == "material" or "mat" in item_id:
+            lines.append("  วัตถุดิบ — ใช้ตอนคราฟ/อัป (ใช้ตรงไม่ได้)")
+            lines.append("  0  กลับ")
+        else:
+            lines.append("  0  กลับ")
+
     return lines

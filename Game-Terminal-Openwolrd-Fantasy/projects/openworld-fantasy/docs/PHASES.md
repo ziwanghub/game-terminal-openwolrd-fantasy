@@ -2,8 +2,7 @@
 
 **รูปแบบ:** 1–3 บรรทัดต่อเวอร์ชัน · รายละเอียดระบบอยู่ `ARCHITECTURE.md` + doc รายระบบ  
 **คิวงานค้าง:** `IMPROVEMENT_PLAN.md` · **Work Order:** `WO_BACKLOG.md`  
-**เวอร์ชันปัจจุบัน:** `2.17.0-alpha` (`wo-arena-1`) — ดู `game/config.py`  
-**แผน (solo-first):** playtest อารีน่า · `docs/ARENA_WO1.md` · ร้านปิดที่ Shop-6  
+**เวอร์ชันปัจจุบัน:** ดู `game/config.py` (`APP_VERSION` / `PHASE`)  
 **WO backlog:** `WO_BACKLOG.md`  
 **แดชบอร์ด:** `python3 -m game.admin.dashboard` · `data/meta/system_dashboard.yaml`
 
@@ -11,6 +10,10 @@
 
 | เวอร์ชัน | สรุป |
 |----------|------|
+| **2.20.2** | **WO-Storage-1.2:** คลังทีมแชร์ user+pass · ไฟล์ vault ระดับโลก · ยา/เกียร์ฝากได้ · เพื่อนร่วมทีมเข้าคลังเดียวกัน |
+| **2.20.1** | **WO-Storage-1.1:** ฝาก multi/ช่วง/`a` mat·junk · ถอน `n:qty` · เงิน Enter=ทั้งหมด · header compact |
+| **2.20.0** | **WO-Storage-1:** คลังส่วนตัว 200 ช่อง · user+pass (sha256) · ฝาก/ถอน ของ+เงิน 3 สกุล · Auto stash default ปิด · PERSONAL 7/U |
+| **2.17.1** | **WO-Craft-1:** คราฟ UI แบ่งสถานี · หน้า 10 · ย่อวัตถุดิบ · พร้อม/ยังไม่พร้อม |
 | **2.17.0** | **WO-Arena-1:** ทีม 1–4 · 3 รอบ · คะแนนกลยุทธ์ · Mystery · promote-by-score |
 | **2.16.0** | **WO-Shop-6 (final):** polish + Anima/Grade/Relic/Spar · ปิดระบบร้าน |
 | **2.15.0** | **WO-Shop-5:** soft shop events · deliver quests · friend VIP flavor |

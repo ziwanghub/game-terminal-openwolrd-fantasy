@@ -234,7 +234,9 @@ projects/openworld-fantasy/
 
 ### ต่อตัวละคร (`saves/{world}/{player_id}.json`)
 - สถานะเล่น: hp, xp, location, stats, quests  
-- คลัง: `inventory_ids` + `inventory_items` (instance)  
+- กระเป๋า: `inventory_ids` + `inventory_items` (instance) · soft cap `bag_cap` (40)  
+- คลังส่วนตัว (WO-Storage-1): `warehouse` { items, money, pass_hash, prefs.auto_stash } · cap 200  
+
 - เกียร์: `equip_ids` + `equip_instances`  
 - กระดาน: `mission_rank`, `board_mission`, `mission_*`  
 - ตลาด: `market_inbox`  

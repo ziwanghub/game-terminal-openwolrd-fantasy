@@ -136,18 +136,21 @@ def _confirm_combat_auto_play(
 ) -> bool:
     """
     WO-010/013: enter Auto Play — Continuous (default) or Step.
+    Proportional boxed confirm (no free-form dump).
     """
     from game.runtime.dungeon_auto import ensure_auto_prefs, run_auto_needs_care
     from game.services.auto_policy_hub import care_auto_oneliner
+    from game.ui_terminal.layout import render_box
 
-    # refresh aggression / soft care notes (no rest mid-fight)
+    care_bits: List[str] = []
     try:
         care_lines, _stop, _avoid, _rested = run_auto_needs_care(
             player, reg, allow_rest=False
         )
-        for line in care_lines[:4]:
-            if line:
-                io.write_line(line if str(line).startswith(" ") else f"  {line}")
+        for line in care_lines[:3]:
+            s = str(line or "").strip()
+            if s:
+                care_bits.append(s.lstrip("· ").strip())
     except Exception:
         pass
 
@@ -155,30 +158,55 @@ def _confirm_combat_auto_play(
     pol = str(prefs.get("low_morale_policy") or "caution")
     aggr = str(player.get("_auto_aggression") or "normal")
     plan = prefs.get("skill_plan") or [1]
-    io.write_line()
-    io.write_line("  เข้าสู่โหมด Auto Play")
+    hp_pct = prefs.get("hp_pct", 35)
     try:
-        io.write_line(f"  สรุป  {care_auto_oneliner(player, reg)}")
+        summary = care_auto_oneliner(player, reg)
     except Exception:
-        io.write_line(f"  สรุป  นโยบายขวัญ {pol}")
-    io.write_line(
-        f"  นโยบายขวัญ {pol} · ก้าวร้าว {aggr} · "
-        f"แผนสกิล {plan} · ยา HP≤{prefs.get('hp_pct')}%"
+        summary = f"นโยบายขวัญ {pol}"
+
+    lines: List[str] = [
+        " Auto Play",
+        "---",
+        f" สรุป     {summary}",
+        f" นโยบาย   ขวัญ {pol}   ·   ก้าวร้าว {aggr}",
+        f" แผน      สกิล {plan}   ·   ยา HP≤{hp_pct}%",
+    ]
+    if care_bits:
+        lines.append("---")
+        lines.append(" ดูแลก่อน")
+        for c in care_bits:
+            lines.append(f"  · {c}")
+    lines.extend(
+        [
+            "---",
+            " โหมด",
+            "  1  Continuous   รันจนจบ · ไม่ถามทุกจังหวะ",
+            "  2  Step         Enter ทีละจังหวะ · debug",
+            "  0  ยกเลิก",
+        ]
     )
-    io.write_line("  โหมด Auto")
-    io.write_line("   1  Continuous  (รันเองจนชนะ/แพ้/หนี · ไม่ถามทุกจังหวะ)")
-    io.write_line("   2  Step        (Enter ทีละจังหวะ · debug)")
-    conf = io.read_line("  เลือกโหมด (Enter/1=Continuous · 2=Step · 0=ยกเลิก): ").strip().lower()
+    io.write_line()
+    io.write_line(render_box(lines, double=False))
+    conf = io.read_line(
+        "  〔Auto〕 เลือก (Enter/1=Continuous · 2=Step · 0=ยกเลิก): "
+    ).strip().lower()
     if conf in ("0", "n", "no", "ไม่", "q"):
-        io.write_line("  ยกเลิก Auto Play")
+        io.write_line()
+        io.write_line(
+            render_box([" Auto Play", "---", "  ยกเลิก — กลับมือ"], double=False)
+        )
         return False
     continuous = conf not in ("2", "step", "s")
     player["_combat_auto_play"] = True
     player["_combat_auto_continuous"] = continuous
     if continuous:
-        io.write_line("  → Continuous · รันจนรู้ผล (แพ้=Soft Death · มีสรุปไฟต์)")
+        mode_note = "Continuous · รันจนรู้ผล (แพ้=Soft Death · มีสรุปไฟต์)"
     else:
-        io.write_line("  → Step · หลังจังหวะ Enter ต่อ · 0/Space=Manual")
+        mode_note = "Step · หลังจังหวะ Enter ต่อ · 0/Space=Manual"
+    io.write_line()
+    io.write_line(
+        render_box([" Auto Play", "---", f"  → {mode_note}"], double=False)
+    )
     return True
 
 
@@ -243,19 +271,23 @@ def _execute_combat_auto_turn(
     plan = list(prefs.get("skill_plan") or [1])
     turn = max(1, int(combat_round or 1))
 
-    io.write_line()
-    io.write_line(f"  〔Auto Play〕 จังหวะ {turn} · ลงมือ…")
+    from game.ui_terminal.layout import render_box as _rb_auto
+    from game.domain.fight_log import _soft_enemy_short
+
+    en_short = _soft_enemy_short(enemy_name, max_w=32)
+    care_notes: List[str] = []
+    auto_notes: List[str] = []
 
     # Retreat policy mid-fight: try flee when morale stressed
     try:
         mb = band("morale", int(get_needs(player)["morale"]))
         if pol == "retreat" and mb in ("low", "crit"):
-            io.write_line("  ออโต้: นโยบาย retreat — พยายามถอย")
+            auto_notes.append("นโยบาย retreat — พยายามถอย")
             chance = 40 + int(player.get("pressure", 0)) // 2
             chance += int(float((player.get("personality") or {}).get("caution", 0)) / 10)
             chance += int(float(player.get("power_spd") or 0) / 8)
             if rng.randint(1, 100) < min(85, chance + 15):
-                emit_narrative(io, narrate(reg, "flee_success", rng, enemy=enemy_name))
+                emit_narrative(io, narrate(reg, "flee_success", rng, enemy=en_short))
                 mark_monster_seen(player, mon)
                 bump_stat(player, "flees", 1)
                 clear_party_call_buffs(player)
@@ -263,9 +295,27 @@ def _execute_combat_auto_turn(
                     io, personality_event(player, "combat_flee", reg)
                 )
                 _clear_combat_auto_play(player)
+                io.write_line()
+                io.write_line(
+                    _rb_auto(
+                        [
+                            f" Auto · จังหวะ {turn}",
+                            "---",
+                            "  ถอยสำเร็จ",
+                        ],
+                        double=False,
+                    )
+                )
                 return None
-            emit_narrative(io, narrate(reg, "flee_fail", rng, enemy=enemy_name))
-            io.write_line("  ออโต้: ถอยไม่สำเร็จ — ต่อสู้ต่อ")
+            emit_narrative(io, narrate(reg, "flee_fail", rng, enemy=en_short))
+            auto_notes.append("ถอยไม่สำเร็จ — ต่อสู้ต่อ")
+            io.write_line()
+            io.write_line(
+                _rb_auto(
+                    [f" Auto · จังหวะ {turn}", "---", *[f"  · {n}" for n in auto_notes]],
+                    double=False,
+                )
+            )
             return True
     except Exception:
         pass
@@ -274,7 +324,7 @@ def _execute_combat_auto_turn(
     try:
         for n in use_items_by_thresholds(player, reg, force=False):
             if n:
-                io.write_line(n if str(n).startswith(" ") else f"  {n}")
+                care_notes.append(str(n).strip())
     except Exception:
         pass
 
@@ -286,11 +336,11 @@ def _execute_combat_auto_turn(
     ):
         if aggr == "passive" or rng.random() < 0.55:
             skill, label = _auto_basic_skill(player)
-            io.write_line("  ออโต้: ลดความก้าวร้าว — ใช้จังหวะเบา")
+            auto_notes.append("ลดความก้าวร้าว — ใช้จังหวะเบา")
 
     if skill_blocked_by_morale(player, skill):
         if str(skill.get("id") or "") not in ("", "__basic__"):
-            io.write_line("  ออโต้: ขวัญไม่นิ่ง — ใช้ท่าโฟกัสไม่ได้")
+            auto_notes.append("ขวัญไม่นิ่ง — ใช้ท่าโฟกัสไม่ได้")
         skill, label = _auto_basic_skill(player)
 
     cost = int(skill.get("cost_mana") or skill.get("mana") or skill.get("mp") or 0)
@@ -310,10 +360,14 @@ def _execute_combat_auto_turn(
     ):
         if rng.random() < skill_fail_chance(player):
             failed = True
-            io.write_line("  ออโต้: มือสั่น — ท่าไม่เต็ม")
+            auto_notes.append("มือสั่น — ท่าไม่เต็ม")
 
     if failed:
-        # soft poke or full miss — same spirit as auto_fight
+        act_lines = [f" Auto · จังหวะ {turn}", "---"]
+        for n in care_notes[:3]:
+            act_lines.append(f"  ดูแล  {n}")
+        for n in auto_notes:
+            act_lines.append(f"  · {n}")
         if rng.random() < 0.45:
             basic, _ = _auto_basic_skill(player)
             dmg, flavor = player_attack_damage(
@@ -321,47 +375,33 @@ def _execute_combat_auto_turn(
             )
             dmg = max(1, dmg // 2)
             mon["hp"] = int(mon["hp"]) - dmg
-            io.write_line(f"  [ตัวเลข] ดาเมจเบา {dmg}{flavor}")
-            io.write_line(f"  {soft_enemy_vitality(mon, known=known)}")
+            act_lines.append("---")
+            act_lines.append(f"  ท่า     โจมตีเบา")
+            act_lines.append(f"  ดาเมจ   {dmg}{flavor}")
+            act_lines.append(f"  {soft_enemy_vitality(mon, known=known)}")
         else:
-            io.write_line("  ท่าพลาด — ไม่โดน")
+            act_lines.append("---")
+            act_lines.append("  ท่าพลาด — ไม่โดน")
+        io.write_line()
+        io.write_line(_rb_auto(act_lines, double=False))
         ac = dict(player.get("action_counts") or {})
         ac["attack"] = int(ac.get("attack", 0)) + 1
         player["action_counts"] = ac
         personality_event(player, "combat_attack", reg)
         return True
 
-    emit_narrative(
-        io,
-        narrate_player_action(
-            reg,
-            "basic" if sid in ("", "__basic__") else "skill",
-            rng,
-            enemy=enemy_name,
-            skill=label,
-        ),
-    )
+    # Auto: keep prose inside the turn box (no free-form dump)
     dmg, flavor = player_attack_damage(player, mon, reg, area_id, skill, rng)
     crit = "คริ" in flavor
     reflect = float(mon.get("reflect_pct") or 0)
+    reflect_note = ""
     if reflect > 0:
         back = max(1, int(dmg * reflect))
         player["hp"] = int(player["hp"]) - back
-        emit_narrative(io, narrate(reg, "reflect", rng, dmg=back, enemy=enemy_name))
+        reflect_note = f"สะท้อน −{back}"
     mon["hp"] = int(mon["hp"]) - dmg
-    emit_narrative(
-        io,
-        narrate_damage_out(
-            reg,
-            dmg,
-            int(mon.get("max_hp") or 1),
-            enemy_name,
-            rng,
-            elements=skill.get("elements"),
-            crit=crit,
-        ),
-    )
-    io.write_line(f"  〔Auto〕 「{label}」 · ดาเมจ {dmg}{flavor}")
+    tag = ""
+    tline = ""
     try:
         from game.domain.fight_log import damage_tag, log_fight_event
 
@@ -373,25 +413,54 @@ def _execute_combat_auto_turn(
             outbound=True,
             actor="คุณ",
             action=label,
-            target=enemy_name,
+            target=en_short,
             dmg=int(dmg),
             tag=tag,
             note="คริ" if crit else "",
             kind=kind,
         )
-        io.write_line(f"  {tline}")
     except Exception:
         pass
-    io.write_line(f"  {soft_enemy_vitality(mon, known=known)}")
+
+    act_lines = [f" Auto · จังหวะ {turn}", "---"]
+    for n in care_notes[:2]:
+        act_lines.append(f"  ดูแล  {n}")
+    for n in auto_notes:
+        act_lines.append(f"  · {n}")
+    if care_notes or auto_notes:
+        act_lines.append("---")
+    act_lines.append(f"  เป้า    {en_short}")
+    act_lines.append(f"  ท่า     「{label}」")
+    dmg_line = f"  ดาเมจ   {dmg}{flavor}"
+    if tag:
+        dmg_line += f"  {tag}"
+    act_lines.append(dmg_line)
+    if reflect_note:
+        act_lines.append(f"  · {reflect_note}")
+    act_lines.append(f"  {soft_enemy_vitality(mon, known=known)}")
+    if tline:
+        # compact log chip — already short via en_short
+        from game.domain.fight_log import _trunc_log_line
+
+        act_lines.append(f"  {_trunc_log_line(tline, max_w=50)}")
+    io.write_line()
+    io.write_line(_rb_auto(act_lines, double=False))
+
     _apply_splash_damage(
         io, dmg, splash, mult=splash_mult, reg=reg, rng=rng, aoe_skill=False
     )
-    for note in apply_on_hit_cards(player, mon, rng, reg):
-        io.write_line(f"  {note}")
+    card_notes = [str(n).strip() for n in apply_on_hit_cards(player, mon, rng, reg) if n]
     from game.domain.party import party_member_turns
 
-    for note in party_member_turns(player, mon, rng, reg):
-        io.write_line(note)
+    party_notes_raw = list(party_member_turns(player, mon, rng, reg) or [])
+    party_clean: List[str] = []
+    for note in party_notes_raw:
+        s = str(note).strip()
+        if not s or s.startswith("─"):
+            continue
+        if s.startswith("›"):
+            s = s.lstrip("› ").strip()
+        party_clean.append(s)
         try:
             from game.domain.fight_log import log_fight_event
 
@@ -400,19 +469,33 @@ def _execute_combat_auto_turn(
                 combat_round,
                 outbound=True,
                 actor="ปาร์ตี้",
-                action=str(note)[:28],
-                target=enemy_name,
+                action=s[:28],
+                target=en_short,
                 kind="party",
             )
         except Exception:
             pass
+
+    extra_box: List[str] = []
+    if card_notes:
+        extra_box.extend([" การ์ดติด", "---", *[f"  · {n}" for n in card_notes[:3]]])
+    if party_clean:
+        if extra_box:
+            extra_box.append("---")
+        extra_box.extend([" ซุ่มช่วย", "---", *[f"  · {s}" for s in party_clean[:4]]])
+    if extra_box:
+        io.write_line()
+        io.write_line(_rb_auto(extra_box, double=False))
     for note in gain_unit_mastery_xp(player, 1, "basic_attack"):
         io.write_line(note)
-    emit_narrative(io, narrate_low_hp_warnings(reg, player, mon, enemy_name, rng))
+    # low-hp / near-death only when relevant (1 line max, no full enemy name)
+    warn = narrate_low_hp_warnings(reg, player, mon, en_short, rng)
+    if warn:
+        emit_narrative(io, warn, max_lines=1)
     try:
         from game.domain.defeat import near_death_warning_lines
 
-        for w in near_death_warning_lines(player, mon=mon, enemy_name=enemy_name):
+        for w in near_death_warning_lines(player, mon=mon, enemy_name=en_short)[:1]:
             io.write_line(w)
     except Exception:
         pass
@@ -792,55 +875,100 @@ def _player_act(
 
     io.write_line()
     io.write_line(render_mode_actions(MODE_COMBAT, player=player, reg=reg))
+    # Proportional turn-condition panel (scan columns, short footnotes)
     meta: List[str] = [" เงื่อนไขเทิร์น", "---"]
     if splash:
         n_sp = len([s for s in splash if int(s.get("hp") or 0) > 0])
         eff = splash_damage_mult(n_splash=n_sp, aoe_skill=False)
         eff = min(eff, splash_mult)
         splash_mult = eff
-        meta.append(f" หลายเป้า  หลัก + กระแส {n_sp} ตัว (แผ่วเมื่อฝูงใหญ่)")
+        meta.append(f" หลายเป้า  หลัก + กระแส {n_sp} ตัว")
+        meta.append("---")
     try:
-        from game.domain.intelligence import format_intel_status_line, ensure_intelligence
+        from game.domain.intelligence import (
+            ensure_intelligence,
+            intel_current,
+            intel_max,
+            soft_intel_label,
+        )
 
         ensure_intelligence(player, reg)
-        meta.append(f" {format_intel_status_line(player).strip()}")
+        lab = str(soft_intel_label(player) or "")
+        # soft_intel already has จิต… — show once inside 〔〕
+        # Thai 'จิต' = 3 codepoints; use removeprefix not [2:]
+        short_lab = lab.removeprefix("จิต") if lab.startswith("จิต") else lab
+        short_lab = short_lab or lab
+        meta.append(
+            f" สติ      〔{short_lab}〕  {intel_current(player)}/{intel_max(player)}"
+            f"   ·  เร่งจังหวะ (6)"
+        )
     except Exception:
         pass
-    meta.append(f" คอมโบสูงสุด  {max_combo} ขั้น · มานาไม่พอใช้โซ่ไม่ได้")
+    meta.append(
+        f" คอมโบ    สูงสุด {max_combo} ขั้น   ·  มานาไม่พอ = โซ่ไม่ได้"
+    )
     try:
         from game.domain.combo_mind import ensure_focus_latent, soft_combo_mind_hint
 
         ensure_focus_latent(player, reg)
-        meta.append(f" {soft_combo_mind_hint(player, reg)}")
+        hint = soft_combo_mind_hint(player, reg).strip()
+        meta.append(f" โฟกัส    {hint}")
     except Exception:
         pass
-    # WO-005: needs soft line under turn conditions (same words as auto)
+    # WO-005: needs soft line under turn conditions
+    body_bits: List[str] = []
     try:
         from game.domain.needs import combat_needs_soft_warnings, needs_pressure_hint
 
         hint = needs_pressure_hint(player)
         if hint:
-            meta.append(hint if str(hint).startswith(" ") else f" {hint}")
+            body_bits.append(str(hint).strip().lstrip("· ").strip())
         else:
             for w in combat_needs_soft_warnings(player)[:1]:
-                meta.append(w if str(w).startswith(" ") else f" {w}")
+                body_bits.append(str(w).strip().lstrip("· ").strip())
     except Exception:
         pass
-    # WO-010: Auto Play needs nudges (also on command menu)
+    try:
+        from game.domain.recovery import format_active_lines
+
+        for ln in format_active_lines(player)[:2]:
+            s = str(ln).strip()
+            if s:
+                body_bits.append(s)
+    except Exception:
+        pass
     try:
         from game.domain.mode_shell import combat_auto_play_soft_hints
 
-        for h in combat_auto_play_soft_hints(player):
-            meta.append(f" {h}")
+        for h in combat_auto_play_soft_hints(player)[:1]:
+            body_bits.append(str(h).strip())
     except Exception:
         pass
-    meta.append(" (จิต/ฉลาด = โฟกัสคอมโบ · ขวัญ = กำลังใจรอบกาย)")
-    meta.append(" อ่านชั้น soft  I / ?  (ไม่เสียเทิร์น · S–SSS ตามตา)")
+    if body_bits:
+        meta.append("---")
+        for i, b in enumerate(body_bits):
+            label = " กายใจ   " if i == 0 else "         "
+            # recovery / auto may not be กายใจ — first only
+            if i > 0 and ("ฟื้น" in b or "กำลัง" in b):
+                label = " ฟื้น     "
+            elif i > 0 and "Auto" in b:
+                label = " Auto    "
+            meta.append(f"{label}{b}")
+    meta.append("---")
+    meta.append(" ลัด      I ประเมิน (ฟรี)   ·   3 ยา (ฟรี)   ·   A Auto")
+    meta.append(" หมาย     จิต/ฉลาด = โฟกัสโซ่   ·   ขวัญ = กำลังใจ")
     try:
         from game.domain.monster_ai import talk_eligible
 
         if talk_eligible(mon) and not mon.get("_parley_used"):
-            meta.append(" เจรจา soft  7 · บางศัตรู · ครั้งเดียว")
+            meta.append("         7 เจรจา soft · ครั้งเดียว")
+    except Exception:
+        pass
+    try:
+        from game.config import APP_VERSION
+
+        ver = str(APP_VERSION).replace("-alpha", "")
+        meta.append(f"         build {ver}")
     except Exception:
         pass
     io.write_line()
@@ -870,19 +998,25 @@ def _player_act(
                 paid=paid,
                 rng=rng,
             )
-            for ln in lines:
-                io.write_line(ln)
+            io.write_line()
+            io.write_line(render_box(list(lines), double=False))
             if growth:
-                io.write_line(growth)
+                io.write_line()
+                io.write_line(render_box([" การเติบโต", "---", f"  {growth.strip()}"], double=False))
         except Exception:
             try:
                 from game.domain.stat_arch import enemy_assess_lines
 
-                for ln in enemy_assess_lines(mon, player, known=known, reg=reg):
-                    io.write_line(ln)
+                io.write_line()
+                io.write_line(
+                    render_box(
+                        list(enemy_assess_lines(mon, player, known=known, reg=reg)),
+                        double=False,
+                    )
+                )
             except Exception:
                 io.write_line(" …อ่านศัตรูไม่ออกในจังหวะนี้")
-        io.read_line(" Enter...")
+        io.read_line("\n  Enter...")
         return _player_act(
             player,
             mon,
@@ -1013,29 +1147,36 @@ def _player_act(
         if not opts:
             io.write_line("ไม่มีสกิล")
             return False
-        for i, (sid, sk) in enumerate(opts, 1):
-            cost = int(sk.get("cost_mana", 0))
-            flag = "" if sk.get("combo_ok", True) else " [ไม่เข้าคอมโบ]"
-            aoe = " [AoE]" if sk.get("aoe") else ""
-            chg = format_charge_hint(player, sid, reg)
-            slot = str(sk.get("slot") or "combat")
-            slot_tag = {
-                "buff": " [บัฟ]",
-                "debuff": " [ดีบัฟ]",
-                "support": " [ซัพ]",
-                "combat": "",
-            }.get(slot, "")
-            rank_lab = sk.get("_rank_label") or ""
-            rank_bit = f" ·{rank_lab}" if rank_lab and rank_lab != "ธรรมดา" else ""
-            io.write_line(
-                f"  {i}. {sk.get('name', sid)}{chg}{slot_tag}{rank_bit} (MP {cost}){flag}{aoe}"
+        # Always use proportional skill box (no plain-list fallback)
+        from game.ui_terminal.combat_skills import render_skill_menu_box
+        from game.ui_terminal.layout import render_box as _rb_sk
+
+        try:
+            menu = render_skill_menu_box(
+                opts,
+                player,
+                reg,
+                max_combo=max_combo,
+                format_charge_hint=format_charge_hint,
             )
-        io.write_line(
-            f"  คอมโบ: พิมพ์เลขคั่นด้วยเว้นวรรค  เช่น  2 1   หรือ  2 1 3"
-            f"  (สูงสุด {max_combo})"
-        )
-        io.write_line("  (เลขเดียว = ใช้สกิลนั้น · ยังรับ 2,1 ได้)")
-        raw = io.read_line("สกิล (เช่น 2 หรือ 2 1): ").strip()
+        except Exception:
+            # still boxed — never dump raw 1. 2. 3. list
+            simple = [" สกิล / คอมโบ", "---"]
+            for i, (sid, sk) in enumerate(opts, 1):
+                cost = int(sk.get("cost_mana", 0) or 0)
+                flag = "" if sk.get("combo_ok", True) else " ·นอกโซ่"
+                simple.append(
+                    f"  {i}. {sk.get('name', sid)}   MP {cost}{flag}"
+                )
+            simple.append("---")
+            simple.append(f" พิมพ์เลขคั่นช่องว่าง · สูงสุด {max_combo}")
+            menu = _rb_sk(simple, double=False)
+        io.write_line()
+        io.write_line(menu)
+        raw = io.read_line("\n  สกิล / โซ่: ").strip()
+        if raw in ("0", "q", "Q"):
+            io.write_line("  ยกเลิก")
+            return False
         idxs = parse_combo_input(raw, max_n=max_combo)
         if not idxs:
             io.write_line("ยกเลิก (ว่างหรืออ่านไม่ได้)")
@@ -1143,10 +1284,12 @@ def _player_act(
             if has_mag and len(skill_ids) >= 2:
                 from game.domain.stat_arch import anima_presence_lines
 
-                for ln in anima_presence_lines(player, "magic_combo", reg=reg):
-                    io.write_line(ln)
+                # stash for open-box mind notes (not free-floating lines)
+                player["_pending_anima_combo_notes"] = list(
+                    anima_presence_lines(player, "magic_combo", reg=reg) or []
+                )
         except Exception:
-            pass
+            player.pop("_pending_anima_combo_notes", None)
         cost = int(combo.get("total_mana", 0))
         if int(player["mana"]) < cost:
             try:
@@ -1180,14 +1323,18 @@ def _player_act(
         player["mana"] = int(player["mana"]) - cost
         skill_label = str(combo.get("flavor") or "สกิล")
         length = int(combo.get("length") or 1)
+        mind_notes: List[str] = []
+        for an in player.pop("_pending_anima_combo_notes", None) or []:
+            s = str(an).strip().lstrip("· ").strip()
+            if s:
+                mind_notes.append(s)
         # CM: focus drift after long chains · fusion trains mind soft
         try:
             from game.domain.combo_mind import note_mind_growth, on_combo_resolved
 
             fnote = on_combo_resolved(player, length, reg)
             if fnote and length >= 3:
-                io.write_line(f"  …{fnote}")
-            # fusion flavor often contains ! / หลอม — soft train intellect
+                mind_notes.append(str(fnote))
             flav = str(combo.get("flavor") or "")
             if length >= 2 and (
                 "!" in flav
@@ -1199,17 +1346,18 @@ def _player_act(
             ):
                 mnote = note_mind_growth(player, 0.22, reason="fusion")
                 if mnote:
-                    io.write_line(f"  …{mnote}")
+                    mind_notes.append(str(mnote))
             elif length >= 3:
                 mnote = note_mind_growth(player, 0.12, reason="combo")
                 if mnote:
-                    io.write_line(f"  …{mnote}")
+                    mind_notes.append(str(mnote))
         except Exception:
             pass
         # AoE skills expand splash to all other living pack members
         use_splash = list(splash or [])
         use_mult = splash_mult
         is_aoe = any((reg.skills.get(sid) or {}).get("aoe") for sid in skill_ids)
+        aoe_banner = ""
         if pack_foes and is_aoe:
             use_splash = [
                 f
@@ -1220,17 +1368,24 @@ def _player_act(
                 n_splash=len(use_splash), aoe_skill=True
             )
             if use_splash:
-                io.write_line("  ✦ สกิล AoE — กระแสโดนทั้งกลุ่ม (แผ่วตามจำนวน)")
-        # clear combo / timing report for player
+                aoe_banner = "AoE — กระแสโดนกลุ่ม (แผ่วตามจำนวน)"
+                mind_notes.append(aoe_banner)
         chain_names: List[str] = []
         for sid in skill_ids:
             skn = (reg.skills.get(sid) or {}).get("name") or sid
             chain_names.append(str(skn))
-        if length >= 2:
-            io.write_line(
-                f"  ── คอมโบ {length} ขั้น · จังหวะคุณ ──"
+        from game.ui_terminal.combat_skills import render_combo_open_box
+
+        io.write_line()
+        io.write_line(
+            render_combo_open_box(
+                length=length,
+                chain_names=chain_names,
+                flavor=skill_label if length >= 2 else "",
+                mind_notes=mind_notes,
             )
-            io.write_line("  โซ่: " + " → ".join(chain_names))
+        )
+        if length >= 2:
             emit_narrative(
                 io,
                 narrate_player_action(
@@ -1238,7 +1393,6 @@ def _player_act(
                 ),
             )
         else:
-            io.write_line(f"  ── ลงมือ · {chain_names[0] if chain_names else skill_label} ──")
             emit_narrative(
                 io,
                 narrate_player_action(
@@ -1285,10 +1439,28 @@ def _player_act(
         if combo.get("heal"):
             heal = int(combo["heal"])
             player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + heal)
-            io.write_line(f"  [ตัวเลข] ฟื้นฟู {heal} HP · MP -{cost}")
+            try:
+                from game.ui_terminal.combat_skills import render_combo_result_box
+
+                io.write_line()
+                io.write_line(
+                    render_combo_result_box(
+                        heal=heal, mana_cost=cost, length=length
+                    )
+                )
+            except Exception:
+                io.write_line(f"  [ตัวเลข] ฟื้นฟู {heal} HP · MP -{cost}")
         elif int(combo.get("damage") or combo.get("power") or 0) <= 0 and length == 1:
             # pure buff / utility — already applied above
-            io.write_line(f"  (ใช้ท่า · MP -{cost})")
+            try:
+                from game.ui_terminal.combat_skills import render_combo_result_box
+
+                io.write_line()
+                io.write_line(
+                    render_combo_result_box(mana_cost=cost, length=length)
+                )
+            except Exception:
+                io.write_line(f"  (ใช้ท่า · MP -{cost})")
         else:
             dmg = int(combo.get("damage") or combo.get("power") or 0)
             reflect = float(mon.get("reflect_pct") or 0)
@@ -1309,10 +1481,7 @@ def _player_act(
                     crit=crit,
                 ),
             )
-            io.write_line(
-                f"  [ตัวเลข] ดาเมจ {dmg}{combo.get('flavor_tag', '')} | MP -{cost} "
-                f"({length} ขั้น)"
-            )
+            tline = ""
             try:
                 from game.domain.fight_log import damage_tag, log_fight_event
 
@@ -1331,19 +1500,10 @@ def _player_act(
                     note="คริ" if crit else "",
                     kind="skill",
                 )
-                io.write_line(f"  {tline}")
             except Exception:
-                pass
-            io.write_line(f"  {soft_enemy_vitality(mon, known=known)}")
-            _apply_splash_damage(
-                io,
-                dmg,
-                use_splash,
-                mult=use_mult,
-                reg=reg,
-                rng=rng,
-                aoe_skill=is_aoe,
-            )
+                tline = ""
+            status_line = ""
+            resist_line = ""
             n_foes = 1 + len(
                 [s for s in (use_splash or []) if int(s.get("hp") or 0) > 0]
             )
@@ -1358,18 +1518,53 @@ def _player_act(
                 attack_elements=list(combo.get("elements") or []),
             )
             if st:
-                io.write_line(
-                    f"  [สถานะ] {status_display_name(st, reg)} ติดที่ศัตรู"
-                )
+                status_line = f"{status_display_name(st, reg)} ติดที่ศัตรู"
             elif combo.get("status") and float(combo.get("status_chance") or 0) > 0:
                 try:
                     from game.domain.status_fx import format_last_resist_note
 
                     rnote = format_last_resist_note(mon)
                     if rnote:
-                        io.write_line(f"  ศัตรู: {rnote}")
+                        resist_line = str(rnote)
                 except Exception:
                     pass
+            try:
+                from game.ui_terminal.combat_skills import render_combo_result_box
+
+                io.write_line()
+                io.write_line(
+                    render_combo_result_box(
+                        damage=dmg,
+                        mana_cost=cost,
+                        length=length,
+                        flavor_tag=str(combo.get("flavor_tag") or ""),
+                        enemy_soft=str(soft_enemy_vitality(mon, known=known) or ""),
+                        status_line=status_line,
+                        resist_line=resist_line,
+                        fight_log_line=str(tline or ""),
+                    )
+                )
+            except Exception:
+                io.write_line(
+                    f"  [ตัวเลข] ดาเมจ {dmg}{combo.get('flavor_tag', '')} | MP -{cost} "
+                    f"({length} ขั้น)"
+                )
+                if tline:
+                    io.write_line(f"  {tline}")
+                io.write_line(f"  {soft_enemy_vitality(mon, known=known)}")
+                if status_line:
+                    io.write_line(f"  [สถานะ] {status_line}")
+                if resist_line:
+                    io.write_line(f"  ศัตรู: {resist_line}")
+            _apply_splash_damage(
+                io,
+                dmg,
+                use_splash,
+                mult=use_mult,
+                reg=reg,
+                rng=rng,
+                aoe_skill=is_aoe,
+            )
             for note in apply_on_hit_cards(player, mon, rng, reg):
                 io.write_line(f"  {note}")
             from game.domain.party import party_member_turns
@@ -1392,31 +1587,42 @@ def _player_act(
         return True
 
     if ch == "3":
+        # Free action (same principle as appraisal I): use item without spending beat.
+        # Loop stays on player ATB full → re-prompt command menu.
         from game.ui_terminal.layout import render_box
 
         io.write_line()
-        io.write_line(
-            render_box(
-                [
-                    " ยา / ล้าง / บัฟ",
-                    "---",
-                    "  1  ใช้ของจากคลัง",
-                    "  2  ล้างเร็ว",
-                    "  0  กลับไฟต์",
-                ],
-                double=False,
+        try:
+            from game.ui_terminal.combat_skills import render_item_care_hub_box
+
+            io.write_line(render_item_care_hub_box(player))
+        except Exception:
+            io.write_line(
+                render_box(
+                    [
+                        " ยา / ล้าง / บัฟ",
+                        "---",
+                        "  1  ใช้ของจากคลัง",
+                        "  2  ล้างเร็ว",
+                        "  0  กลับไฟต์",
+                        "---",
+                        " ไม่เสียเทิร์น · เหมือนประเมิน I",
+                    ],
+                    double=False,
+                )
             )
-        )
         sub = io.read_line("\n  เลือก (1/2/0): ").strip()
         if sub in ("0", ""):
             return False
         if sub == "2":
             if not _combat_quick_cleanse(player, reg, io):
                 return False
+            io.write_line("  …ล้างแล้ว (ไม่เสียเทิร์น — เลือกคำสั่งต่อได้)")
         else:
             if not _use_potion(player, io, reg):
                 return False
-        return True
+            # result box already notes free action
+        return False
 
     if ch == "4":
         # v2 dungeon floor/heart boss: no normal flee — shard only
@@ -1859,6 +2065,8 @@ def _run_combat(
                 narrate(reg, "victory", rng, enemy=str(mon.get("name") or enemy_name)),
             )
         _emit_personality_notes(io, personality_event(player, "combat_win", reg))
+        from game.ui_terminal.layout import render_box as _rb_win
+
         victory_lines = resolve_victory(player, mon, reg, area_id, rng)
         io.write_line()
         # แผงรวม XP/เงิน/โน้ตครบ — ไม่ตัดทิ้ง 6 บรรทัดแรก
@@ -1881,30 +2089,50 @@ def _run_combat(
             if mon.get("_boss_shard_escape"):
                 pass  # already left via shard
             elif mon.get("dungeon_heart_boss") or mon.get("dungeon_boss"):
-                for line in on_dungeon_boss_defeated(player, reg, rng):
-                    io.write_line(line)
+                heart_notes = list(on_dungeon_boss_defeated(player, reg, rng))
+                if heart_notes:
+                    io.write_line()
+                    io.write_line(_rb_win(heart_notes, double=False))
             elif mon.get("dungeon_floor_boss"):
-                for line in on_floor_boss_defeated(player, reg, rng, mon=mon):
-                    io.write_line(line)
+                floor_notes = list(
+                    on_floor_boss_defeated(player, reg, rng, mon=mon)
+                )
+                if floor_notes:
+                    io.write_line()
+                    io.write_line(_rb_win(floor_notes, double=False))
             else:
                 run = get_run(player) or {}
                 if mon.get("id") == run.get("boss_id"):
-                    for line in on_dungeon_boss_defeated(player, reg, rng):
-                        io.write_line(line)
+                    heart_notes = list(on_dungeon_boss_defeated(player, reg, rng))
+                    if heart_notes:
+                        io.write_line()
+                        io.write_line(_rb_win(heart_notes, double=False))
         _emit_personality_notes(io, check_personality_point_grants(player, reg))
         loot = build_combat_loot_table(player, mon, reg, rng)
         if loot:
             emit_narrative(io, narrate_field(reg, "loot", rng))
-            for line in present_loot_choices(loot):
-                io.write_line(line)
-            pick = io.read_line("เก็บ (A / 1,2 / 0): ").strip()
+            io.write_line()
+            io.write_line(_rb_win(present_loot_choices(loot), double=False))
+            pick = io.read_line("\n  เก็บ (A / 1,2 / 0): ").strip()
             notes = resolve_loot_pick(player, reg, loot, pick)
             if pick.strip().lower() in ("0", "", "n", "ไม่", "ทิ้ง"):
                 emit_narrative(io, narrate_field(reg, "loot_leave", rng))
-            for line in notes:
-                io.write_line(line)
+            if notes:
+                io.write_line()
+                io.write_line(
+                    _rb_win(
+                        [" เก็บของ", "---", *[f"  · {n}" for n in notes]],
+                        double=False,
+                    )
+                )
         else:
-            io.write_line("ไม่พบของหล่น...")
+            io.write_line()
+            io.write_line(
+                _rb_win(
+                    [" ของที่ตก", "---", "  ไม่พบของหล่น..."],
+                    double=False,
+                )
+            )
         clear_party_call_buffs(player)
         for line in bump_quest(player, reg, "kill", area_id=area_id):
             io.write_line(line)
@@ -1914,25 +2142,48 @@ def _run_combat(
             try_complete_board_mission(player, reg, io)
         except Exception:
             pass
-        if mon.get("boss"):
+        if mon.get("boss") or mon.get("dungeon_floor_boss"):
             defeated = list(player.get("bosses_defeated") or [])
-            if mon.get("id") not in defeated:
-                defeated.append(mon["id"])
-            player["bosses_defeated"] = defeated
+            mid = mon.get("id")
+            if mid and mid not in defeated and mon.get("boss"):
+                defeated.append(mid)
+                player["bosses_defeated"] = defeated
+            en_short = str(mon.get("name") or enemy_name)
+            if "·" in en_short:
+                en_short = en_short.split("·")[0].strip()
+            io.write_line()
             io.write_line(
-                spotlight(
-                    "BOSS DEFEATED",
-                    [str(mon.get("name")), "เงาแห่งพื้นที่นี้สั่นคลอน..."],
-                    art_id="level_up",
-                    category="ui",
+                _rb_win(
+                    [
+                        " พิชิตแล้ว",
+                        "---",
+                        f"  {en_short}",
+                        "  เงาแห่งพื้นที่นี้สั่นคลอน…",
+                    ],
+                    double=False,
                 )
             )
-            for line in bump_quest(
-                player, reg, "kill_boss", area_id=str(mon.get("id"))
-            ):
-                io.write_line(line)
+            if mon.get("boss"):
+                for line in bump_quest(
+                    player, reg, "kill_boss", area_id=str(mon.get("id"))
+                ):
+                    io.write_line(line)
         if int(player.get("level", 1)) > prev_lv:
-            io.write_line(level_up_banner(int(player["level"])))
+            io.write_line()
+            io.write_line(
+                _rb_win(
+                    [
+                        " Level Up",
+                        "---",
+                        f"  ระดับ  →  {int(player['level'])}",
+                    ],
+                    double=False,
+                )
+            )
+            try:
+                io.write_line(level_up_banner(int(player["level"])))
+            except Exception:
+                pass
             ensure_quests(player, reg)
 
 

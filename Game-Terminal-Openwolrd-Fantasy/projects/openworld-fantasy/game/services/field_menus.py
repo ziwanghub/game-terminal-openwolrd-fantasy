@@ -927,90 +927,160 @@ def _master_teach_menu(
 
 
 def _run_craft_menu(player: Dict[str, Any], reg: DataRegistry, io: IO) -> None:
+    """
+    WO-Craft-1: station hub → paged recipe list (readable · no formula dump).
+    """
     import random as _rnd
 
     from game.domain.craft import (
+        CRAFT_PAGE_SIZE,
+        can_craft,
         count_recipes_elsewhere,
+        craft_elsewhere_hint,
+        format_recipe_list_lines,
         format_stations_line,
-        recipe_chance_label,
+        group_recipes_by_station,
         station_label,
+        station_ready_counts,
+        stations_at_location,
     )
-    from game.domain.rarity import rarity_label
+    from game.ui_terminal.layout import render_box
 
-    recipes = list_recipes(reg, player, require_station=True)
-    io.write_line("\n── คราฟ ──")
-    io.write_line(f" {format_stations_line(player, reg)}")
-    io.write_line(" (วัตถุดิบขั้นต่ำ · โอกาส soft · สูตรตามสถานีพื้นที่)")
-    elsewhere = count_recipes_elsewhere(reg, player)
-    if elsewhere > 0:
-        from game.domain.craft import craft_elsewhere_hint
+    while True:
+        here_recipes = list_recipes(reg, player, require_station=True)
+        groups = group_recipes_by_station(here_recipes)
+        # prefer station order available at location
+        avail = stations_at_location(player, reg)
+        station_order: list = []
+        for s in avail:
+            if s in groups:
+                station_order.append(s)
+        for s in groups:
+            if s not in station_order:
+                station_order.append(s)
 
+        elsewhere = count_recipes_elsewhere(reg, player)
         hint = craft_elsewhere_hint(reg)
-        io.write_line(f" (อีก ~{elsewhere} สูตรต้องสถานีอื่น{(' · ' + hint) if hint else ''})")
-
-    if not recipes:
-        io.write_line(" ที่นี่ยังไม่มีสูตรที่ใช้ได้ (เลเวล/สถานี)")
-        io.write_line("  0. กลับ")
-        io.read_line("Enter...")
-        return
-
-    # soft sort: unlock level · station · name (K4 list friendliness)
-    recipes = sorted(
-        recipes,
-        key=lambda r: (
-            int(r.get("unlock_level") or 1),
-            str(r.get("station") or ""),
-            str(r.get("name") or r.get("id") or ""),
-        ),
-    )
-
-    last_st = None
-    for i, r in enumerate(recipes, 1):
-        st = str(r.get("station") or "")
-        if st and st != last_st and len(recipes) >= 6:
-            io.write_line(f" ··· {station_label(st, reg)} ···")
-            last_st = st
-        inputs = r.get("inputs") or {}
-        ir = r.get("inputs_rarity") or {}
-        bits = []
-        for k, v in inputs.items():
-            nm = (reg.items.get(k) or reg.cards.get(k) or {}).get("name") or k
-            if k in ir:
-                bits.append(f"{nm}x{v}(≥{rarity_label(reg, str(ir[k]))})")
-            else:
-                bits.append(f"{nm}x{v}")
-        need = ", ".join(bits)
-        out_r = r.get("output_rarity")
-        out_bit = f" [{rarity_label(reg, str(out_r))}]" if out_r else ""
-        out_nm = (
-            (reg.items.get(str(r.get("output"))) or reg.cards.get(str(r.get("output"))) or {}).get(
-                "name"
+        hub: list = [
+            " คราฟ · เลือกสถานี",
+            "---",
+            f" {format_stations_line(player, reg)}",
+            " วัตถุดิบขั้นต่ำ · โอกาส soft · สูตรตามสถานีพื้นที่",
+        ]
+        if elsewhere > 0:
+            hub.append(
+                f" อีก ~{elsewhere} สูตรต้องสถานีอื่น"
+                + (f" · {hint}" if hint else " · เดินทางก่อน")
             )
-            or r.get("output")
+        hub.append("---")
+        menu: list = []  # (key, station_id)
+        n = 0
+        for st in station_order:
+            recipes_st = groups.get(st) or []
+            ready, total = station_ready_counts(player, reg, recipes_st)
+            n += 1
+            lab = station_label(st, reg)
+            hub.append(f"  {n}  {lab}  ·  {ready}/{total} พร้อม")
+            menu.append((str(n), st))
+        if not menu:
+            hub.append("  (ที่นี่ยังไม่มีสูตร — เลเวล/สถานี)")
+        hub.extend(
+            [
+                "---",
+                "  ใบ้: สูตรสถานีอื่นอยู่ที่เมือง / ถ้ำ / ยอดเขา — เดินทางก่อน",
+                "  0  กลับ",
+            ]
         )
-        feel = recipe_chance_label(player, r, reg)
-        st_bit = f" · {station_label(st, reg)}" if st else ""
-        io.write_line(
-            f"  {i}. {r.get('name')}{st_bit} | ใช้: {need} + เงิน {r.get('money', 0)} "
-            f"→ {out_nm}{out_bit} (Lv.{r.get('unlock_level', 1)}) · {feel}"
-        )
-    io.write_line("  0. กลับ")
-    ch = io.read_line("คราฟหมายเลข: ").strip()
-    if ch in ("0", ""):
-        return
-    try:
-        idx = int(ch) - 1
-        rid = str(recipes[max(0, min(len(recipes) - 1, idx))].get("id"))
-    except Exception:
-        io.write_line("ยกเลิก")
-        return
-    msg = craft(player, reg, rid, rng=_rnd.Random())
-    for line in str(msg).splitlines():
-        io.write_line(line)
-    if "สำเร็จ" in msg:
-        bump_stat(player, "crafts", 1)
-        for line in bump_quest(player, reg, "craft"):
-            io.write_line(line)
+        io.write_line()
+        io.write_line(render_box(hub, double=False))
+        ch = io.read_line("\n  สถานี (เลข · 0): ").strip().lower()
+        if ch in ("0", "", "q"):
+            return
+        st_pick = None
+        for key, sid in menu:
+            if ch == key:
+                st_pick = sid
+                break
+        # soft shortcuts
+        shortcuts = {"c": "camp", "f": "forge", "m": "mystic", "ก": "camp"}
+        if ch in shortcuts and shortcuts[ch] in groups:
+            st_pick = shortcuts[ch]
+        if not st_pick:
+            io.write_line("  เลือกหมายเลขสถานี")
+            continue
+
+        # ── station recipe pages ──
+        recipes_st = list(groups.get(st_pick) or [])
+        page = 0
+        page_size = CRAFT_PAGE_SIZE
+        n_pages = max(1, (len(recipes_st) + page_size - 1) // page_size)
+        while True:
+            if not recipes_st:
+                io.write_line("  สถานีนี้ยังไม่มีสูตรที่เลเวลถึง")
+                io.read_line("Enter...")
+                break
+            start = page * page_size
+            chunk = recipes_st[start : start + page_size]
+            ready, total = station_ready_counts(player, reg, recipes_st)
+            lines = [
+                f" คราฟ · {station_label(st_pick, reg)}",
+                "---",
+                f" สูตร {total} · พร้อม {ready} · หน้า {page + 1}/{n_pages}",
+                " ○ ธรรมดา  ◇ สูง  ◆ หายาก  ★ ตำนาน  · 〔ยังไม่พร้อม〕= วัตถุดิบ/เงินไม่พอ",
+                "---",
+            ]
+            lines.extend(
+                format_recipe_list_lines(
+                    player, reg, chunk, start_index=start + 1
+                )
+            )
+            lines.append("---")
+            if n_pages > 1:
+                nav = []
+                if page > 0:
+                    nav.append("P ก่อนหน้า")
+                if page + 1 < n_pages:
+                    nav.append("N ถัดไป")
+                if nav:
+                    lines.append("  " + "  ·  ".join(nav))
+            lines.append(f"  พิมพ์ {start + 1}–{start + len(chunk)} เพื่อคราฟ · 0 กลับสถานี")
+            io.write_line()
+            io.write_line(render_box(lines, double=False))
+            prompt = f"\n  คราฟ ({start + 1}–{start + len(chunk)}"
+            if n_pages > 1:
+                prompt += " · N/P"
+            prompt += " · 0): "
+            ch2 = io.read_line(prompt).strip().lower()
+            if ch2 in ("0", ""):
+                break
+            if ch2 in ("n", "next", ">", "ถัดไป") and page + 1 < n_pages:
+                page += 1
+                continue
+            if ch2 in ("p", "prev", "<", "ก่อน") and page > 0:
+                page -= 1
+                continue
+            try:
+                idx = int(ch2) - 1
+                if idx < 0 or idx >= len(recipes_st):
+                    io.write_line("  หมายเลขนอกช่วง")
+                    continue
+                recipe = recipes_st[idx]
+            except Exception:
+                io.write_line("  พิมพ์เลข / N / P / 0")
+                continue
+            rid = str(recipe.get("id") or "")
+            if not can_craft(player, recipe, reg):
+                io.write_line("  ยังไม่พร้อม — ตรวจวัตถุดิบ/เงิน (หรือ rarity ขั้นต่ำ)")
+                continue
+            msg = craft(player, reg, rid, rng=_rnd.Random())
+            for line in str(msg).splitlines():
+                io.write_line(line)
+            if "สำเร็จ" in msg:
+                bump_stat(player, "crafts", 1)
+                for line in bump_quest(player, reg, "craft"):
+                    io.write_line(line)
+            # stay on station list for multi-craft
+            continue
 
 
 def run_rank_hub(

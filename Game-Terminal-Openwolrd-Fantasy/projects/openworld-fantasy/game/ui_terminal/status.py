@@ -396,6 +396,24 @@ def format_sights_panel_lines(
     return lines
 
 
+def _clip_disp(text: str, max_w: int) -> str:
+    """Truncate by display width, append … if cut."""
+    from game.ui_terminal.layout import display_width
+
+    s = str(text or "")
+    if display_width(s) <= max_w:
+        return s
+    out: List[str] = []
+    w = 0
+    for ch in s:
+        cw = display_width(ch)
+        if w + cw > max_w - 1:
+            break
+        out.append(ch)
+        w += cw
+    return "".join(out) + "…"
+
+
 def render_combat_vitals(
     player: Mapping[str, Any],
     mon: Mapping[str, Any],
@@ -406,9 +424,17 @@ def render_combat_vitals(
     banner: str = "",
 ) -> str:
     """
-    Combat vitals — sectioned box:
-      header · you · foe · ATB · situation
+    Combat vitals — proportional sectioned box (UI_WIDTH=60):
+
+      header
+      คุณ  (ชีพ + HP/MP row + กายใจ)
+      ทีม  (aligned name · kind · bar)
+      ศัตรู (short name + HP)
+      จังหวะ (ATB side-by-side when it fits)
+      ▸ situation
     """
+    from game.ui_terminal.layout import display_width, pad_to_width
+
     php = int(player.get("hp", 0))
     pmax = max(1, int(player.get("max_hp", 1)))
     pmp = int(player.get("mana", 0))
@@ -419,13 +445,21 @@ def render_combat_vitals(
         s.get("name", s.get("id", s)) if isinstance(s, dict) else str(s)
         for s in (mon.get("statuses") or [])
     ]
-    st_txt = f"  [{', '.join(str(x) for x in mon_st)}]" if mon_st else ""
+    st_txt = f"  [{', '.join(str(x) for x in mon_st[:3])}]" if mon_st else ""
     mon_name = str(mon.get("name") or "???")
+    try:
+        from game.domain.fight_log import _soft_enemy_short
+
+        mon_short = _soft_enemy_short(mon_name, max_w=36)
+    except Exception:
+        mon_short = _clip_disp(mon_name, 36)
 
     show_hp = known or bool(mon.get("boss"))
     phase_txt = ""
-    if mon.get("boss"):
-        phase_txt = f" · เฟส {mon.get('phase', 1)}/{mon.get('max_phases', 1)}"
+    if mon.get("boss") or mon.get("dungeon_floor_boss"):
+        ph = mon.get("phase", 1)
+        mxp = mon.get("max_phases", 1)
+        phase_txt = f" · เฟส {ph}/{mxp}"
 
     head = " ไฟต์"
     if round_no is not None:
@@ -435,30 +469,35 @@ def render_combat_vitals(
     if banner:
         head = f" {banner.strip()}"
 
-    lines: List[str] = [head, "---", " คุณ"]
+    # ── คุณ ──────────────────────────────────────────────
+    cond = ""
     try:
         from game.domain.stat_arch import soft_hp_condition
 
-        lines.append(f"  ชีพ  {soft_hp_condition(player)}")
+        cond = str(soft_hp_condition(player) or "").strip()
     except Exception:
-        pass
-    lines.append(
-        f"  HP  [{ratio_bar(php, pmax, width=8)}] {php}/{pmax}"
-    )
-    lines.append(
-        f"  MP  [{ratio_bar(pmp, pmm, width=8)}] {pmp}/{pmm}"
-    )
-    # player status short
+        cond = ""
+    you_head = f" คุณ  ·  {cond}" if cond else " คุณ"
+    lines: List[str] = [head, "---", you_head]
+
+    hp_s = f"HP [{ratio_bar(php, pmax, width=8)}] {php}/{pmax}"
+    mp_s = f"MP [{ratio_bar(pmp, pmm, width=8)}] {pmp}/{pmm}"
+    dual = f"  {hp_s}   {mp_s}"
+    if display_width(dual) <= 56:
+        lines.append(dual)
+    else:
+        lines.append(f"  {hp_s}")
+        lines.append(f"  {mp_s}")
+
     try:
         from game.domain.status_fx import format_status_short
 
         pst = format_status_short(player, None)
         if pst and pst != "-":
-            lines.append(f"  สถานะ  {pst}")
+            lines.append(f"  สถานะ  {_clip_disp(pst, 48)}")
     except Exception:
         pass
 
-    # WO-005 / P1.5: compact needs (หิว · ล้า · ขวัญ) — soft, not formula
     try:
         from game.domain.needs import (
             combat_needs_soft_warnings,
@@ -468,67 +507,80 @@ def render_combat_vitals(
 
         ensure_needs(player)  # type: ignore
         lines.append(f"  กายใจ  {format_combat_needs_compact(player)}")
-        for w in combat_needs_soft_warnings(player):
-            lines.append(f"  {w}")
+        for w in combat_needs_soft_warnings(player)[:2]:
+            s = str(w).strip()
+            if not s.startswith("…") and not s.startswith("."):
+                s = "…" + s.lstrip("· ").strip()
+            lines.append(f"  {_clip_disp(s, 54)}")
     except Exception:
         pass
 
-    # party roster in combat (who fights with you)
+    # ── ทีม ──────────────────────────────────────────────
     party = list(player.get("party") or [])
     if party:
         lines.append("---")
-        lines.append(f" ทีมร่วม  {len(party)}/3")
+        lines.append(f" ทีม  {len(party)}/3")
         try:
-            from game.domain.party import kind_label
             from game.data_load.registry import get_registry
+            from game.domain.party import (
+                get_relationship,
+                kind_label,
+                relationship_bar,
+                soft_relationship_label,
+            )
 
             reg = None
             try:
                 reg = get_registry()
             except Exception:
                 reg = None
-            from game.domain.party import (
-                get_relationship,
-                relationship_bar,
-                soft_relationship_label,
-            )
-
             for i, m in enumerate(party, 1):
-                nm = str(m.get("name") or m.get("id") or "?")
+                nm = _clip_disp(str(m.get("name") or m.get("id") or "?"), 10)
                 kd = str(m.get("kind") or "other")
                 kl = kind_label(reg, kd) if reg else kd
+                kl = _clip_disp(str(kl), 6)
                 mid = str(m.get("id") or "")
                 rel = get_relationship(player, mid, m)
                 soft = soft_relationship_label(rel)
-                lines.append(
-                    f"  {i}. {nm} · {kl} · สัมพันธ์สหาย "
-                    f"[{relationship_bar(rel)}] {soft}"
+                # columns: # name(10) kind(6) [bar] soft
+                row = (
+                    f"  {i}  {pad_to_width(nm, 10)} {pad_to_width(kl, 6)} "
+                    f"[{relationship_bar(rel, width=6)}] {soft}"
                 )
+                lines.append(_clip_disp(row.rstrip(), 56) if display_width(row) > 56 else row.rstrip())
         except Exception:
             for i, m in enumerate(party, 1):
-                lines.append(f"  {i}. {m.get('name') or m.get('id') or '?'}")
+                lines.append(
+                    f"  {i}  {_clip_disp(str(m.get('name') or m.get('id') or '?'), 20)}"
+                )
 
+    # ── ศัตรู ────────────────────────────────────────────
     lines.append("---")
-    lines.append(" ศัตรู")
     if show_hp:
-        lines.append(f"  {mon_name}")
-        lines.append(f"  HP  [{ratio_bar(mhp, mmax, width=8)}] {mhp}/{mmax}{st_txt}")
+        lines.append(f" ศัตรู  {mon_short}")
+        lines.append(
+            f"  HP  [{ratio_bar(mhp, mmax, width=8)}] {mhp}/{mmax}{st_txt}"
+        )
     else:
-        lines.append(f"  {mon_name if known else '???'}")
+        lines.append(f" ศัตรู  {mon_short if known else '???'}")
         lines.append(f"  HP  ???/???{st_txt}")
 
+    # ── จังหวะ ───────────────────────────────────────────
     lines.append("---")
-    lines.append(" จังหวะ (แท่งเต็ม = ลงมือ)")
+    lines.append(" จังหวะ · เต็ม = ลงมือ")
     try:
         from game.domain.combat_atb import format_atb_bar, soft_atb_label
 
-        pb = format_atb_bar(player)
-        mb = format_atb_bar(mon)
+        pb = format_atb_bar(player, width=8)
+        mb = format_atb_bar(mon, width=8)
         pl = soft_atb_label(player)
         ml = soft_atb_label(mon)
-        lines.append(f"  คุณ    [{pb}]  {pl}")
-        lines.append(f"  ศัตรู   [{mb}]  {ml}")
-        # fatigue soft next to ATB when lagging (P1.5)
+        atb_dual = f"  คุณ [{pb}] {pl}   ศัตรู [{mb}] {ml}"
+        if display_width(atb_dual) <= 56:
+            lines.append(atb_dual)
+        else:
+            lines.append(f"  คุณ    [{pb}]  {pl}")
+            lines.append(f"  ศัตรู   [{mb}]  {ml}")
         try:
             from game.domain.needs import band, get_needs
 
@@ -550,8 +602,9 @@ def render_combat_vitals(
             pass
 
     if situation:
+        sit = _clip_disp(str(situation).strip(), 52)
         lines.append("---")
-        lines.append(f" ▸ {situation}")
+        lines.append(f" ▸ {sit}")
 
     return render_box(lines, double=False)
 

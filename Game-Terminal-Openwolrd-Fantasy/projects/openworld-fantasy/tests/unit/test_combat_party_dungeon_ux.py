@@ -26,7 +26,7 @@ def test_combat_vitals_shows_party():
     add_member(p, member_from_template(tpl, reg, random.Random(1)), reg)
     mon = {"name": "Wolf", "hp": 40, "max_hp": 80, "statuses": [], "boss": False}
     text = render_combat_vitals(p, mon, known=True, round_no=2)
-    assert "ทีมร่วม" in text
+    assert "ทีม" in text
     assert "ภูต" in text or "spirit" in text.lower() or "ใบไม้" in text
     sit = situation_strip(p, mon, known=True, reg=reg)
     assert "ทีม:" in sit

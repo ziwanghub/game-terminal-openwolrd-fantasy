@@ -77,12 +77,28 @@ def _is_consumable_entry(
     it = (reg.items.get(item_id) or {}) if item_id else {}
     if it.get("kind") == "consumable":
         return True
-    if any(it.get(k) for k in ("heal_hp", "heal_mana", "clear_status", "clear_all_debuffs", "apply_status")):
+    if any(
+        it.get(k)
+        for k in (
+            "heal_hp",
+            "heal_mana",
+            "clear_status",
+            "clear_all_debuffs",
+            "apply_status",
+            "recovery_kind",
+            "recovery_rank",
+        )
+    ):
+        return True
+    tags = it.get("tags") or []
+    if isinstance(tags, str):
+        tags = [tags]
+    if "recovery" in tags or str(item_id).startswith("recovery_"):
         return True
     # name fallback only when id unknown
     if not item_id or item_id not in reg.items:
         lab = str(label)
-        keys = ("ยา", "HP", "Mana", "มานา", "เครื่องราง", "สัญญา", "ถอน", "ขี้ผึ้ง", "ชา", "น้ำมัน")
+        keys = ("ยา", "HP", "Mana", "มานา", "เครื่องราง", "สัญญา", "ถอน", "ขี้ผึ้ง", "ชา", "น้ำมัน", "ฟื้น", "คลายล้า")
         return any(k in lab for k in keys)
     return False
 
@@ -109,29 +125,93 @@ def _use_potion(
         if _is_consumable_entry(reg, iid, str(name)):
             usable_idx.append(i)
     if not usable_idx:
-        io.write_line("ไม่มีของใช้ได้")
+        try:
+            from game.ui_terminal.combat_skills import render_consumable_menu_box
+
+            io.write_line()
+            io.write_line(render_consumable_menu_box([], player, free_action=True))
+        except Exception:
+            io.write_line("ไม่มีของใช้ได้")
         return False
-    for n, bi in enumerate(usable_idx, 1):
-        iid = str(ids[bi] or "")
-        disp = (reg.items.get(iid) or {}).get("name") or inv[bi]
-        tag = f" [{iid}]" if iid and iid in reg.items else ""
-        io.write_line(f"  {n}. {disp}{tag}")
+
+    # Build proportional list (kind · name · effect)
+    entries: List[Dict[str, Any]] = []
     try:
-        pi = int(io.read_line("ใช้: ").strip()) - 1
-        bi = usable_idx[max(0, min(len(usable_idx) - 1, pi))]
+        from game.ui_terminal.combat_skills import (
+            consumable_effect_hint,
+            consumable_kind_tag,
+            render_consumable_menu_box,
+        )
+
+        for n, bi in enumerate(usable_idx, 1):
+            iid = str(ids[bi] or "")
+            it0 = dict(reg.items.get(iid) or {})
+            it0.setdefault("id", iid)
+            disp = str(it0.get("name") or inv[bi] or iid)
+            # stack qty soft
+            try:
+                from game.domain.bag_stack import qty_at
+
+                q = int(qty_at(player, bi) or 1)
+                if q > 1:
+                    disp = f"{disp} ×{q}"
+            except Exception:
+                pass
+            entries.append(
+                {
+                    "n": str(n),
+                    "name": disp,
+                    "kind": consumable_kind_tag(it0),
+                    "effect": consumable_effect_hint(it0, item_id=iid),
+                }
+            )
+        io.write_line()
+        io.write_line(render_consumable_menu_box(entries, player, free_action=True))
     except Exception:
+        for n, bi in enumerate(usable_idx, 1):
+            iid = str(ids[bi] or "")
+            disp = (reg.items.get(iid) or {}).get("name") or inv[bi]
+            io.write_line(f"  {n}. {disp}")
+
+    raw_pick = io.read_line("\n  ใช้เลข (0=กลับ): ").strip()
+    if raw_pick in ("0", "", "q", "Q"):
+        io.write_line("  ยกเลิก")
         return False
-    item_name = str(inv.pop(bi))
-    item_id = str(ids.pop(bi) or "")
-    if bi < len(rar):
-        rar.pop(bi)
-    while len(ids) > len(inv):
-        ids.pop()
-    while len(rar) > len(inv):
-        rar.pop()
-    player["inventory"] = inv
-    player["inventory_ids"] = ids
-    player["inventory_rarities"] = rar
+    try:
+        pi = int(raw_pick) - 1
+        if pi < 0 or pi >= len(usable_idx):
+            io.write_line("  เลขนอกช่วง")
+            return False
+        bi = usable_idx[pi]
+    except Exception:
+        io.write_line("  ยกเลิก")
+        return False
+
+    # Prefer stack-aware remove when available
+    item_id = str(ids[bi] or "")
+    item_name = str(inv[bi] if bi < len(inv) else item_id)
+    try:
+        from game.domain.bag_stack import remove_units_at
+
+        removed = remove_units_at(player, bi, reg, amount=1)
+        if not removed:
+            # fall through to legacy pop
+            raise RuntimeError("no stack remove")
+        inv = list(player.get("inventory") or [])
+        ids = list(player.get("inventory_ids") or [])
+        rar = list(player.get("inventory_rarities") or [])
+    except Exception:
+        item_name = str(inv.pop(bi))
+        item_id = str(ids.pop(bi) or "")
+        if bi < len(rar):
+            rar.pop(bi)
+        while len(ids) > len(inv):
+            ids.pop()
+        while len(rar) > len(inv):
+            rar.pop()
+        player["inventory"] = inv
+        player["inventory_ids"] = ids
+        player["inventory_rarities"] = rar
 
     it = dict(reg.items.get(item_id) or {})
     # resolve by display name if id missing/unknown
@@ -141,13 +221,53 @@ def _use_potion(
                 item_id = iid
                 it = dict(defn)
                 break
+    it.setdefault("id", item_id)
+    shown_name = str(it.get("name") or item_name or item_id)
+    effect_notes: List[str] = []
+
+    def _note(msg: str) -> None:
+        s = str(msg).strip()
+        if s:
+            effect_notes.append(s)
 
     def _report_cleared(cleared: List[str], prefix: str) -> None:
         if cleared:
             names = ", ".join(status_display_name(reg, c) for c in cleared)
-            io.write_line(f"{prefix}ล้าง: {names}")
+            _note(f"{prefix}ล้าง: {names}")
         else:
-            io.write_line(f"{prefix}(ไม่มีสถานะที่ล้างได้)")
+            _note(f"{prefix}(ไม่มีสถานะที่ล้างได้)")
+
+    def _finish_ok() -> bool:
+        try:
+            from game.ui_terminal.combat_skills import render_item_use_result_box
+
+            io.write_line()
+            io.write_line(
+                render_item_use_result_box(
+                    name=shown_name,
+                    effect_lines=effect_notes or ["ใช้แล้ว"],
+                    free_action=True,
+                )
+            )
+        except Exception:
+            for line in effect_notes:
+                io.write_line(f"  {line}")
+            io.write_line(f"ใช้「{shown_name}」")
+        return True
+
+    # WO-Recovery-1: multi-turn recovery bottles before food/potion one-shots
+    try:
+        from game.domain.recovery import try_handle_item_use
+
+        rec_notes = try_handle_item_use(
+            player, it, item_id=item_id, immediate_tick=True
+        )
+        if rec_notes is not None:
+            for line in rec_notes:
+                _note(line)
+            return _finish_ok()
+    except Exception:
+        pass
 
     # N4: food first — relieve hunger, optional small heal + buff
     try:
@@ -160,15 +280,15 @@ def _use_potion(
             for line in apply_food_relief(
                 player, hunger_relief=hr, fatigue_relief=fr, morale_boost=mb
             ):
-                io.write_line(line)
+                _note(line)
             if it.get("heal_hp"):
                 h = int(it["heal_hp"])
                 player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + h)
-                io.write_line(f"อุ่นกาย ฟื้น HP +{h}")
+                _note(f"อุ่นกาย ฟื้น HP +{h}")
             if it.get("heal_mana"):
                 m = int(it["heal_mana"])
                 player["mana"] = min(int(player["max_mana"]), int(player["mana"]) + m)
-                io.write_line(f"ชุ่มคอ MP +{m}")
+                _note(f"ชุ่มคอ MP +{m}")
             buff = it.get("food_buff") or it.get("apply_status")
             if buff:
                 from game.domain.status_fx import apply_status, status_display_name as sname
@@ -184,9 +304,9 @@ def _use_potion(
                     ignore_resist=True,
                 )
                 if applied:
-                    io.write_line(f"ได้รสอาหาร: {sname(reg, applied)}")
-            io.write_line(f"กิน「{it.get('name') or item_name}」")
-            return True
+                    _note(f"ได้รสอาหาร: {sname(reg, applied)}")
+            _note(f"กิน「{it.get('name') or item_name}」")
+            return _finish_ok()
     except Exception:
         pass
 
@@ -197,7 +317,7 @@ def _use_potion(
     ):
         cleared = cleanse(player, reg, mode="all_debuffs", item_id=item_id or "panacea")
         _report_cleared(cleared, "ยาถอนสถานะ — ")
-        return True
+        return _finish_ok()
     if it.get("clear_status") and not it.get("heal_hp") and not it.get("heal_mana") and not it.get(
         "apply_status"
     ):
@@ -209,7 +329,7 @@ def _use_potion(
             tags=["poison", "ailment"],
         )
         _report_cleared(cleared, "ยาแก้ — ")
-        return True
+        return _finish_ok()
     if it.get("apply_status"):
         from game.domain.status_fx import apply_status, status_display_name as sname
 
@@ -218,22 +338,21 @@ def _use_potion(
             player, sid, reg, random.Random(), chance=1.0, source=item_id or "item", ignore_resist=True
         )
         if applied:
-            io.write_line(f"ได้บัฟ/สถานะ: {sname(reg, applied)}")
+            _note(f"ได้บัฟ/สถานะ: {sname(reg, applied)}")
         else:
-            io.write_line("ใช้แล้ว แต่ผลไม่ติด")
-        # small heal if also heal_hp
+            _note("ใช้แล้ว แต่ผลไม่ติด")
         if it.get("heal_hp"):
             h = int(it["heal_hp"])
             player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + h)
-            io.write_line(f"ฟื้น HP +{h}")
-        return True
+            _note(f"ฟื้น HP +{h}")
+        return _finish_ok()
 
     if "สัญญา" in item_name or "นรก" in item_name or item_id == "hell_contract":
         player["bonus_atk"] = int(player.get("bonus_atk", 0)) + 5
         player["base_atk"] = int(player.get("base_atk", 0)) + 5
         player["blessings"] = list(player.get("blessings") or []) + ["สัญญานรก"]
         player["blessing_turns"] = max(int(player.get("blessing_turns", 0)), 8)
-        io.write_line("สัญญานรก! ATK+5 ชั่วคราว (~8 เทิร์น) — มีราคา...")
+        _note("สัญญานรก! ATK+5 ชั่วคราว (~8 เทิร์น) — มีราคา...")
     elif "เครื่องราง" in item_name or "สวรรค์" in item_name or item_id == "blessed_charm":
         player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + 80)
         player["mana"] = min(int(player["max_mana"]), int(player["mana"]) + 40)
@@ -241,11 +360,13 @@ def _use_potion(
         extra = ""
         if cleared:
             extra = " · ล้าง " + ", ".join(status_display_name(reg, c) for c in cleared)
-        io.write_line(f"เครื่องรางสวรรค์: ฟื้น HP/MP มาก{extra}")
+        _note(f"เครื่องรางสวรรค์: ฟื้น HP/MP มาก{extra}")
     elif it.get("heal_mana") or "Mana" in item_name or "มานา" in item_name:
         heal = int(it.get("heal_mana") or 35)
-        player["mana"] = min(int(player["max_mana"]), int(player["mana"]) + heal)
-        io.write_line(f"ฟื้น MP +{heal}")
+        before = int(player.get("mana") or 0)
+        player["mana"] = min(int(player["max_mana"]), before + heal)
+        gained = int(player["mana"]) - before
+        _note(f"ฟื้น MP +{gained}  →  {player['mana']}/{player['max_mana']}")
     elif "พิษ" in item_name or "แก้" in item_name or item_id == "antidote":
         cleared = clear_statuses(
             player, reg, item_id="antidote", clear_spec="poison", tags=["poison", "ailment"]
@@ -253,11 +374,12 @@ def _use_potion(
         _report_cleared(cleared, "")
     else:
         heal = int(it.get("heal_hp") or 40)
-        player["hp"] = min(int(player["max_hp"]), int(player["hp"]) + heal)
-        # potion may also clear lightly if flagged
+        before = int(player.get("hp") or 0)
+        player["hp"] = min(int(player["max_hp"]), before + heal)
+        gained = int(player["hp"]) - before
         if it.get("clear_status"):
             clear_statuses(player, reg, clear_spec=it.get("clear_status"))
-        io.write_line(f"ฟื้น HP +{heal}")
+        _note(f"ฟื้น HP +{gained}  →  {player['hp']}/{player['max_hp']}")
     # potions: tiny hunger ease only (not a meal)
     try:
         from game.domain.needs import apply_food_relief, is_food_item
@@ -266,10 +388,10 @@ def _use_potion(
             for line in apply_food_relief(
                 player, hunger_relief=4, fatigue_relief=0, morale_boost=1
             ):
-                io.write_line(line)
+                _note(line)
     except Exception:
         pass
-    return True
+    return _finish_ok()
 
 
 def _find_consumable_index(
@@ -284,6 +406,7 @@ def _find_consumable_index(
     Prefers dedicated potions; skips pure food for H/M (use E for food).
     """
     from game.domain.needs import is_food_item
+    from game.domain.recovery import is_recovery_item
 
     ids = list(player.get("inventory_ids") or [])
     inv = list(player.get("inventory") or [])
@@ -302,6 +425,11 @@ def _find_consumable_index(
                     it = dict(defn)
                     break
         if is_food_item(it):
+            continue
+        # multi-turn recovery bottles are handled separately (WO-Recovery-1)
+        it_chk = dict(it)
+        it_chk.setdefault("id", iid)
+        if is_recovery_item(it_chk):
             continue
         s = (iid + " " + label + " " + str(it.get("name") or "")).lower()
         heal_hp = int(it.get("heal_hp") or 0)
@@ -342,23 +470,54 @@ def quick_use_care_potion(
     kind: str,
 ) -> List[str]:
     """
-    PERSONAL care hotkey: auto-use one HP (h) or MP (m) potion from bag.
-    Does not open a pick list. Returns soft lines for the hub.
+    Care hotkeys: H=HP, M=MP, Y=PY (WO-Recovery-1).
+    Prefers multi-turn Recovery bottles, then one-shot potions (HP/MP only).
     """
-    kind = "mp" if kind in ("mp", "mana", "m") else "hp"
+    k = str(kind or "hp").strip().lower()
+    if k in ("py", "fatigue", "fat", "y", "ล้า"):
+        care_kind = "py"
+    elif k in ("mp", "mana", "m"):
+        care_kind = "mp"
+    else:
+        care_kind = "hp"
+
     hp = int(player.get("hp") or 0)
     mhp = max(1, int(player.get("max_hp") or 1))
     mp = int(player.get("mana") or 0)
     mmp = max(0, int(player.get("max_mana") or 0))
 
-    if kind == "hp" and hp >= mhp:
+    if care_kind == "hp" and hp >= mhp:
+        # still allow drinking if no active recovery? soft skip when full
         return ["  HP เต็มแล้ว — ไม่ต้องใช้ยา"]
-    if kind == "mp" and (mmp <= 0 or mp >= mmp):
+    if care_kind == "mp" and (mmp <= 0 or mp >= mmp):
         return ["  MP เต็มแล้ว — ไม่ต้องใช้ยา"] if mmp > 0 else ["  ไม่มีมานาสูงสุด — ไม่ใช้ยา"]
+    if care_kind == "py":
+        try:
+            from game.domain.needs import ensure_needs, get_needs
 
-    idx = _find_consumable_index(player, reg, kind=kind)
+            ensure_needs(player)
+            if int(get_needs(player).get("fatigue") or 0) <= 0:
+                return ["  ล้าเบาแล้ว — ไม่ต้องใช้ขวดคลายล้า"]
+        except Exception:
+            pass
+
+    # WO-Recovery-1: prefer multi-turn bottles
+    try:
+        from game.domain.recovery import consume_recovery_from_bag, find_best_recovery_index
+
+        if find_best_recovery_index(player, reg, kind=care_kind) >= 0:
+            return consume_recovery_from_bag(
+                player, reg, kind=care_kind, immediate_tick=True, silent=False
+            )
+    except Exception:
+        pass
+
+    if care_kind == "py":
+        return ["  ไม่มีขวดคลายล้า (Recovery PY) ในกระเป๋า — ซื้อร้าน / ดรอป"]
+
+    idx = _find_consumable_index(player, reg, kind=care_kind)
     if idx < 0:
-        if kind == "hp":
+        if care_kind == "hp":
             return ["  ไม่มียาเพิ่มเลือดในกระเป๋า — ซื้อร้าน / ดรอป"]
         return ["  ไม่มียาเพิ่มมานาในกระเป๋า — ซื้อร้าน / ดรอป"]
 
@@ -375,7 +534,28 @@ def quick_use_care_potion(
     it = dict((reg.items or {}).get(iid) or {})
     name = str(it.get("name") or label or iid)
 
-    # consume
+    # skip if this index is somehow a recovery bottle without heal_hp
+    if it.get("recovery_kind") and not it.get("heal_hp") and not it.get("heal_mana"):
+        try:
+            from game.domain.recovery import apply_recovery_item
+            from game.domain.bag_stack import remove_units_at
+
+            if not remove_units_at(player, idx, reg, amount=1):
+                # manual pop
+                if idx < len(inv):
+                    inv.pop(idx)
+                if idx < len(ids):
+                    ids.pop(idx)
+                if idx < len(rar):
+                    rar.pop(idx)
+                player["inventory"] = inv
+                player["inventory_ids"] = ids
+                player["inventory_rarities"] = rar
+            return apply_recovery_item(player, it, item_id=iid, immediate_tick=True)
+        except Exception:
+            pass
+
+    # consume one-shot
     if idx < len(inv):
         inv.pop(idx)
     if idx < len(ids):
@@ -387,7 +567,7 @@ def quick_use_care_potion(
     player["inventory_rarities"] = rar
 
     notes: List[str] = []
-    if kind == "hp":
+    if care_kind == "hp":
         heal = int(it.get("heal_hp") or 40)
         if heal <= 0:
             heal = 40
@@ -395,7 +575,6 @@ def quick_use_care_potion(
         player["hp"] = min(mhp, before + heal)
         gained = int(player["hp"]) - before
         notes.append(f"  ใช้「{name}」→ HP +{gained}  ({player['hp']}/{mhp})")
-        # tiny soft hunger ease like full potion path
         try:
             from game.domain.needs import apply_food_relief
 

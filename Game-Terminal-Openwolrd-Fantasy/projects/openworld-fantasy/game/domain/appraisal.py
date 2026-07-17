@@ -602,29 +602,28 @@ def appraise_monster_lines(
     """
     ensure_appraisal(player)
     tier = force_tier or resolve_appraisal_tier(player)
-    # base block
+    tier_lab = "พื้นฐาน" if tier == TIER_BASE else str(tier)
+    # base block — retitle + keep section structure
     try:
         from game.domain.stat_arch import enemy_assess_lines
 
-        lines = list(
-            enemy_assess_lines(mon, player, known=known, reg=reg)
-        )
-        # retitle
-        if lines and "ประเมินศัตรู" in lines[0]:
-            lines[0] = f" อ่านชั้น · ศัตรู 〔{tier if tier != TIER_BASE else 'พื้นฐาน'}〕"
+        lines = list(enemy_assess_lines(mon, player, known=known, reg=reg))
+        if lines:
+            lines[0] = f" อ่านชั้น · ศัตรู 〔{tier_lab}〕"
     except Exception:
         lines = [
-            f" อ่านชั้น · ศัตรู 〔{tier}〕",
+            f" อ่านชั้น · ศัตรู 〔{tier_lab}〕",
             "---",
-            f" เป้า   {mon.get('name') or '???'}",
+            " เป้า / สภาพ",
+            f"  ชื่อ    {mon.get('name') or '???'}",
         ]
 
     if _rank_index(tier) >= _rank_index(TIER_S):
         letter = _enemy_grade_soft_band(mon, player)
         etier = _enemy_tier_soft(mon)
         lines.append("---")
-        lines.append(" ชั้นพลังศัตรู (soft)")
-        lines.append(f" · ระดับประมาณ 〔{letter}〕 · {etier}")
+        lines.append(" ชั้นพลัง (soft)")
+        lines.append(f"  · ระดับประมาณ 〔{letter}〕 · {etier}")
         # mark appraised for pipeline soft hint
         mid = str(mon.get("id") or mon.get("name") or "?")
         ap = dict(player.get("_appraised_targets") or {})
@@ -635,28 +634,46 @@ def appraise_monster_lines(
 
     if _rank_index(tier) >= _rank_index(TIER_SS):
         lines.append("---")
-        lines.append(" จุดอ่อน soft")
-        lines.extend(soft_weakness_lines(mon, reg, max_n=3))
+        lines.append(" จุดอ่อน (soft)")
+        for wl in soft_weakness_lines(mon, reg, max_n=3):
+            s = str(wl).strip()
+            if s.startswith("·"):
+                s = s[1:].strip()
+            lines.append(f"  · {s}")
 
     if _rank_index(tier) >= _rank_index(TIER_SSS):
         lines.append("---")
-        lines.append(" สายที่น่าลอง (soft recipe · ไม่ใช่สูตรเต็ม)")
-        lines.extend(soft_recipe_lines(mon, reg, max_n=2, rng=rng))
+        lines.append(" สายที่น่าลอง (soft · ไม่ใช่สูตรเต็ม)")
+        for rl in soft_recipe_lines(mon, reg, max_n=2, rng=rng):
+            s = str(rl).strip()
+            if s.startswith("·"):
+                s = s[1:].strip()
+            # shorten label "สาย 〔…〕"
+            if s.startswith("สาย "):
+                s = s[len("สาย ") :].strip()
+            lines.append(f"  · {s}")
 
-    # anima / relic presence on clarity
+    # anima / relic presence on clarity (avoid dup with assess notes)
+    clarity: List[str] = []
     try:
         from game.domain.stat_arch import anima_value
 
         a = float(anima_value(player))
         if a >= 65 and _rank_index(tier) >= _rank_index(TIER_S):
-            lines.append(" · จิตวิญญาณมั่น — อ่านชัดขึ้น")
+            clarity.append("จิตวิญญาณมั่น — อ่านชัดขึ้น")
         elif a < 28:
-            lines.append(" · จิตแผ่ว — ขอบบางของภาพพร่า")
+            clarity.append("จิตแผ่ว — ขอบภาพพร่า")
     except Exception:
         pass
+    if clarity:
+        lines.append("---")
+        lines.append(" ความชัด")
+        for c in clarity:
+            lines.append(f"  · {c}")
 
     lines.append("---")
-    lines.append(" · ไม่โชว์ HP/ATK ดิบ · ไม่ dump สูตร")
+    lines.append(" soft เท่านั้น · ไม่โชว์ HP/ATK · ไม่ dump สูตร")
+    lines.append(" I ฟรีเทิร์น · ชั้น S–SSS ตามตาคุณ")
     return lines
 
 
@@ -706,13 +723,22 @@ def run_appraisal(
         lines = appraise_self_lines(player, reg)
 
     if gate_note:
-        lines = [gate_note, "---"] + lines
+        # soft gate banner — keep inside proportional panel
+        g = str(gate_note).strip()
+        if g.startswith("…"):
+            g = g[1:].strip()
+        lines = [
+            " หมายเหตุสมาธิ",
+            "---",
+            f"  {g}",
+            "---",
+        ] + list(lines)
 
     growth = None
     if spent:
         growth = note_appraisal_use(player, depth=tier)
 
-    # soft alert
+    # soft alert — fold as footer note (avoid double dump of --- lines)
     try:
         from game.domain.alerts import emit_alert_lines
 
@@ -724,7 +750,32 @@ def run_appraisal(
             target="ศัตรู" if target == "monster" else "ตัวเอง",
         )
         if alert_lines:
-            lines = list(alert_lines) + ["---"] + lines
+            extra = [
+                str(x).strip()
+                for x in alert_lines
+                if str(x).strip() and str(x).strip() != "---"
+            ]
+            if extra:
+                # keep short: first meaningful body only
+                body = extra[-1] if len(extra) > 1 else extra[0]
+                for cand in extra:
+                    if "สมาธิ" in cand or "อ่าน" in cand or "soft" in cand.lower():
+                        body = cand
+                        break
+                body = body.lstrip("·• ").strip()
+                if body and body not in "\n".join(lines):
+                    lines = list(lines)
+                    # insert before final footer soft-only lines
+                    insert_at = len(lines)
+                    for i, ln in enumerate(lines):
+                        if "soft เท่านั้น" in ln or "ไม่โชว์ HP" in ln:
+                            insert_at = i
+                            break
+                    block = [" แจ้งเตือน soft", f"  · {body}"]
+                    if insert_at == 0 or str(lines[insert_at - 1]).strip() != "---":
+                        block = ["---"] + block
+                    for j, row in enumerate(block):
+                        lines.insert(insert_at + j, row)
     except Exception:
         pass
 

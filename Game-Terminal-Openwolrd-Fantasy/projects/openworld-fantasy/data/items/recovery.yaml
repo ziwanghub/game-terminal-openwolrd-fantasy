@@ -1,0 +1,219 @@
+# WO-Recovery-1 — multi-turn recovery bottles (HP / MP / PY)
+# Schema: recovery_kind, recovery_rank · duration from ranks table (S=3, else 5)
+# Old potions (heal_hp / heal_mana one-shot) remain valid.
+
+# ── HP ──────────────────────────────────────────────
+- id: recovery_hp_f
+  rarity: common
+  name: ขวดฟื้นเลือด F
+  desc: ยาแรงก์ F — ฟื้นเลือดทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: F
+  price_world: 22
+
+- id: recovery_hp_e
+  rarity: common
+  name: ขวดฟื้นเลือด E
+  desc: ยาแรงก์ E — ฟื้นเลือดทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: E
+  price_world: 30
+
+- id: recovery_hp_d
+  rarity: common
+  name: ขวดฟื้นเลือด D
+  desc: ยาแรงก์ D — ฟื้นเลือดทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: D
+  price_world: 42
+
+- id: recovery_hp_c
+  rarity: uncommon
+  name: ขวดฟื้นเลือด C
+  desc: ยาแรงก์ C — ฟื้นเลือดชัด 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: C
+  price_world: 68
+
+- id: recovery_hp_b
+  rarity: uncommon
+  name: ขวดฟื้นเลือด B
+  desc: ยาแรงก์ B — ฟื้นเลือดแรง 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: B
+  price_world: 110
+
+- id: recovery_hp_a
+  rarity: rare
+  name: ขวดฟื้นเลือด A
+  desc: ยาแรงก์ A — ฟื้นเลือดหนัก 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: A
+  price_world: 160
+
+- id: recovery_hp_s
+  rarity: sacred
+  name: ขวดฟื้นเลือด S
+  desc: ยาแรงก์ S — ฟื้นเลือดเต็มทุกจังหวะ · 3 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_hp]
+  recovery_kind: hp
+  recovery_rank: S
+  price_world: 280
+  price_heaven: 1
+
+# ── MP ──────────────────────────────────────────────
+- id: recovery_mp_f
+  rarity: common
+  name: ขวดฟื้นมานา F
+  desc: ยาแรงก์ F — ฟื้นมานาทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: F
+  price_world: 20
+
+- id: recovery_mp_e
+  rarity: common
+  name: ขวดฟื้นมานา E
+  desc: ยาแรงก์ E — ฟื้นมานาทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: E
+  price_world: 28
+
+- id: recovery_mp_d
+  rarity: common
+  name: ขวดฟื้นมานา D
+  desc: ยาแรงก์ D — ฟื้นมานาทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: D
+  price_world: 40
+
+- id: recovery_mp_c
+  rarity: uncommon
+  name: ขวดฟื้นมานา C
+  desc: ยาแรงก์ C — ฟื้นมานาชัด 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: C
+  price_world: 64
+
+- id: recovery_mp_b
+  rarity: uncommon
+  name: ขวดฟื้นมานา B
+  desc: ยาแรงก์ B — ฟื้นมานาแรง 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: B
+  price_world: 100
+
+- id: recovery_mp_a
+  rarity: rare
+  name: ขวดฟื้นมานา A
+  desc: ยาแรงก์ A — ฟื้นมานาหนัก 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: A
+  price_world: 150
+
+- id: recovery_mp_s
+  rarity: sacred
+  name: ขวดฟื้นมานา S
+  desc: ยาแรงก์ S — ฟื้นมานาเต็มทุกจังหวะ · 3 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_mp]
+  recovery_kind: mp
+  recovery_rank: S
+  price_world: 260
+  price_heaven: 1
+
+# ── PY (fatigue / ล้า) ──────────────────────────────
+- id: recovery_py_f
+  rarity: common
+  name: ขวดคลายล้า F
+  desc: ยาแรงก์ F — คลายล้าทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: F
+  price_world: 18
+
+- id: recovery_py_e
+  rarity: common
+  name: ขวดคลายล้า E
+  desc: ยาแรงก์ E — คลายล้าทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: E
+  price_world: 26
+
+- id: recovery_py_d
+  rarity: common
+  name: ขวดคลายล้า D
+  desc: ยาแรงก์ D — คลายล้าทีละน้อย 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: D
+  price_world: 38
+
+- id: recovery_py_c
+  rarity: uncommon
+  name: ขวดคลายล้า C
+  desc: ยาแรงก์ C — คลายล้าชัด 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: C
+  price_world: 60
+
+- id: recovery_py_b
+  rarity: uncommon
+  name: ขวดคลายล้า B
+  desc: ยาแรงก์ B — คลายล้าแรง 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: B
+  price_world: 95
+
+- id: recovery_py_a
+  rarity: rare
+  name: ขวดคลายล้า A
+  desc: ยาแรงก์ A — คลายล้าหนัก 5 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: A
+  price_world: 140
+
+- id: recovery_py_s
+  rarity: sacred
+  name: ขวดคลายล้า S
+  desc: ยาแรงก์ S — ล้างล้าเต็มทุกจังหวะ · 3 เทิร์น
+  kind: consumable
+  tags: [recovery, recovery_py]
+  recovery_kind: py
+  recovery_rank: S
+  price_world: 240
+  price_heaven: 1

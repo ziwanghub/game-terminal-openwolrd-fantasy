@@ -893,7 +893,8 @@ def party_member_turns(
     party = list(player.get("party") or [])
     if not party or int(mon.get("hp", 0)) <= 0:
         return notes
-    notes.append("  ── ซุ่มช่วย (ตามสัมพันธ์สหาย) ──")
+    notes.append("")
+    notes.append("  ─ ซุ่มช่วย · ตามสัมพันธ์สหาย ─")
     acted_any = False
     team_cleansed = False  # at most one cleanse attempt success per player turn
     for m in party:

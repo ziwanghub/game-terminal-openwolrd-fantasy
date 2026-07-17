@@ -77,8 +77,8 @@ def test_open_all_from_bag_hub():
     p["inventory_ids"] = ["sealed_chest_common", "sealed_chest_common"]
     p["inventory"] = ["หีบ1", "หีบ2"]
     p["inventory_rarities"] = ["common", "common"]
-    # 4 = chest category, A = open all, y = confirm, 0 hub back, 0 exit
-    io = ScriptedIO(["4", "A", "y", "0", "0"])
+    # 4 = chest category, A = open all, y = confirm, Enter = summary, 0 hub, 0 exit
+    io = ScriptedIO(["4", "A", "y", "", "0", "0"])
     run_bag_hub(p, reg, io)
     assert "sealed_chest_common" not in (p.get("inventory_ids") or [])
     out = io.joined()

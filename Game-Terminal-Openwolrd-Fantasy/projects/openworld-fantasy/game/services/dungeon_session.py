@@ -204,21 +204,42 @@ def _confirm_floor_boss(player: Dict[str, Any], reg: DataRegistry, io: IO) -> bo
     shards = count_escape_shards(player, reg)
     run = get_run(player) or {}
     depth = int(run.get("depth") or run.get("floor") or 1)
+    is_heart = bool(run.get("at_max_depth") or run.get("heart") or False)
+    try:
+        from game.domain.dungeon import max_depth_hidden, current_depth
+
+        is_heart = current_depth(run) >= max_depth_hidden(run)
+    except Exception:
+        pass
+
+    title = " ท้าทายเงาที่ปลายโพรง" if is_heart else " ท้าทายผู้เฝ้าชั้น"
     lines = [
-        " ท้าทายผู้เฝ้าชั้น",
+        title,
         "---",
-        f" ความลึก   ลงมาชั้นที่ {depth}",
-        " · หนีปกติใช้ไม่ได้",
-        " · ชนะ = ทางลงเปิด · แพ้ = ถูกเหวี่ยงออก (เสียของบางส่วน)",
+        " สถานการณ์",
+        f"  ความลึก    ชั้นที่ {depth}"
+        + ("  ·  ปลายโพรง" if is_heart else ""),
+        "---",
+        " กติกา",
+        "  · หนีปกติใช้ไม่ได้",
+        "  · ชนะ  →  ทางลงเปิด",
+        "  · แพ้  →  ถูกเหวี่ยงออก (เสียของบางส่วน)",
+        "---",
+        " ทางหนีสำรอง",
     ]
     if shards:
         names = " · ".join(n for _, _, n in shards[:3])
-        lines.append(f" · เศษหนีในมือ: {len(shards)} ชิ้น ({names})")
+        lines.append(f"  เศษหนี    {len(shards)} ชิ้น")
+        if names:
+            lines.append(f"            ({names})")
+        lines.append("            ใช้ได้จากเมนูหนีในไฟต์")
     else:
-        lines.append(" · เศษหนีในมือ: ไม่มี — ต้องมั่นใจว่าชนะได้")
+        lines.append("  เศษหนี    ไม่มีในมือ")
+        lines.append("            ต้องสู้ให้จบ — เตรียมยา/เกียร์ก่อน")
     lines.extend(
         [
             "---",
+            " เลือก",
             "  1  มั่นใจ — ท้าทาย",
             "  0  ยังไม่พร้อม",
         ]
@@ -277,9 +298,45 @@ def _dungeon_field_turn(
                     io.write_line("เงาผู้เฝ้าจางหาย... (ลองสำรวจก่อน)")
                 else:
                     set_boss_encounter(player, True)
-                    soft_name = "ผู้เฝ้าชั้น" if not boss.get("dungeon_heart_boss") else "เงาที่ปลายโพรง"
-                    io.write_line(f"\n☠ {soft_name} ปรากฏ — วงบอสขังคุณ!")
-                    io.write_line(" หนีปกติใช้ไม่ได้ · เศษหนีเท่านั้น (เมนูหนี)")
+                    soft_name = (
+                        "เงาที่ปลายโพรง"
+                        if boss.get("dungeon_heart_boss")
+                        else "ผู้เฝ้าชั้น"
+                    )
+                    boss_nm = str(boss.get("name") or soft_name)
+                    spawn_lines = [
+                        " วงบอส",
+                        "---",
+                        f"  ☠  {soft_name} ปรากฏ",
+                        f"  เป้า   {boss_nm}",
+                        "---",
+                        " กติกาไฟต์",
+                        "  · หนีปกติใช้ไม่ได้",
+                        "  · เศษหนีเท่านั้น (เมนู 4 หนี)",
+                        "  · แพ้ = เหวี่ยงออกดัน (เสียของบางส่วน)",
+                    ]
+                    # soft weakness tip if appraisal already done (S+)
+                    try:
+                        from game.domain.combat_identity import weakness_lite_hint_lines
+
+                        tips = weakness_lite_hint_lines(
+                            player, boss, reg, pre_fight=True, rng=rng
+                        )
+                        if tips:
+                            spawn_lines.append("---")
+                            spawn_lines.append(" ใบ้ soft")
+                            for t in tips:
+                                s = str(t).strip().lstrip("· ").strip()
+                                if s.startswith("ใบ้ soft:"):
+                                    s = s[len("ใบ้ soft:") :].strip()
+                                spawn_lines.append(f"  · {s}")
+                    except Exception:
+                        pass
+                    from game.ui_terminal.layout import render_box as _rb_boss
+
+                    io.write_line()
+                    io.write_line(_rb_boss(spawn_lines, double=False))
+                    io.read_line("\n  Enter เข้าไฟต์...")
                     _run_combat(player, reg, io, rng, mon=boss, ambush=False)
                     # ensure flag cleared if combat ended oddly
                     if in_dungeon(player):

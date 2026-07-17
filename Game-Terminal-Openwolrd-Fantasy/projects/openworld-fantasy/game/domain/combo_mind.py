@@ -248,9 +248,15 @@ def combo_mana_mind_multiplier(
 
 
 def soft_combo_mind_hint(player: Mapping[str, Any], reg: Optional[DataRegistry] = None) -> str:
-    """One line for combat meta — no numbers of latent."""
+    """One line for combat meta — no numbers of latent.
+
+    Avoid จิต〔จิตนิ่ง〕 — strip axis prefix already inside soft labels.
+    (Thai 'จิต' is 3 code points — never slice with [2:].)
+    """
     fl = soft_focus_label(player, reg)
     il = soft_intellect_label(player, reg)
+    if fl.startswith("จิต"):
+        fl = fl.removeprefix("จิต") or fl
     return f"จิต〔{fl}〕 · ฉลาด〔{il}〕"
 
 

@@ -483,7 +483,7 @@ def run_field(
             )
         )
         ch = io.read_line(
-            "\n  เลือก (R/E/H/M/O ดูแล · U อารีน่า · เลขเมนู / เลขเป้า / 0 ออก): "
+            "\n  เลือก (R/E/H/M/Y/O ดูแล · U อารีน่า · เลขเมนู / เลขเป้า / 0 ออก): "
         ).strip()
 
         # verb + target commands (f_mn02, upgrade_sw001, …)
@@ -662,7 +662,7 @@ def run_field(
             for line in personal_eat_first_food(player, reg):
                 io.write_line(line)
         elif ch in ("h", "H"):
-            # Care band — HP potion (help moved to ?)
+            # Care band — HP Recovery / potion (help moved to ?)
             from game.services.consumables import quick_use_care_potion
 
             for line in quick_use_care_potion(player, reg, kind="hp"):
@@ -672,17 +672,22 @@ def run_field(
 
             for line in quick_use_care_potion(player, reg, kind="mp"):
                 io.write_line(line)
+        elif ch in ("y", "Y"):
+            # WO-Recovery-1: PY (fatigue) recovery bottle
+            from game.services.consumables import quick_use_care_potion
+
+            for line in quick_use_care_potion(player, reg, kind="py"):
+                io.write_line(line)
         elif ch in ("o", "O"):
             # Field Auto Policy (A stays rank / personal uses A)
             from game.services.auto_policy_hub import run_auto_policy_hub
 
             run_auto_policy_hub(player, reg, io)
-        elif ch in ("s", "S", "p", "P", "n", "N", "c", "C", "k", "K", "y", "Y", "u", "U", "l", "L"):
+        elif ch in ("s", "S", "p", "P", "n", "N", "c", "C", "k", "K", "u", "U", "l", "L"):
             # Hotkey aliases → PERSONAL (Mode Shell Phase A compatibility)
-            from game.services.personal_hub import run_personal_hub
+            # Y reassigned to Recovery PY (WO-Recovery-1); party via Personal hub
             from game.services.field_menus import (
                 _class_change_menu,
-                _party_menu,
                 _personality_allocate_menu,
                 _skill_tree_menu,
                 _stat_allocate_menu,
@@ -706,8 +711,6 @@ def run_field(
                 _class_change_menu(player, reg, io)
             elif ch in ("k", "K"):
                 _skill_tree_menu(player, reg, io)
-            elif ch in ("y", "Y"):
-                _party_menu(player, reg, io)
             elif ch in ("u", "U"):
                 _ui_prefs_menu(player, io)
             elif ch in ("l", "L"):

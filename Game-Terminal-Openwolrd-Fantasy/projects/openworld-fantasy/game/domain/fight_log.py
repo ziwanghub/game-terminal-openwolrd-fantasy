@@ -193,6 +193,71 @@ def recent_fight_lines(player: Mapping[str, Any], *, limit: int = 8) -> List[str
     return [str(e.get("line") or "") for e in buf[-limit:] if e.get("line")]
 
 
+def _soft_enemy_short(name: str, *, max_w: int = 28) -> str:
+    """
+    Shorten long floor-boss display names for vitals / Auto / report.
+
+    Prefer Thai title; strip rarity glyphs and (ระดับ).
+    e.g. "ผู้เฝ้าชั้น · ◇Ruins Specter (สูง)" → "ผู้เฝ้าชั้น · Specter"
+    """
+    from game.ui_terminal.layout import display_width
+
+    s = str(name or "???").strip()
+    # drop rarity / tier parens first
+    if "(" in s and s.rstrip().endswith(")"):
+        s = s.rsplit("(", 1)[0].strip()
+    # strip diamond / star rarity glyphs
+    for g in ("◇", "◆", "★", "☆", "✦", "✧", "●", "○"):
+        s = s.replace(g, "")
+    s = " ".join(s.split())
+    if "·" in s:
+        left, right = s.split("·", 1)
+        left = left.strip()
+        right = right.strip()
+        # English multi-word class → keep last token (Ruins Specter → Specter)
+        if right and all((ord(c) < 128) or c.isspace() or c in "-'_" for c in right):
+            words = right.split()
+            if len(words) > 1:
+                right = words[-1]
+        if right and display_width(f"{left} · {right}") > max_w:
+            s = left or right
+        else:
+            s = f"{left} · {right}" if left and right else (left or right)
+        if left and display_width(s) > max_w:
+            s = left
+    if display_width(s) <= max_w:
+        return s
+    out: List[str] = []
+    w = 0
+    for ch in s:
+        cw = display_width(ch)
+        if w + cw > max_w - 1:
+            break
+        out.append(ch)
+        w += cw
+    return "".join(out) + "…"
+
+
+def _trunc_log_line(ln: str, *, max_w: int = 52) -> str:
+    from game.ui_terminal.layout import display_width
+
+    s = str(ln or "").strip()
+    # compress party assist headers
+    if "ซุ่มช่วย" in s and "→" in s:
+        s = s.split("→")[0].strip() + " → …"
+    if display_width(s) <= max_w:
+        return s
+    out: List[str] = []
+    w = 0
+    for ch in s:
+        cw = display_width(ch)
+        if w + cw > max_w - 1:
+            break
+        out.append(ch)
+        w += cw
+    return "".join(out) + "…"
+
+
 def format_fight_report(
     player: Mapping[str, Any],
     *,
@@ -214,32 +279,42 @@ def format_fight_report(
         "loss": "แพ้ — สลบ (Soft Death)",
         "flee": "หนีสำเร็จ",
     }.get(oc, oc or "?")
+    en = _soft_enemy_short(enemy_name)
 
     lines: List[str] = [
         " สรุปไฟต์",
         "---",
-        f" ผล     {oc_th} · {enemy_name}",
-        f" แอคชัน  โจมตี {meta.get('attacks', 0)} · สกิล {meta.get('skills', 0)} · "
-        f"ยา {meta.get('potions', 0)} · ปาร์ตี้ {meta.get('party', 0)}",
+        f" ผล      {oc_th}",
+        f" ศัตรู    {en}",
+        "---",
+        " แอคชัน",
+        f"  โจมตี {int(meta.get('attacks', 0) or 0)}   "
+        f"สกิล {int(meta.get('skills', 0) or 0)}   "
+        f"ยา {int(meta.get('potions', 0) or 0)}   "
+        f"ปาร์ตี้ {int(meta.get('party', 0) or 0)}",
     ]
     try:
         from game.domain.needs import format_combat_needs_compact
 
-        lines.append(f" กายใจ  {format_combat_needs_compact(player)}")  # type: ignore[arg-type]
+        lines.append("---")
+        lines.append(" กายใจ")
+        lines.append(f"  {format_combat_needs_compact(player)}")  # type: ignore[arg-type]
     except Exception:
         pass
     if oc == "loss" and defeat_line:
+        lines.append("---")
         lines.append(f" {defeat_line}")
     elif player.get("_last_defeat") and oc == "loss":
+        lines.append("---")
         lines.append(f" {player['_last_defeat'].get('line', '')}")
 
-    log_n = 8 if dense else 5
+    log_n = 6 if dense else 4
     recent = recent_fight_lines(player, limit=log_n)
     if recent:
         lines.append("---")
-        lines.append(" บันทึกย่อ")
+        lines.append(" บันทึกย่อ (ล่าสุด)")
         for ln in recent:
-            lines.append(f"  {ln}")
+            lines.append(f"  {_trunc_log_line(ln)}")
     return lines
 
 

@@ -337,6 +337,130 @@ def recipe_chance_label(
     return craft_chance_label(craft_success_chance(player, recipe, reg), reg)
 
 
+# WO-Craft-1: UI helpers (readable craft lists · no new recipes)
+CRAFT_PAGE_SIZE = 10
+
+
+def rarity_mark(reg: DataRegistry, rarity_id: Optional[str]) -> str:
+    """Short ○/◇/◆ style mark for craft UI."""
+    if not rarity_id:
+        return "○"
+    try:
+        from game.domain.rarity import tier_by_id
+
+        t = tier_by_id(reg, str(rarity_id)) or {}
+        tag = str(t.get("color_tag") or "").strip()
+        if tag:
+            return tag
+    except Exception:
+        pass
+    rid = str(rarity_id).lower()
+    if rid in ("common", ""):
+        return "○"
+    if rid in ("uncommon",):
+        return "◇"
+    if rid in ("rare",):
+        return "◆"
+    if rid in ("sacred", "legendary"):
+        return "★"
+    if rid in ("divine", "mythic", "archdivine"):
+        return "✦"
+    return "○"
+
+
+def recipe_output_name(reg: DataRegistry, recipe: Mapping[str, Any]) -> str:
+    out_id = str(recipe.get("output") or "")
+    it = (reg.items or {}).get(out_id) or (reg.cards or {}).get(out_id) or {}
+    return str(it.get("name") or out_id or "?")
+
+
+def recipe_inputs_short(
+    reg: DataRegistry,
+    recipe: Mapping[str, Any],
+    *,
+    max_parts: int = 2,
+) -> str:
+    """Abbreviated materials for list rows."""
+    from game.domain.rarity import rarity_label
+
+    inputs = recipe.get("inputs") or {}
+    ir = recipe.get("inputs_rarity") or {}
+    bits: List[str] = []
+    for k, v in list(inputs.items())[: max(1, max_parts)]:
+        nm = (reg.items.get(k) or reg.cards.get(k) or {}).get("name") or k
+        # shorten long names
+        nm_s = str(nm)
+        if len(nm_s) > 10:
+            nm_s = nm_s[:9] + "…"
+        if k in ir:
+            bits.append(f"{nm_s}×{v}≥{rarity_mark(reg, str(ir[k]))}")
+        else:
+            bits.append(f"{nm_s}×{v}")
+    extra = len(inputs) - max_parts
+    if extra > 0:
+        bits.append(f"+{extra}")
+    money = int(recipe.get("money") or 0)
+    if money:
+        bits.append(f"เงิน{money}")
+    return " · ".join(bits) if bits else "—"
+
+
+def format_recipe_list_lines(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+    recipes: Sequence[Mapping[str, Any]],
+    *,
+    start_index: int = 1,
+) -> List[str]:
+    """
+    Compact 2-line recipe rows for WO-Craft-1.
+    Returns list of display lines (not one blob).
+    """
+    lines: List[str] = []
+    for off, r in enumerate(recipes):
+        i = start_index + off
+        ready = can_craft(player, r, reg)
+        feel = recipe_chance_label(player, r, reg)
+        out_r = r.get("output_rarity")
+        mark = rarity_mark(reg, str(out_r) if out_r else None)
+        out_nm = recipe_output_name(reg, r)
+        status = f"〔{feel}〕" if ready else "〔ยังไม่พร้อม〕"
+        name = str(r.get("name") or r.get("id") or "?")
+        lines.append(f"  {i}. {name}  →  {out_nm} {mark}  {status}")
+        lines.append(f"      ใช้: {recipe_inputs_short(reg, r)} · Lv.{int(r.get('unlock_level') or 1)}")
+    return lines
+
+
+def group_recipes_by_station(
+    recipes: Sequence[Mapping[str, Any]],
+) -> Dict[str, List[Dict[str, Any]]]:
+    """station_id -> recipes (empty station key = '')."""
+    groups: Dict[str, List[Dict[str, Any]]] = {}
+    for r in recipes:
+        st = str(r.get("station") or "").strip() or "camp"
+        groups.setdefault(st, []).append(dict(r))
+    for st in groups:
+        groups[st] = sorted(
+            groups[st],
+            key=lambda x: (
+                int(x.get("unlock_level") or 1),
+                str(x.get("name") or x.get("id") or ""),
+            ),
+        )
+    return groups
+
+
+def station_ready_counts(
+    player: Mapping[str, Any],
+    reg: DataRegistry,
+    recipes: Sequence[Mapping[str, Any]],
+) -> Tuple[int, int]:
+    """(ready, total) for a recipe list."""
+    total = len(recipes)
+    ready = sum(1 for r in recipes if can_craft(player, r, reg))
+    return ready, total
+
+
 def _consume_inputs(
     player: MutableMapping[str, Any],
     recipe: Mapping[str, Any],

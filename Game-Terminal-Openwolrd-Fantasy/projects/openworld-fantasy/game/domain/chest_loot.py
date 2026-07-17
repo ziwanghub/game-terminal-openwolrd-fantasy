@@ -118,22 +118,41 @@ def format_chest_stash_summary(
     player: Mapping[str, Any],
     reg: DataRegistry,
 ) -> List[str]:
-    """Soft multi-line stash overview for bag category header."""
+    """Soft multi-line stash overview for bag category header (box sections)."""
     rows = summarize_chest_ranks(player, reg)
     if not rows:
-        return [" คลังหีบว่าง — หาได้จากบอส · เควส · เหตุการณ์"]
-    bits = []
+        return [
+            " สถานะคลัง",
+            "  ว่าง — หาได้จากบอส · เควส · เหตุการณ์สนาม",
+            "---",
+            " วิธีใช้",
+            "  หมายเลข = เปิดหนึ่งใบ",
+            "  A = เปิดทั้งหมด (ยืนยัน)",
+            "  0 = กลับ",
+        ]
+    total = sum(n for _, n in rows)
+    lines = [
+        " สถานะคลัง",
+        f"  รวม  {total} ใบ",
+        "  แรงก์สูง ≠ ของดีเสมอ (soft)",
+        "---",
+        " แยกแรงก์",
+    ]
     for rid, n in rows:
         rd = rank_def(reg, rid)
         sym = str(rd.get("symbol") or "□")
         nm = str(rd.get("name") or rid)
-        bits.append(f"{sym}{nm}×{n}")
-    total = sum(n for _, n in rows)
-    return [
-        f" คลังหีบ {total} ใบ · แรงก์สูง ≠ ของดีเสมอ",
-        f"  {', '.join(bits)}",
-        "  หมายเลข = เปิด · A = เปิดทั้งหมด (ยืนยัน) · 0 = กลับ",
-    ]
+        lines.append(f"  {sym}  {nm:<8}  ×{n}")
+    lines.extend(
+        [
+            "---",
+            " วิธีใช้",
+            "  หมายเลข = เปิดหนึ่งใบ",
+            "  A = เปิดทั้งหมด (ยืนยัน)",
+            "  0 = กลับ",
+        ]
+    )
+    return lines
 
 
 def _weighted_pick(weights: Mapping[str, float], rng: random.Random) -> str:
@@ -642,8 +661,17 @@ def open_chest(
 
     rd = rank_def(reg, effective_rank)
     label = str(rd.get("label") or f"หีบ · {effective_rank}")
-    lines: List[str] = [f"เปิด{label}…"]
+    sym = str(rd.get("symbol") or "□")
+    rname = str(rd.get("name") or effective_rank)
+    # Proportional open card (caller may render_box)
+    lines: List[str] = [
+        " เปิดหีบ",
+        "---",
+        f"  {sym}  {label}",
+        f"  แรงก์  {rname}",
+    ]
     if effective_rank == "unit" and rank_id != "unit":
+        lines.append("---")
         lines.append(" 「ผนึกด้านใน… ไม่ใช่หีบธรรมดา」")
 
     pools = (_chests_cfg(reg).get("pools") or {}).get("buckets") or {}
@@ -653,15 +681,14 @@ def open_chest(
     bias = dict(rd.get("rarity_bias") or {})
     buckets_w = dict(rd.get("bucket_weights") or {"material": 1})
 
+    loot_lines: List[str] = []
     granted = 0
     high_only = True
     for _ in range(n_rolls):
         bucket = _weighted_pick(buckets_w, rng)
-        # soft empty = low-tier junk
         if bucket == "soft_empty":
             bucket = "soft_empty"
         pool = list(pools.get(bucket) or pools.get("material") or ["upgrade_mat"])
-        # filter existing items
         pool = [str(x) for x in pool if str(x) in (reg.items or {})]
         if not pool:
             pool = ["upgrade_mat"] if "upgrade_mat" in (reg.items or {}) else []
@@ -670,16 +697,17 @@ def open_chest(
 
         if bucket == "unit_unique" or effective_rank == "unit":
             _iid, ulines = grant_unit_unique(player, reg, rng)
-            lines.extend(ulines)
+            for ul in ulines:
+                s = str(ul).strip()
+                if s:
+                    loot_lines.append(s if s.startswith("·") else f" · {s}")
             if _iid:
                 granted += 1
             high_only = False
             continue
 
         iid = str(rng.choice(pool))
-        # rarity with bias
         rid = _roll_rarity_biased(reg, rng, bias)
-        # equipment can be higher; mats often stay common-ish
         it = reg.items.get(iid) or {}
         if str(it.get("kind")) == "material" and rng.random() < 0.6:
             rid = "common"
@@ -688,7 +716,7 @@ def open_chest(
 
         shown = add_item(player, iid, reg, rarity=rid)
         if shown and "ไม่พบ" not in str(shown):
-            lines.append(f" · {shown}")
+            loot_lines.append(f" · {shown}")
             granted += 1
             if rid in ("common",) or bucket in ("material", "food", "heal", "soft_empty"):
                 high_only = False
@@ -696,25 +724,35 @@ def open_chest(
                 high_only = False
 
     if granted == 0:
-        # guarantee something tiny
         if "city_bread" in (reg.items or {}):
             shown = add_item(player, "city_bread", reg)
-            lines.append(f" · {shown}")
+            loot_lines.append(f" · {shown}")
             high_only = False
         elif "potion_hp_small" in (reg.items or {}):
             shown = add_item(player, "potion_hp_small", reg)
-            lines.append(f" · {shown}")
+            loot_lines.append(f" · {shown}")
 
     player["chest_opens"] = int(player.get("chest_opens") or 0) + 1
 
+    lines.append("---")
+    lines.append(" ของที่ได้")
+    if loot_lines:
+        lines.extend(loot_lines)
+    else:
+        lines.append(" · (ว่าง — เงาไม่ให้สิ่งใด)")
+
     # soft flavor
+    lines.append("---")
+    lines.append(" โทน")
     if effective_rank in ("ss", "sss") and not high_only and granted > 0:
         if rng.random() < 0.55:
-            lines.append("「กล่องใหญ่… ของข้างในเรียบง่าย — โชคยังไม่ถึง」")
+            lines.append("  「กล่องใหญ่… ของข้างในเรียบง่าย — โชคยังไม่ถึง」")
+        else:
+            lines.append("  「ยังไม่ใช่สิ่งที่เงาสัญญา — แต่ก็ใช้ได้」")
     elif effective_rank in ("s", "ss", "sss", "unit") and high_only:
-        lines.append("「เงาสั่น — ของนี้ไม่ธรรมดา」")
+        lines.append("  「เงาสั่น — ของนี้ไม่ธรรมดา」")
     else:
-        lines.append("「ยังไม่ใช่สิ่งที่เงาสัญญา — แต่ก็ใช้ได้」")
+        lines.append("  「ยังไม่ใช่สิ่งที่เงาสัญญา — แต่ก็ใช้ได้」")
 
     return lines
 

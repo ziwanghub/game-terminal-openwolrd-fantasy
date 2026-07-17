@@ -1,0 +1,23 @@
+# WO-Storage-1 / 1.2 — Shared team vault (user + pass)
+# Vault files: saves/{world_id}/vaults/*.json
+enabled: true
+shared: true
+default_cap: 200
+# Auto stash (default off — player opts in; needs vault session unlocked)
+auto_stash_default: false
+# Auto / `a` may move these (manual can still move equipment etc.)
+auto_stash_categories:
+  - material
+  - other
+  - healing
+  - food
+# Never auto-touch (manual deposit still OK)
+auto_stash_block_categories:
+  - equipment
+  - chest
+  - card
+  - relic
+money_keys:
+  - world
+  - heaven
+  - hell

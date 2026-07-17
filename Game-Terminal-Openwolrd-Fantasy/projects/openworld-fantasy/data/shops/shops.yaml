@@ -30,6 +30,15 @@
     - potion_hp_small
     - potion_hp
     - potion_mana
+    - recovery_hp_f
+    - recovery_hp_d
+    - recovery_hp_c
+    - recovery_mp_f
+    - recovery_mp_d
+    - recovery_mp_c
+    - recovery_py_f
+    - recovery_py_d
+    - recovery_py_c
     - antidote
     - balm_regen
     - balm_nature
